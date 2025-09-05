@@ -53,7 +53,7 @@ const QuestDetailPageContent = () => {
   const [mintedNftData, setMintedNftData] = useState<{
     name: string;
     description: string;
-    image_url: string | StaticImageData;
+    image_url: string;
     recipient: string;
   } | null>(null);
 
