@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Get My Location</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        button {
+            background: #4DA2FF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #3a8fef;
+        }
+        .result {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4DA2FF;
+        }
+        .location-info {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌍 Get Your Location for NFT Minting</h1>
+    <p>Click the button below to get your current latitude and longitude coordinates for minting location-specific NFTs.</p>
+    
+    <button onclick="getLocation()">📍 Get My Location</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function getLocation() {
+            const resultDiv = document.getElementById('result');
+            
+            if (!navigator.geolocation) {
+                resultDiv.innerHTML = '<div class="result">❌ Geolocation is not supported by this browser.</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="result">🔍 Getting your location...</div>';
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    // Determine which city area user is in
+                    const cities = {
+                        mumbai: { name: "Mumbai", lat: 19.0760, lon: 72.8777, radius: 50000 },
+                        delhi: { name: "Delhi", lat: 28.7041, lon: 77.1025, radius: 50000 },
+                        bangalore: { name: "Bangalore", lat: 12.9716, lon: 77.5946, radius: 50000 }
+                    };
+                    
+                    let userCity = null;
+                    let distances = [];
+                    
+                    for (const [key, city] of Object.entries(cities)) {
+                        const distance = calculateDistance(lat, lon, city.lat, city.lon);
+                        distances.push({ name: city.name, distance: Math.round(distance/1000) });
+                        
+                        if (distance <= city.radius) {
+                            userCity = city.name;
+                        }
+                    }
+                    
+                    distances.sort((a, b) => a.distance - b.distance);
+                    
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            <h3>✅ Location Found!</h3>
+                            <div class="location-info">
+                                <strong>📍 Your Coordinates:</strong><br>
+                                Latitude: ${lat}<br>
+                                Longitude: ${lon}<br>
+                                Accuracy: ±${Math.round(accuracy)}m
+                            </div>
+                            
+                            <div class="location-info">
+                                <strong>🏙️ City Detection:</strong><br>
+                                ${userCity ? `You are in <strong>${userCity}</strong>! 🎉` : 'You are not in any supported city area ❌'}
+                            </div>
+                            
+                            <div class="location-info">
+                                <strong>📏 Distances to Cities:</strong><br>
+                                ${distances.map(d => `${d.name}: ${d.distance}km`).join('<br>')}
+                            </div>
+                            
+                            <div class="location-info">
+                                <strong>🎯 For Minting Script:</strong><br>
+                                <code>const userLat = ${lat};</code><br>
+                                <code>const userLon = ${lon};</code>
+                            </div>
+                            
+                            ${userCity ? `
+                                <div class="location-info" style="background: #0a5d0a;">
+                                    <strong>🎨 Available NFT:</strong><br>
+                                    ${userCity} ${userCity === 'Mumbai' ? 'Local' : userCity === 'Delhi' ? 'Special' : 'Tech'} NFT
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                },
+                function(error) {
+                    let errorMessage = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "❌ Location access denied. Please allow location access and try again.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = "❌ Location information is unavailable. Please check your device's location services.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = "❌ Location request timed out. Please try again.";
+                            break;
+                        default:
+                            errorMessage = "❌ An unknown error occurred while retrieving location.";
+                            break;
+                    }
+                    resultDiv.innerHTML = `<div class="result">${errorMessage}</div>`;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        }
+        
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c; // Distance in meters
+        }
+    </script>
+</body>
+</html>
+
+

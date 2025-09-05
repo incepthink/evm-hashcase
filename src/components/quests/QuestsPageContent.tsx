@@ -1,0 +1,250 @@
+// components/QuestsPageContent.tsx
+"use client";
+
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useGlobalAppStore } from "@/store/globalAppStore";
+import { useCurrentAccount } from "@mysten/dapp-kit";
+import { useZkLogin } from "@mysten/enoki/react";
+import { useAccount } from "wagmi";
+import { useCollectionById } from "@/hooks/useCollections";
+import { useQuests } from "@/hooks/useQuests";
+import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
+
+// Components
+import { LoadingScreen } from "./LoadingScreen";
+import { ErrorScreen } from "./ErrorScreen";
+import { Navigation } from "./Navigation";
+import { NFTDisplay } from "./NFTDisplay";
+import { QuestHeader } from "./QuestHeader";
+import { QuestList } from "./QuestList";
+import { ClaimNFTButton } from "./ClaimNFTButton";
+import { NFTSuccessModal } from "./NFTSuccessModal";
+
+interface MintedNftData {
+  name: string;
+  description: string;
+  image_url: string;
+  recipient: string;
+}
+
+const QuestsPageContent = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, getWalletForChain, hasWalletForChain, setOpenModal } =
+    useGlobalAppStore();
+
+  // Wallet connections
+  const currentAccount = useCurrentAccount(); // Sui wallet
+  const { address: zkAddress } = useZkLogin(); // Sui zkLogin
+  const { address: evmAddress } = useAccount(); // EVM wallet
+
+  const [mounted, setMounted] = useState(false);
+  const [showNftModal, setShowNftModal] = useState(false);
+  const [mintedNftData, setMintedNftData] = useState<MintedNftData | null>(
+    null
+  );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const cid = searchParams.get("collection_id");
+
+  const {
+    collection,
+    isLoading: isCollectionLoading,
+    isError: isCollectionError,
+  } = useCollectionById(cid!);
+
+  // Memoize chain type calculation
+  const requiredChainType = useMemo((): "sui" | "evm" => {
+    if (!collection?.contract?.Chain?.chain_type) return "sui"; // Default fallback
+    return collection.contract.Chain.chain_type === "ethereum" ? "evm" : "sui";
+  }, [collection?.contract?.Chain?.chain_type]);
+
+  // Memoize wallet address calculation
+  const walletAddress = useMemo((): string | null => {
+    if (!mounted) return null;
+    const walletInfo = getWalletForChain(requiredChainType);
+    return walletInfo?.address || null;
+  }, [mounted, getWalletForChain, requiredChainType]);
+
+  // Memoize wallet connection status
+  const isWalletConnected = useMemo((): boolean => {
+    if (!mounted) return false;
+    return hasWalletForChain(requiredChainType);
+  }, [mounted, hasWalletForChain, requiredChainType]);
+
+  const {
+    quests,
+    isLoading: questsLoading,
+    completedQuests,
+    totalQuests,
+    completionPercentage,
+    nftMinted,
+    setNftMinted,
+  } = useQuests({
+    collection,
+    walletAddress,
+    isWalletConnected,
+    mounted,
+    requiredChainType,
+  });
+
+  // Memoize handlers to prevent re-renders
+  const handleBack = useCallback(() => {
+    try {
+      const cid = searchParams.get("collection_id");
+      if (cid) {
+        router.push(`/loyalties/${cid}`);
+        return;
+      }
+      router.push("/loyalties/214");
+    } catch {
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        window.history.back();
+      } else {
+        router.push("/loyalties");
+      }
+    }
+  }, [searchParams, router]);
+
+  const handleNFTMintSuccess = useCallback((nftData: any) => {
+    const formattedData: MintedNftData = {
+      name: nftData.name,
+      description: nftData.description,
+      image_url: nftData.image_url,
+      recipient: nftData.recipient,
+    };
+    setMintedNftData(formattedData);
+    setShowNftModal(true);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setShowNftModal(false);
+    // Optional: Clear minted data after a delay to prevent flash
+    setTimeout(() => {
+      setMintedNftData(null);
+    }, 300);
+  }, []);
+
+  // Memoize collection check
+  const isNSCollection = useMemo(() => {
+    return (
+      collection?.name === "NS" ||
+      collection?.name === "Network School Collection"
+    );
+  }, [collection?.name]);
+
+  // Memoize stable props for modal
+  const modalProps = useMemo(
+    () => ({
+      isOpen: showNftModal,
+      onClose: handleCloseModal,
+      mintedNftData,
+      walletAddress,
+      isNSCollection,
+    }),
+    [
+      showNftModal,
+      handleCloseModal,
+      mintedNftData,
+      walletAddress,
+      isNSCollection,
+    ]
+  );
+
+  // Loading states
+  if (!mounted) {
+    return (
+      <LoadingScreen message="Loading..." isNSCollection={isNSCollection} />
+    );
+  }
+
+  if (isCollectionLoading) {
+    return (
+      <LoadingScreen
+        message="Loading Collection..."
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
+  if (isCollectionError || !collection) {
+    return (
+      <ErrorScreen
+        title="Collection Not Found"
+        message="Unable to load collection data"
+        onBack={() => router.push("/collections")}
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
+  if (questsLoading || quests.length === 0) {
+    return (
+      <LoadingScreen
+        message="Loading Quests..."
+        collectionName={collection?.name}
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`min-h-screen ${isNSCollection ? "bg-black" : "bg-[#000421]"}`}
+    >
+      <Navigation onBack={handleBack} />
+
+      {/* Main Content */}
+      <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          {/* NFT Display Section */}
+          <NFTDisplay
+            collection={collection}
+            backgroundImage={backgroundImageHeroSection}
+          />
+
+          {/* Quest Section */}
+          <QuestHeader
+            completedQuests={completedQuests}
+            totalQuests={totalQuests}
+            completionPercentage={completionPercentage}
+            showProgress={mounted && isWalletConnected && !questsLoading}
+            requiredChainType={requiredChainType}
+          />
+
+          {/* Quest List */}
+          <QuestList
+            quests={quests}
+            isWalletConnected={isWalletConnected}
+            requiredChainType={requiredChainType}
+          />
+
+          {/* Claim NFT Button */}
+          {quests.length > 0 && (
+            <ClaimNFTButton
+              nftMinted={nftMinted}
+              completionPercentage={completionPercentage}
+              totalQuests={totalQuests}
+              completedQuests={completedQuests}
+              collection={collection}
+              collectionId={cid!}
+              onSuccess={handleNFTMintSuccess}
+              onNftMintedChange={setNftMinted}
+              chain={requiredChainType === "evm" ? "ethereum" : "sui"}
+              requiredChainType={requiredChainType}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* NFT Success Modal */}
+      <NFTSuccessModal {...modalProps} />
+    </div>
+  );
+};
+
+export default QuestsPageContent;

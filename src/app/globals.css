@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-primary {
+    @apply relative px-6 py-3 rounded-full md:text-xl text-sm bg-white text-black border-[1px] border-b-4 border-[#4DA2FF] flex items-center gap-x-2 
+              hover:border-b-[6px] hover:-translate-y-0.5 
+              active:border-b-[1px] active:translate-y-0.5 active:bg-[#e1f0ff]
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA2FF] focus-visible:ring-offset-2
+              transition-all duration-200 ease-out transform;
+  }
+
+  .btn-primary-interactive {
+    @apply hover:bg-[#f0f8ff] hover:border-b-[6px] hover:-translate-y-0.5;
+    @apply active:border-b-[1px] active:translate-y-0.5 active:bg-[#e1f0ff];
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4DA2FF] focus-visible:ring-offset-2;
+    @apply transition-all duration-200 ease-out transform;
+  }
+}

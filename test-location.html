@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Location Test</title>
+</head>
+<body>
+    <h1>Location Test</h1>
+    <button onclick="getLocation()">Get My Location</button>
+    <div id="result"></div>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        document.getElementById('result').innerHTML = `
+                            <h2>Your Location:</h2>
+                            <p>Latitude: ${lat}</p>
+                            <p>Longitude: ${lon}</p>
+                            <p>Accuracy: ${position.coords.accuracy} meters</p>
+                        `;
+                    },
+                    function(error) {
+                        document.getElementById('result').innerHTML = `
+                            <h2>Error:</h2>
+                            <p>${error.message}</p>
+                        `;
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000
+                    }
+                );
+            } else {
+                document.getElementById('result').innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+    </script>
+</body>
+</html>
