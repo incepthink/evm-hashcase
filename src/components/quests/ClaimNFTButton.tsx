@@ -41,10 +41,16 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
   const walletAddress = walletInfo?.address;
   const isWalletConnected = hasWalletForChain(requiredChainType);
 
-  // Handle success case
+  // Handle success case and set localStorage
   useEffect(() => {
     if (isSuccess && data?.success && walletAddress) {
+      // Set the localStorage item to persist minted state
+      localStorage.setItem("nft_minted_ns_daily", "true");
+
+      // Update component state
       onNftMintedChange(true);
+
+      // Prepare NFT data for modal
       const nftData = {
         collection_id: collectionId,
         name: collection.name,
@@ -52,7 +58,12 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
         image_url: collection.image_uri,
         recipient: walletAddress,
       };
+
+      // Call success handler
       onSuccess(nftData);
+
+      // Show success toast
+      toast.success("NFT successfully minted!");
     }
   }, [
     isSuccess,
@@ -63,6 +74,16 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
     collection,
     walletAddress,
   ]);
+
+  // Check localStorage on component mount to restore minted state
+  useEffect(() => {
+    if (completionPercentage === 100) {
+      const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
+      if (savedNftStatus === "true" && !nftMinted) {
+        onNftMintedChange(true);
+      }
+    }
+  }, [completionPercentage, nftMinted, onNftMintedChange]);
 
   const handleClaimNFT = async () => {
     if (nftMinted) {
@@ -151,7 +172,7 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
     <div className="text-center mt-6 sm:mt-8">
       <button
         onClick={handleClaimNFT}
-        disabled={claiming || !isWalletConnected}
+        disabled={claiming || !isWalletConnected || nftMinted}
         className={`
           w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base md:text-lg transition-all duration-300 transform
           ${getButtonStyle()}

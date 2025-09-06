@@ -73,7 +73,7 @@ const WalletConnectionModal = () => {
         )}
 
         {/* Privy Connection Status (if connected via Privy) */}
-        {privyAuthenticated && privyUser?.wallet?.address && !evmWallet && (
+        {/* {privyAuthenticated && privyUser?.wallet?.address && !evmWallet && (
           <div className="w-full p-3 bg-green-50 border border-green-200 rounded-lg mb-4">
             <div className="text-sm text-green-800">
               <div className="font-medium mb-1">Connected via Google:</div>
@@ -86,7 +86,7 @@ const WalletConnectionModal = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* EVM Wallet Connection */}
         <EVMWalletConnect />

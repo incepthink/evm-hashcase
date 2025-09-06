@@ -1,6 +1,7 @@
 // components/quests/QuestDetailClaimButton.tsx
 "use client";
 
+import { useEffect } from "react";
 import { StaticImageData } from "next/image";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import axiosInstance from "@/utils/axios";
@@ -19,6 +20,7 @@ interface QuestDetailClaimButtonProps {
   nftMinted: boolean;
   claiming: boolean;
   setClaiming: (claiming: boolean) => void;
+  setNftMinted: (minted: boolean) => void; // Add this prop to update parent state
   completionPercentage: number;
   totalQuests: number;
   completedQuests: number;
@@ -32,6 +34,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
   nftMinted,
   claiming,
   setClaiming,
+  setNftMinted,
   completionPercentage,
   totalQuests,
   completedQuests,
@@ -41,6 +44,16 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
   requiredChainType = "sui",
 }) => {
   const { getWalletForChain, setOpenModal } = useGlobalAppStore();
+
+  // Check localStorage on component mount to restore minted state
+  useEffect(() => {
+    if (completionPercentage === 100) {
+      const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
+      if (savedNftStatus === "true" && !nftMinted) {
+        setNftMinted(true);
+      }
+    }
+  }, [completionPercentage, nftMinted, setNftMinted]);
 
   const handleClaimNFT = async () => {
     if (nftMinted) {
@@ -94,6 +107,13 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       const response = await axiosInstance.post(endpoint, mintData);
 
       if (response.data.success) {
+        // Set localStorage to persist minted state
+        localStorage.setItem("nft_minted_ns_daily", "true");
+
+        // Update component state
+        setNftMinted(true);
+
+        // Call success handler
         onSuccess({
           name: nftData.name,
           description: nftData.description,
@@ -119,6 +139,10 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
         errorMessage.includes("already minted") ||
         errorMessage.includes("already claimed")
       ) {
+        // If NFT was already minted, set localStorage and update state
+        localStorage.setItem("nft_minted_ns_daily", "true");
+        setNftMinted(true);
+
         onSuccess({
           name: nftData.name,
           description: nftData.description,
@@ -174,7 +198,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
     <div className="text-center mt-6 sm:mt-8">
       <button
         onClick={handleClaimNFT}
-        disabled={claiming || !isWalletConnected}
+        disabled={claiming || !isWalletConnected || nftMinted}
         className={`
           w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base md:text-lg transition-all duration-300 transform
           ${getButtonStyle()}

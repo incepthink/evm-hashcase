@@ -16,20 +16,13 @@ export const NFTDisplay: React.FC<NFTDisplayProps> = ({
         {/* NFT Image */}
         <div className="w-full sm:flex-shrink-0 sm:w-auto">
           <div className="w-full sm:w-40 sm:h-40 md:w-48 md:h-48 aspect-square rounded-2xl shadow-2xl border-2 border-purple-300/30 overflow-hidden">
-            {collection.name === "NS" ||
-            collection.name === "Network School Collection" ? (
-              <img
-                src="https://client-uploads.nyc3.digitaloceanspaces.com/images/3b1daaad-c7dc-4884-a78b-739a3ce3dfaa/2025-08-28T12-25-58-895Z-38bc0eae.png"
-                alt="NS Daily NFT"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Image
-                src={backgroundImage}
-                alt="Collection NFT"
-                className="w-full h-full object-cover"
-              />
-            )}
+            <Image
+              src={collection.image_uri}
+              alt="Collection NFT"
+              width={192}
+              height={192}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
 

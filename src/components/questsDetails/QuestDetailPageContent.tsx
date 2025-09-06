@@ -73,14 +73,6 @@ const QuestDetailPageContent = () => {
     isError: isCollectionError,
   } = useCollectionById(cid!);
 
-  console.log("QUEST_DEBUG: Wallet states:", {
-    evmAddress,
-    privyAuthenticated,
-    privyWalletAddress: privyUser?.wallet?.address,
-    activeQuestCode,
-    collectionId: cid,
-  });
-
   // Always return "evm" since we only support EVM now
   const getRequiredChainType = (): "evm" => {
     return "evm";
@@ -153,7 +145,9 @@ const QuestDetailPageContent = () => {
   const nftData = getNftData();
 
   const isNSCollection =
-    collection?.name === "NS" || collection?.name?.includes("NS");
+    collection?.name === "NS" ||
+    collection?.name?.includes("NS") ||
+    collection?.name === "Network School Collection Base";
 
   useEffect(() => setMounted(true), []);
 
@@ -161,7 +155,6 @@ const QuestDetailPageContent = () => {
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === "quest_progress_ping" && e.newValue) {
-        console.log("QUEST_DEBUG: Cross-tab sync triggered:", e.newValue);
         fetchQuests();
       }
     };
@@ -199,9 +192,6 @@ const QuestDetailPageContent = () => {
     prevIsConnectedRef.current = isWalletConnected;
 
     if (prev !== isWalletConnected) {
-      console.log(
-        `QUEST_DEBUG: Wallet connection changed for ${requiredChainType}, reloading quests`
-      );
       setLoading(true);
       setInitialLoad(true);
     }
@@ -255,7 +245,6 @@ const QuestDetailPageContent = () => {
   const fetchQuests = async () => {
     try {
       setLoading(true);
-      console.log("QUEST_DEBUG: Fetching quests for code:", activeQuestCode);
 
       const {
         data: { quest },
@@ -270,8 +259,6 @@ const QuestDetailPageContent = () => {
       if (walletAddress) {
         params.wallet_address = walletAddress;
       }
-
-      console.log("QUEST_DEBUG: Fetching quests with params:", params);
 
       const response = await axiosInstance.get("/platform/quest/by-owner", {
         params,
@@ -305,8 +292,6 @@ const QuestDetailPageContent = () => {
         };
       });
 
-      console.log("QUEST_DEBUG: Transformed quests:", transformedQuests);
-
       if (transformedQuests.length > 0) {
         setQuests(transformedQuests);
         return transformedQuests;
@@ -314,7 +299,7 @@ const QuestDetailPageContent = () => {
         return [];
       }
     } catch (error) {
-      console.error("QUEST_DEBUG: Error fetching quests:", error);
+      console.error("Error fetching quests:", error);
       toast.error("Failed to load quests");
       return [];
     } finally {
@@ -351,13 +336,6 @@ const QuestDetailPageContent = () => {
         return;
       }
 
-      console.log("QUEST_DEBUG: Claiming quest:", {
-        questId,
-        questCode: quest.quest_code,
-        walletAddress,
-        walletType: getWalletType(),
-      });
-
       setQuests((prevQuests) => {
         const updatedQuests = prevQuests.map((q) =>
           q.id === questId ? { ...q, is_completed: true } : q
@@ -387,8 +365,6 @@ const QuestDetailPageContent = () => {
           chain_type: requiredChainType, // Always "evm"
         });
 
-        console.log("QUEST_DEBUG: Quest completion response:", response.data);
-
         const latest = await fetchQuests();
         const verified = Array.isArray(latest)
           ? latest.find((q) => q.id === questId)?.is_completed === true
@@ -407,11 +383,6 @@ const QuestDetailPageContent = () => {
           localStorage.removeItem("quest_progress_ping");
         } catch {}
       } catch (apiError: any) {
-        console.log(
-          "QUEST_DEBUG: Backend persistence failed (using localStorage fallback):",
-          apiError
-        );
-
         // Handle wallet-specific errors
         if (apiError.response?.data?.message?.includes("wrong wallet")) {
           toast.error(
@@ -421,7 +392,7 @@ const QuestDetailPageContent = () => {
       }
       fetchQuests();
     } catch (error: any) {
-      console.error("QUEST_DEBUG: Error claiming quest:", error);
+      console.error("Error claiming quest:", error);
       const errorMessage =
         error.response?.data?.message || "Failed to claim quest";
       toast.error(errorMessage);
@@ -431,7 +402,6 @@ const QuestDetailPageContent = () => {
   };
 
   const handleNFTMintSuccess = (nftDataResponse: any) => {
-    console.log("QUEST_DEBUG: NFT mint success:", nftDataResponse);
     setMintedNftData({
       name: nftData.name,
       description: nftData.description,
@@ -507,34 +477,6 @@ const QuestDetailPageContent = () => {
       {/* Main Content */}
       <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {/* Wallet Status Indicator */}
-          {/* <div className="mb-6">
-            <div className="flex items-center justify-center">
-              <div className="bg-white/10 backdrop-blur-lg rounded-lg px-4 py-2 border border-white/20">
-                <div className="flex items-center gap-3 text-sm">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      isWalletConnected ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  ></div>
-                  <span className="text-white">
-                    {isWalletConnected
-                      ? `Connected with ${getWalletType()} wallet`
-                      : "EVM wallet or Google sign-in required"}
-                  </span>
-                  {!isWalletConnected && (
-                    <button
-                      onClick={() => setOpenModal(true)}
-                      className="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-full transition-colors"
-                    >
-                      Connect
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div> */}
-
           {/* NFT Display Section */}
           <QuestDetailHeader nftData={nftData} />
 
@@ -566,6 +508,7 @@ const QuestDetailPageContent = () => {
               nftMinted={nftMinted}
               claiming={claiming}
               setClaiming={setClaiming}
+              setNftMinted={setNftMinted} // Add this missing prop
               completionPercentage={completionPercentage}
               totalQuests={totalQuests}
               completedQuests={completedQuests}

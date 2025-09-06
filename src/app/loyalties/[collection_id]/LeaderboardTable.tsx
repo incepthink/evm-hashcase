@@ -17,6 +17,7 @@ type LeaderboardEntry = {
     email?: string;
     eth_wallet_address?: string;
     fuel_wallet_address?: string;
+    sui_wallet_address?: string;
   };
 };
 
@@ -54,16 +55,11 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
     (privyAuthenticated && privyUser?.wallet?.address)
   );
 
-  console.log("LEADERBOARD_DEBUG: Wallet states:", {
-    evmAddress,
-    privyAuthenticated,
-    privyWalletAddress: privyUser?.wallet?.address,
-    isWalletConnected,
-    userId: user?.id,
-  });
-
   const refreshLeaderboard = async () => {
-    if (!isWalletConnected) return;
+    if (!isWalletConnected) {
+      toast.error("Please connect your wallet to refresh leaderboard");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -84,7 +80,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
 
       toast.success("Leaderboard updated with latest rankings!");
     } catch (error: any) {
-      console.error("LEADERBOARD_DEBUG: Error refreshing leaderboard:", error);
+      console.error("Error refreshing leaderboard:", error);
       toast.error("Failed to refresh leaderboard");
     } finally {
       setIsLoading(false);
@@ -93,59 +89,30 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
 
   useEffect(() => {
     const getLeaderboardData = async () => {
-      if (!isWalletConnected) {
-        console.log(
-          "LEADERBOARD_DEBUG: No wallet connected, skipping leaderboard fetch"
-        );
-        return;
-      }
-
       setIsLoading(true);
       try {
-        const userId = user?.id;
-
-        if (!userId) {
-          console.log(
-            "LEADERBOARD_DEBUG: User not found, showing leaderboard without user rank"
-          );
-        }
-
+        // Always fetch basic leaderboard data
         const response = await axiosInstance.get("/platform/new-leaderboard", {
           params: {
             owner_id: owner_id,
-            user_id: userId,
+            user_id: isWalletConnected ? user?.id : undefined,
             page: 1,
             page_size: 10,
           },
         });
 
         const leaderboard: LeaderboardResponse = response.data.leaderboard;
-        console.log("LEADERBOARD_DEBUG: Leaderboard data:", leaderboard);
-
         setLeaderboardData(leaderboard.rows || []);
-        setUserRank(leaderboard.userRank || null);
 
-        if (userId) {
-          try {
-            const pointsResponse = await axiosInstance.get(
-              "/user/achievements/get-points",
-              {
-                params: { owner_id },
-              }
-            );
-            console.log(
-              "LEADERBOARD_DEBUG: Points response:",
-              pointsResponse.data
-            );
-          } catch (pointsError: any) {
-            console.error(
-              "LEADERBOARD_DEBUG: Error fetching direct points:",
-              pointsError
-            );
-          }
+        // Only set user rank if wallet is connected
+        if (isWalletConnected) {
+          setUserRank(leaderboard.userRank || null);
+        } else {
+          setUserRank(null);
         }
       } catch (error: any) {
-        console.error("LEADERBOARD_DEBUG: Error fetching leaderboard:", error);
+        console.error("Error fetching leaderboard:", error);
+        // Fallback to basic leaderboard
         try {
           const response = await axiosInstance.get("/platform/leaderboard", {
             params: {
@@ -154,15 +121,10 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
             },
           });
           const leaderboard = response.data.leaderboard;
-          console.log("LEADERBOARD_DEBUG: Fallback leaderboard:", leaderboard);
-
           setLeaderboardData(leaderboard);
           setUserRank(null);
         } catch (fallbackError) {
-          console.error(
-            "LEADERBOARD_DEBUG: Fallback leaderboard also failed:",
-            fallbackError
-          );
+          console.error("Fallback leaderboard also failed:", fallbackError);
         }
       } finally {
         setIsLoading(false);
@@ -178,15 +140,17 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
   };
 
   const getUserIdentifier = (entry: LeaderboardEntry) => {
-    // Check EVM address first (most common)
+    console.log("entry", entry);
+
     if (entry.user?.eth_wallet_address) {
       return formatWalletAddress(entry.user.eth_wallet_address);
     }
-    // Check other wallet types
+    if (entry.user?.sui_wallet_address) {
+      return formatWalletAddress(entry.user.sui_wallet_address);
+    }
     if (entry.user?.fuel_wallet_address) {
       return formatWalletAddress(entry.user.fuel_wallet_address);
     }
-    // Check username and email
     if (entry.user?.username) {
       return entry.user.username;
     }
@@ -197,11 +161,9 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
   };
 
   const getCurrentUserAddress = () => {
-    // Check regular EVM wallet first
     if (evmAddress) {
       return formatWalletAddress(evmAddress);
     }
-    // Check Privy wallet
     if (privyAuthenticated && privyUser?.wallet?.address) {
       return formatWalletAddress(privyUser.wallet.address);
     }
@@ -242,9 +204,10 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
           <button
             key={buttonPeriod}
             onClick={() => setPeriod(buttonPeriod)}
+            disabled={!isWalletConnected}
             className={`w-full sm:w-auto bg-[#3f54b4] text-white text-sm sm:text-base md:text-lg px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-300 hover:bg-[#2678C2] shadow-md ${
               period === buttonPeriod ? "ring-2 ring-blue-400" : ""
-            }`}
+            } ${!isWalletConnected ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {label}
           </button>
@@ -255,15 +218,21 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       {!isWalletConnected && (
         <div className="w-full max-w-6xl mx-auto bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 text-center">
           <p className="text-yellow-300 text-sm sm:text-base">
-            Connect an EVM wallet or sign in with Google to see your ranking
+            Connect an EVM wallet or sign in with Google to see your ranking and
+            interact with the leaderboard
           </p>
         </div>
       )}
 
       {/* Mobile Card View */}
-      <div className="w-full flex flex-col gap-3 max-w-6xl mx-auto md:hidden">
-        {/* Current User's Entry (if not in top list) */}
-        {userRank &&
+      <div
+        className={`w-full flex flex-col gap-3 max-w-6xl mx-auto md:hidden ${
+          !isWalletConnected ? "opacity-60" : ""
+        }`}
+      >
+        {/* Current User's Entry (only if wallet connected and not in top list) */}
+        {isWalletConnected &&
+          userRank &&
           !leaderboardData.some((entry) => entry.user_id === user?.id) && (
             <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-400/30 backdrop-blur-lg rounded-lg p-4 shadow-lg">
               <div className="flex justify-between items-center mb-2">
@@ -287,31 +256,10 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
             </div>
           )}
 
-        {/* Authentication Required Message */}
-        {isWalletConnected && !userRank && user?.id && (
-          <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border border-yellow-400/30 backdrop-blur-lg rounded-lg p-4 shadow-lg">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <span className="bg-yellow-500 text-black px-2 py-1 rounded-full text-sm font-bold">
-                  #-
-                </span>
-                <span className="text-yellow-300 text-sm font-medium">
-                  (You - {getCurrentUserType()})
-                </span>
-              </div>
-              <div className="text-yellow-300 font-bold text-sm">
-                Auth Required
-              </div>
-            </div>
-            <div className="text-white/80 text-sm">
-              {getCurrentUserAddress()}
-            </div>
-          </div>
-        )}
-
         {/* Leaderboard Entries */}
         {leaderboardData.map((entry, index) => {
-          const isCurrentUser = userRank && entry.user_id === user?.id;
+          const isCurrentUser =
+            isWalletConnected && userRank && entry.user_id === user?.id;
           return (
             <div
               key={index}
@@ -347,7 +295,11 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       </div>
 
       {/* Desktop Table View */}
-      <div className="w-full flex-col justify-start items-start gap-4 max-w-6xl mx-auto hidden md:flex">
+      <div
+        className={`w-full flex-col justify-start items-start gap-4 max-w-6xl mx-auto hidden md:flex ${
+          !isWalletConnected ? "opacity-60" : ""
+        }`}
+      >
         {/* Table Header */}
         <div className="flex justify-between items-center w-full px-4 md:px-6 py-3 rounded-md text-base md:text-lg font-semibold text-white bg-white/10 backdrop-blur-lg shadow-lg">
           <p className="w-1/3 text-center">Rank</p>
@@ -355,8 +307,9 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
           <p className="w-1/3 text-center">Loyalty Points</p>
         </div>
 
-        {/* Current User's Entry (if not in top list) */}
-        {userRank &&
+        {/* Current User's Entry (only if wallet connected and not in top list) */}
+        {isWalletConnected &&
+          userRank &&
           !leaderboardData.some((entry) => entry.user_id === user?.id) && (
             <div className="flex justify-between items-center w-full px-4 md:px-6 py-3 rounded-md text-base md:text-lg text-white bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-400/30 backdrop-blur-lg shadow-lg">
               <p className="w-1/3 text-center">#{userRank.rank}</p>
@@ -374,25 +327,10 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
             </div>
           )}
 
-        {/* Authentication Required Message */}
-        {isWalletConnected && !userRank && user?.id && (
-          <div className="flex justify-between items-center w-full px-4 md:px-6 py-3 rounded-md text-base md:text-lg text-white bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border border-yellow-400/30 backdrop-blur-lg shadow-lg">
-            <p className="w-1/3 text-center">-</p>
-            <p className="w-1/3 text-center">
-              {getCurrentUserAddress()}
-              <span className="ml-2 text-yellow-300 text-sm">
-                ({getCurrentUserType()})
-              </span>
-            </p>
-            <p className="w-1/3 text-center text-yellow-300">
-              Authentication required
-            </p>
-          </div>
-        )}
-
         {/* Leaderboard Entries */}
         {leaderboardData.map((entry, index) => {
-          const isCurrentUser = userRank && entry.user_id === user?.id;
+          const isCurrentUser =
+            isWalletConnected && userRank && entry.user_id === user?.id;
           return (
             <div
               key={index}
@@ -422,7 +360,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       </div>
 
       {/* No Data Message */}
-      {!isLoading && leaderboardData.length === 0 && !userRank && (
+      {!isLoading && leaderboardData.length === 0 && (
         <div className="w-full text-center py-6 sm:py-8">
           <p className="text-blue-300 text-base sm:text-lg">
             No leaderboard data available
@@ -431,15 +369,21 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       )}
 
       {/* Refresh Button */}
-      {isWalletConnected && (
-        <button
-          onClick={refreshLeaderboard}
-          disabled={isLoading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-        >
-          {isLoading ? "Refreshing..." : "Refresh Leaderboard"}
-        </button>
-      )}
+      <button
+        onClick={refreshLeaderboard}
+        disabled={isLoading || !isWalletConnected}
+        className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+          isWalletConnected
+            ? "bg-blue-600 hover:bg-blue-700 text-white"
+            : "bg-gray-600 text-gray-400 cursor-not-allowed"
+        } disabled:bg-gray-600 disabled:cursor-not-allowed`}
+      >
+        {isLoading
+          ? "Refreshing..."
+          : isWalletConnected
+          ? "Refresh Leaderboard"
+          : "Connect Wallet to Refresh"}
+      </button>
     </div>
   );
 };

@@ -56,8 +56,6 @@ export const useQuests = ({
           params.wallet_address = walletAddress;
         }
 
-        console.log(`🔍 Fetching quests for ${requiredChainType} chain with wallet:`, walletAddress?.slice(0, 8) + '...');
-
         const response = await axiosInstance.get("/platform/quest/by-owner", {
           params,
         });
@@ -90,7 +88,7 @@ export const useQuests = ({
           } as Quest;
         });
       } catch (err) {
-        console.error("❌ Error fetching quests:", err);
+        console.error("Error fetching quests:", err);
         toast.error("Failed to load quests");
         throw err;
       }
@@ -103,7 +101,7 @@ export const useQuests = ({
   // Handle error state
   useEffect(() => {
     if (error) {
-      console.error("❌ Quest query error:", error);
+      console.error("Quest query error:", error);
       toast.error("Failed to load quests");
     }
   }, [error]);
@@ -115,7 +113,6 @@ export const useQuests = ({
     prevIsConnectedRef.current = isWalletConnected;
 
     if (prev !== isWalletConnected) {
-      console.log(`🔄 Wallet connection changed for ${requiredChainType}, refetching quests`);
       refetch();
     }
 
@@ -134,31 +131,55 @@ export const useQuests = ({
     }
   }, [mounted, isWalletConnected, refetch, requiredChainType]);
 
-  // Handle NFT minted status
+  // Handle NFT minted status - FIXED VERSION
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isLoading) return;
 
+    // Always check localStorage first to restore minted state
+    const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
+    
     if (quests.length > 0) {
       const completedQuests = quests.filter((quest: any) => quest.is_completed).length;
       const totalQuests = quests.length;
       const currentCompletionPercentage =
         totalQuests > 0 ? Math.round((completedQuests / totalQuests) * 100) : 0;
 
-      const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
+      // If localStorage says NFT is minted and completion is 100%, keep it minted
       if (savedNftStatus === "true" && currentCompletionPercentage === 100) {
         setNftMinted(true);
-      } else if (currentCompletionPercentage < 100) {
+      }
+      // If localStorage says NFT is minted but completion is < 100%, trust localStorage
+      // This handles the case where data is still loading or there's a temporary inconsistency
+      else if (savedNftStatus === "true") {
+        setNftMinted(true);
+      }
+      // Only set to false and remove localStorage if completion drops below 100% 
+      // AND there's no saved status (meaning user hasn't minted yet)
+      else if (currentCompletionPercentage < 100 && savedNftStatus !== "true") {
         setNftMinted(false);
-        localStorage.removeItem("nft_minted_ns_daily");
+        // Don't remove localStorage here - only remove when user actually disconnects wallet
+      }
+      // If no saved status and 100% complete, don't mint (wait for user to claim)
+      else if (!savedNftStatus && currentCompletionPercentage === 100) {
+        setNftMinted(false);
+      }
+    } else {
+      // If no quests loaded but localStorage says minted, trust localStorage
+      if (savedNftStatus === "true") {
+        setNftMinted(true);
       }
     }
-  }, [quests, mounted]);
+  }, [quests, mounted, isLoading]);
 
   // Listen for storage events
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === "quest_progress_ping" && e.newValue) {
         refetch();
+      }
+      // Also listen for NFT minted status changes
+      if (e.key === "nft_minted_ns_daily") {
+        setNftMinted(e.newValue === "true");
       }
     };
     window.addEventListener("storage", onStorage);

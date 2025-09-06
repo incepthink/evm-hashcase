@@ -7,6 +7,7 @@ import { useGlobalAppStore } from "@/store/globalAppStore";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useZkLogin } from "@mysten/enoki/react";
 import { useAccount } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { useCollectionById } from "@/hooks/useCollections";
 import { useQuests } from "@/hooks/useQuests";
 import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
@@ -31,13 +32,20 @@ interface MintedNftData {
 const QuestsPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, getWalletForChain, hasWalletForChain, setOpenModal } =
-    useGlobalAppStore();
+  const {
+    user,
+    getWalletForChain,
+    hasWalletForChain,
+    setOpenModal,
+    isUserVerified,
+    connectedWallets,
+  } = useGlobalAppStore();
 
   // Wallet connections
   const currentAccount = useCurrentAccount(); // Sui wallet
   const { address: zkAddress } = useZkLogin(); // Sui zkLogin
   const { address: evmAddress } = useAccount(); // EVM wallet
+  const { authenticated: privyAuthenticated, user: privyUser } = usePrivy(); // Privy
 
   const [mounted, setMounted] = useState(false);
   const [showNftModal, setShowNftModal] = useState(false);
@@ -45,9 +53,25 @@ const QuestsPageContent = () => {
     null
   );
 
+  // Force re-render trigger for wallet state changes
+  const [walletStateKey, setWalletStateKey] = useState(0);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Watch for wallet state changes and force re-render
+  useEffect(() => {
+    setWalletStateKey((prev) => prev + 1);
+  }, [
+    connectedWallets,
+    isUserVerified,
+    evmAddress,
+    privyAuthenticated,
+    privyUser?.wallet?.address,
+    currentAccount?.address,
+    zkAddress,
+  ]);
 
   const cid = searchParams.get("collection_id");
 
@@ -63,18 +87,85 @@ const QuestsPageContent = () => {
     return collection.contract.Chain.chain_type === "ethereum" ? "evm" : "sui";
   }, [collection?.contract?.Chain?.chain_type]);
 
-  // Memoize wallet address calculation
+  // Memoize wallet address calculation - include walletStateKey to force recalculation
   const walletAddress = useMemo((): string | null => {
     if (!mounted) return null;
-    const walletInfo = getWalletForChain(requiredChainType);
-    return walletInfo?.address || null;
-  }, [mounted, getWalletForChain, requiredChainType]);
 
-  // Memoize wallet connection status
+    // For EVM chains, check both regular EVM and Privy wallets
+    if (requiredChainType === "evm") {
+      // First check global store
+      const walletInfo = getWalletForChain("evm");
+      if (walletInfo?.address) {
+        return walletInfo.address;
+      }
+
+      // Then check live connections
+      if (evmAddress) {
+        return evmAddress;
+      }
+
+      if (privyAuthenticated && privyUser?.wallet?.address) {
+        return privyUser.wallet.address;
+      }
+    } else {
+      // For Sui chains
+      const walletInfo = getWalletForChain("sui");
+      if (walletInfo?.address) {
+        return walletInfo.address;
+      }
+
+      if (currentAccount?.address) {
+        return currentAccount.address;
+      }
+
+      if (zkAddress) {
+        return zkAddress;
+      }
+    }
+
+    return null;
+  }, [
+    mounted,
+    requiredChainType,
+    getWalletForChain,
+    evmAddress,
+    privyAuthenticated,
+    privyUser?.wallet?.address,
+    currentAccount?.address,
+    zkAddress,
+    walletStateKey, // Include this to force recalculation
+  ]);
+
+  // Memoize wallet connection status - include walletStateKey to force recalculation
   const isWalletConnected = useMemo((): boolean => {
     if (!mounted) return false;
-    return hasWalletForChain(requiredChainType);
-  }, [mounted, hasWalletForChain, requiredChainType]);
+
+    // Check global store first
+    if (hasWalletForChain(requiredChainType)) {
+      return true;
+    }
+
+    // For EVM chains, also check live connections
+    if (requiredChainType === "evm") {
+      return !!(
+        evmAddress ||
+        (privyAuthenticated && privyUser?.wallet?.address)
+      );
+    } else {
+      // For Sui chains
+      return !!(currentAccount?.address || zkAddress);
+    }
+  }, [
+    mounted,
+    hasWalletForChain,
+    requiredChainType,
+    evmAddress,
+    privyAuthenticated,
+    privyUser?.wallet?.address,
+    currentAccount?.address,
+    zkAddress,
+    walletStateKey, // Include this to force recalculation
+  ]);
 
   const {
     quests,
@@ -84,6 +175,7 @@ const QuestsPageContent = () => {
     completionPercentage,
     nftMinted,
     setNftMinted,
+    refetch: refetchQuests,
   } = useQuests({
     collection,
     walletAddress,
@@ -91,6 +183,13 @@ const QuestsPageContent = () => {
     mounted,
     requiredChainType,
   });
+
+  // Trigger quest refetch when wallet connection changes
+  useEffect(() => {
+    if (mounted && refetchQuests) {
+      refetchQuests();
+    }
+  }, [isWalletConnected, walletAddress, mounted, refetchQuests]);
 
   // Memoize handlers to prevent re-renders
   const handleBack = useCallback(() => {
@@ -133,7 +232,8 @@ const QuestsPageContent = () => {
   const isNSCollection = useMemo(() => {
     return (
       collection?.name === "NS" ||
-      collection?.name === "Network School Collection"
+      collection?.name === "Network School Collection" ||
+      collection?.name === "Network School Collection Base"
     );
   }, [collection?.name]);
 

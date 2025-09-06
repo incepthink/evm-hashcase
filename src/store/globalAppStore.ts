@@ -24,6 +24,11 @@ interface WalletInfo {
 type Chain = "sui" | "evm";
 type WalletMap = Partial<Record<Chain, WalletInfo>>;
 
+interface AuthenticationLock {
+  walletAddress: string;
+  timestamp: number;
+}
+
 interface AppState {
   user: User | null;
   isUserVerified: boolean;
@@ -34,6 +39,10 @@ interface AppState {
 
   // Deprecated but kept for backward compatibility
   userWalletAddress: string | null;
+
+  // Authentication lock state
+  isAuthenticating: boolean;
+  authenticationLock: AuthenticationLock | null;
 
   // Actions
   setUser: (user: User, jwt: string) => void;
@@ -49,6 +58,11 @@ interface AppState {
   hasWalletForChain: (chain: Chain) => boolean;
   disconnectWallet: (chain: Chain) => void;
   disconnectAllWallets: () => void;
+
+  // Authentication lock actions
+  setIsAuthenticating: (authenticating: boolean) => void;
+  setAuthenticationLock: (lock: AuthenticationLock | null) => void;
+  canAuthenticate: (walletAddress: string) => boolean;
 }
 
 /* ========= Helpers ========= */
@@ -76,6 +90,8 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
   openModal: false,
   connectedWallets: {} as WalletMap,
   userWalletAddress: null,
+  isAuthenticating: false,
+  authenticationLock: null,
 
   // Set user and JWT in cookies and state
   setUser: (user, jwt) => {
@@ -94,6 +110,8 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       isUserVerified: false,
       connectedWallets: {},
       userWalletAddress: null,
+      isAuthenticating: false,
+      authenticationLock: null,
     });
   },
 
@@ -190,7 +208,43 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
     set({
       connectedWallets: {},
       userWalletAddress: null,
+      isAuthenticating: false,
+      authenticationLock: null,
     });
+  },
+
+  // Authentication lock actions
+  setIsAuthenticating: (authenticating: boolean) => {
+    set({ isAuthenticating: authenticating });
+  },
+
+  setAuthenticationLock: (lock: AuthenticationLock | null) => {
+    set({ authenticationLock: lock });
+  },
+
+  canAuthenticate: (walletAddress: string): boolean => {
+    const state = get();
+    const now = Date.now();
+    
+    // If no lock exists, allow authentication
+    if (!state.authenticationLock) {
+      return true;
+    }
+    
+    // If lock is expired (10 seconds timeout), allow authentication
+    if (now - state.authenticationLock.timestamp > 10000) {
+      // Clear expired lock
+      set({ authenticationLock: null, isAuthenticating: false });
+      return true;
+    }
+    
+    // If same wallet address is already being authenticated, block
+    if (state.authenticationLock.walletAddress === walletAddress) {
+      return false;
+    }
+    
+    // Different wallet address, allow (this will override the lock)
+    return true;
   },
 }));
 
