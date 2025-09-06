@@ -60,11 +60,11 @@ const WalletConnectionModal = () => {
     }
   };
 
-  const handleEmailKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleEmailSubmit();
-    }
-  };
+  // const handleEmailKeyPress = (e: React.KeyboardEvent) => {
+  //   if (e.key === "Enter") {
+  //     handleEmailSubmit();
+  //   }
+  // };
 
   const resetEmailFlow = () => {
     setEmailSubmitted(false);
@@ -116,13 +116,16 @@ const WalletConnectionModal = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleEmailKeyPress}
+                // onKeyPress={handleEmailKeyPress}
                 placeholder="Enter your email"
-                className="!z-50 flex-1 px-4 py-3 border border-gray-300 rounded-l-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white !text-black"
+                className=" flex-1 px-4 py-3 border border-gray-300 rounded-l-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white !text-black"
                 style={{
                   fontSize: "16px",
                   WebkitAppearance: "none",
+                  position: "relative",
+                  zIndex: 99999,
                   borderRadius: "8px 0 0 8px",
+                  cursor: "pointer",
                 }}
                 autoComplete="email"
                 inputMode="email"
