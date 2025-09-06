@@ -57,6 +57,11 @@ const nextConfig = {
         hostname: "client-uploads.nyc3.digitaloceanspaces.com",
         pathname: "/**", // allow all paths under this domain
       },
+      {
+        protocol: "https",
+        hostname: "chocolate-certain-cockroach-300.mypinata.cloud",
+        pathname: "/**", // allow all paths under this domain
+      },
     ],
   },
 };

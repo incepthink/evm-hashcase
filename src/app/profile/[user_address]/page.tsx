@@ -427,7 +427,7 @@ const App: React.FC = () => {
                               : "px-3 py-2 text-sm"
                           } font-medium text-white hover:bg-blue-400/10 transition-colors`}
                         >
-                          Manage NFT <span className="text-white">→</span>
+                          View Collection <span className="text-white">→</span>
                         </button>
                       </div>
                     }

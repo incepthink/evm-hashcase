@@ -247,12 +247,12 @@ const CollectionsPage: React.FC = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          router.push(`/loyalties/${collectionId}`);
+                          router.push(`/metadata/${collectionId}`);
                         }}
                         className="flex-1 text-center rounded-lg px-3 py-2 text-sm font-medium text-white bg-[#4DA2FF]/20 border border-[#4DA2FF]/50 hover:bg-[#4DA2FF] hover:text-black transition-all duration-200"
-                        aria-label={`View loyalties for ${collectionName}`}
+                        aria-label={`View NFTs for ${collectionName}`}
                       >
-                        Loyalties
+                        View Mintable NFTs
                       </button>
                       {/* <button className="flex-1 text-center rounded-lg px-3 py-2 text-sm font-medium text-white bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-200">
                         View
