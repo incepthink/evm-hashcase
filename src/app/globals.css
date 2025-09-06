@@ -18,3 +18,10 @@
     @apply transition-all duration-200 ease-out transform;
   }
 }
+
+input[type="email"] {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+  touch-action: manipulation !important;
+}

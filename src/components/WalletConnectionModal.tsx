@@ -119,8 +119,16 @@ const WalletConnectionModal = () => {
                 onKeyPress={handleEmailKeyPress}
                 placeholder="Enter your email"
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white !text-black"
-                style={{ fontSize: "16px" }}
+                style={{
+                  fontSize: "16px",
+                  WebkitAppearance: "none",
+                  borderRadius: "8px 0 0 8px",
+                }}
                 autoComplete="email"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
               />
               <button
                 onClick={handleEmailSubmit}
