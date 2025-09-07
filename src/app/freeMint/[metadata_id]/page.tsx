@@ -897,6 +897,38 @@ export default function NFTPage() {
 
   const buttonState = getMintButtonState();
 
+  useEffect(() => {
+    // Auto-mint when conditions are met
+    const shouldAutoMint = () => {
+      return (
+        !buttonState.disabled && // Button is enabled
+        isEvmWalletConnected && // Wallet is connected
+        evmWallet?.address && // Wallet has address
+        nftData && // NFT data is loaded
+        !minting && // Not currently minting
+        isMetadataActive && // Metadata is active
+        canMintAgain // User can mint again
+      );
+    };
+
+    if (shouldAutoMint()) {
+      // Add a small delay to ensure all state updates are complete
+      const timeoutId = setTimeout(() => {
+        handleGaslessMintAndTransfer();
+      }, 1000); // 1 second delay
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [
+    buttonState.disabled,
+    isEvmWalletConnected,
+    evmWallet?.address,
+    nftData,
+    minting,
+    isMetadataActive,
+    canMintAgain,
+  ]);
+
   // Show wallet connection requirement if no EVM wallet connected
   if (!isEvmWalletConnected) {
     return (

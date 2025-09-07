@@ -324,7 +324,7 @@ const QuestsPageContent = () => {
           />
 
           {/* Claim NFT Button */}
-          {quests.length > 0 && (
+          {/* {quests.length > 0 && (
             <ClaimNFTButton
               nftMinted={nftMinted}
               completionPercentage={completionPercentage}
@@ -337,7 +337,7 @@ const QuestsPageContent = () => {
               chain={requiredChainType === "evm" ? "ethereum" : "sui"}
               requiredChainType={requiredChainType}
             />
-          )}
+          )} */}
         </div>
       </div>
 

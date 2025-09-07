@@ -32,7 +32,7 @@ export const NFTDisplay: React.FC<NFTDisplayProps> = ({
             {collection.name}
           </h2>
           <p className="text-gray-300 text-base sm:text-lg leading-relaxed">
-            Complete the tasks for the day to claim this reward.
+            {collection.description}
           </p>
         </div>
       </div>

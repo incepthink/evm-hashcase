@@ -41,7 +41,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "hash-collect.s3.ap-south-1.amazonaws.com",
-        pathname: "/**", // allow all paths under this domain
+        pathname: "/**",
       },
       {
         protocol: "https",
@@ -50,18 +50,29 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "i.pinimg.com",
-        pathname: "/**", // allow all paths under this domain
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "client-uploads.nyc3.digitaloceanspaces.com",
-        pathname: "/**", // allow all paths under this domain
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "chocolate-certain-cockroach-300.mypinata.cloud",
-        pathname: "/**", // allow all paths under this domain
+        pathname: "/**",
       },
+      // Add this entry for Pinata gateway
+      {
+        protocol: "https",
+        hostname: "gateway.pinata.cloud",
+        pathname: "/**",
+      },
+      {
+      protocol: "https",
+      hostname: "metadata-hashcase-admin.s3.us-east-2.amazonaws.com",
+      pathname: "/**",
+    },
     ],
   },
 };
