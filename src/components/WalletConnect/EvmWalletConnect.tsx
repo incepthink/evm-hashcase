@@ -16,17 +16,6 @@ import axiosInstance from "@/utils/axios";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 
 export default function EVMWalletConnect() {
-  useEffect(() => {
-    const resetConnectionState = () => {
-      if (isConnected && !evmWallet && !isUserVerified) {
-        // Disconnect any existing connections when component first loads
-        disconnect();
-      }
-    };
-
-    resetConnectionState();
-  }, []);
-
   const {
     isUserVerified,
     setUser,
@@ -56,6 +45,47 @@ export default function EVMWalletConnect() {
     allowedWallets.some((allowed) => connector.name.includes(allowed))
   );
 
+  // Safety check with improved conditions
+  useEffect(() => {
+    const resetConnectionState = async () => {
+      // Add a small delay to let wagmi settle
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Only disconnect if we're absolutely sure there's a stale connection
+      // and the user hasn't initiated any connection process
+      if (
+        isConnected &&
+        !evmWallet &&
+        !isUserVerified &&
+        address &&
+        !connectingWallet &&
+        !creatingUser
+      ) {
+        console.log(
+          "Cleaning up stale wallet connection for address:",
+          address
+        );
+        try {
+          disconnect();
+        } catch (error) {
+          console.warn("Failed to disconnect stale connection:", error);
+        }
+      }
+    };
+
+    // Only run if we detect an actual stale connection
+    // and ensure we're not in the middle of any authentication process
+    if (
+      isConnected &&
+      !isUserVerified &&
+      !evmWallet &&
+      !connectingWallet &&
+      !creatingUser
+    ) {
+      resetConnectionState();
+    }
+  }, []); // Keep empty dependency array to run only once on mount
+
   useEffect(() => {
     console.log("Available EVM connectors:", filteredConnectors);
     console.log("Current EVM account:", address);
@@ -66,6 +96,7 @@ export default function EVMWalletConnect() {
   const handleUserCreation = async () => {
     if (isUserVerified || !address) return;
 
+    setCreatingUser(true);
     const notifyId = notifyPromise("Authenticating...", "info");
 
     try {
@@ -237,12 +268,20 @@ export default function EVMWalletConnect() {
       address &&
       !isUserVerified &&
       !connectingWallet &&
-      !evmWallet
+      !evmWallet &&
+      !creatingUser
     ) {
       handleUserCreation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected, address, isUserVerified, connectingWallet, evmWallet]);
+  }, [
+    isConnected,
+    address,
+    isUserVerified,
+    connectingWallet,
+    evmWallet,
+    creatingUser,
+  ]);
 
   const handleWalletDisconnect = async () => {
     try {
@@ -291,14 +330,14 @@ export default function EVMWalletConnect() {
         return (
           <button
             key={connector.id}
-            disabled={connectingWallet || !connector}
+            disabled={connectingWallet || creatingUser || !connector}
             className="bg-[#ffffff] border-black/20 px-6 py-2 text-black font-semibold rounded-full w-full flex items-center gap-x-8 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleWalletConnect(connector)}
           >
-            {connectingWallet ? (
+            {connectingWallet || creatingUser ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black" />
-                Connecting...
+                {creatingUser ? "Authenticating..." : "Connecting..."}
               </>
             ) : (
               <>
