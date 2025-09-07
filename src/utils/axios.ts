@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 // TODO
 const axiosInstance = axios.create({
-  baseURL:  "http://localhost:8000",
+  baseURL:  "https://api.hashcase.co",
 });
 
 let del
