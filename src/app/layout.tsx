@@ -15,7 +15,7 @@ import PrivyLoginProvider from "@/providers/PrivyLoginProvider";
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EVM Hashcase",
+  title: "Hashcase",
   description: "Mint a unique digital asset on the Sui blockchain",
   icons: {
     icon: [

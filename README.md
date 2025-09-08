@@ -1,10 +1,10 @@
-# EVM Hashcase
+# Hashcase
 
-EVM Hashcase is a Next.js project that allows users to claim NFTs in their wallet on the SUI blockchain. This project provides a simple and intuitive interface for interacting with SUI blockchain and managing NFTs.
+Hashcase is a Next.js project that allows users to claim NFTs in their wallet on the SUI blockchain. This project provides a simple and intuitive interface for interacting with SUI blockchain and managing NFTs.
 
 ## Description
 
-EVM Hashcase leverages the power of Next.js and the SUI blockchain to offer a seamless NFT claiming experience. Users can connect their SUI wallet, view available NFTs, and claim them directly into their wallet. The project is designed with scalability and user experience in mind, making it easy for both developers to extend and users to interact with.
+Hashcase leverages the power of Next.js and the SUI blockchain to offer a seamless NFT claiming experience. Users can connect their SUI wallet, view available NFTs, and claim them directly into their wallet. The project is designed with scalability and user experience in mind, making it easy for both developers to extend and users to interact with.
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ git clone https://github.com/incepthink/sui-hashcase.git
 
 ## Contributing
 
-We welcome contributions to EVM Hashcase! Please see our CONTRIBUTING.md file for details on how to get started.
+We welcome contributions to Hashcase! Please see our CONTRIBUTING.md file for details on how to get started.
 
 ## License
 

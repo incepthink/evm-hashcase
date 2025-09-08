@@ -11,7 +11,7 @@ import WalletConnectionModal from "@/components/WalletConnectionModal";
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Quests - EVM Hashcase",
+  title: "Quests - Hashcase",
   description: "Complete quests to earn loyalty points",
 };
 

@@ -168,7 +168,7 @@ const App: React.FC = () => {
         banner_image:
           user.banner_image ||
           "https://i.pinimg.com/564x/49/cc/10/49cc10386c922de5e2e3c0bb66956e65.jpg",
-        description: user.description || "Hello, I am using EVM Hashcase",
+        description: user.description || "Hello, I am using Hashcase",
         user_id: user.id,
         username: user.username,
         nfts: 0,

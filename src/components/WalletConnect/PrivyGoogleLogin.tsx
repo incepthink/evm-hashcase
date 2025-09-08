@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import { notifyPromise, notifyResolve } from "@/utils/notify";
 import axiosInstance from "@/utils/axios";
@@ -27,21 +27,58 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
   } = useGlobalAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   // Check if EVM wallet is connected in store
   const evmWallet = getWalletForChain("evm");
 
-  // MANUAL AUTHENTICATION FUNCTION with lock
-  const handleUserCreation = async () => {
+  // Enhanced canAuthenticate with timeout
+  const canAuthenticateWithTimeout = useCallback(
+    (walletAddress: string) => {
+      if (!authenticationLock) return true;
+
+      // If lock is for different wallet, allow
+      if (authenticationLock.walletAddress !== walletAddress) return true;
+
+      // If lock is older than 30 seconds, clear it and allow
+      const now = Date.now();
+      if (now - authenticationLock.timestamp > 30000) {
+        console.log("Clearing expired authentication lock");
+        setAuthenticationLock(null);
+        setIsAuthenticating(false);
+        return true;
+      }
+
+      return false;
+    },
+    [authenticationLock, setAuthenticationLock, setIsAuthenticating]
+  );
+
+  // Clear any stuck locks on component mount
+  useEffect(() => {
+    const now = Date.now();
+    if (authenticationLock && now - authenticationLock.timestamp > 30000) {
+      console.log("Clearing stuck authentication lock on mount");
+      setAuthenticationLock(null);
+      setIsAuthenticating(false);
+    }
+  }, []);
+
+  // MANUAL AUTHENTICATION FUNCTION with enhanced error handling
+  const handleUserCreation = useCallback(async () => {
     if (!authenticated || !user?.wallet?.address) {
+      console.log("Not authenticated or no wallet address");
       setIsLoading(false);
       return;
     }
 
     const walletAddress = user.wallet.address;
+    console.log("Starting authentication for wallet:", walletAddress);
 
     // Check if authentication is already in progress for this wallet
-    if (!canAuthenticate(walletAddress)) {
+    if (!canAuthenticateWithTimeout(walletAddress)) {
+      console.log("Authentication already in progress for this wallet");
       setIsLoading(false);
       return;
     }
@@ -60,27 +97,105 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
 
     try {
       setIsLoading(true);
+      setLastError(null);
 
-      // Request authentication token
-      const response = await axiosInstance.get("auth/wallet/request-token");
+      console.log("Requesting authentication token...");
+      // Request authentication token with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await axiosInstance.get("auth/wallet/request-token", {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      console.log("Auth token response:", response.data);
+
+      if (!response.data.message || !response.data.token) {
+        throw new Error(
+          "Invalid response from auth server - missing message or token"
+        );
+      }
+
       const message = response.data.message as string;
       const authToken = response.data.token as string;
 
-      // Sign message using Privy's signMessage function
-      const signatureResult = await signMessage({ message });
+      console.log("Message to sign:", message);
+      console.log("Signing message with Privy...");
 
-      // Extract signature string from Privy's response
-      const signature =
-        typeof signatureResult === "string"
-          ? signatureResult
-          : signatureResult.signature;
+      // Sign message using Privy's signMessage function with better error handling
+      let signatureResult;
+      try {
+        signatureResult = await signMessage({ message });
+      } catch (signError) {
+        console.error("Signing failed:", signError);
+        throw new Error("Failed to sign message. Please try again.");
+      }
+
+      console.log("Signature result:", typeof signatureResult, signatureResult);
+
+      // Enhanced signature extraction with proper typing
+      let signature: string;
+      if (typeof signatureResult === "string") {
+        signature = signatureResult;
+      } else if (signatureResult && typeof signatureResult === "object") {
+        // Cast to any to safely check properties
+        const sigResult = signatureResult as any;
+
+        // Handle different possible signature formats
+        if (sigResult.signature && typeof sigResult.signature === "string") {
+          signature = sigResult.signature;
+        } else if (sigResult.data && typeof sigResult.data === "string") {
+          signature = sigResult.data;
+        } else {
+          // Try to find any string property that looks like a signature
+          const possibleSig = Object.values(sigResult).find(
+            (val): val is string =>
+              typeof val === "string" &&
+              val.startsWith("0x") &&
+              val.length > 100
+          );
+          if (possibleSig) {
+            signature = possibleSig;
+          } else {
+            console.error("Unexpected signature format:", signatureResult);
+            throw new Error("Invalid signature format received");
+          }
+        }
+      } else {
+        console.error("Unexpected signature result:", signatureResult);
+        throw new Error("No signature received from wallet");
+      }
+
+      if (!signature || signature.length < 132) {
+        // Basic signature validation
+        throw new Error("Invalid signature received");
+      }
+
+      console.log("Valid signature obtained, logging in...");
 
       // Login with the signature
-      const res = await axiosInstance.post("auth/wallet/login", {
-        signature,
-        address: walletAddress,
-        token: authToken,
-      });
+      const loginController = new AbortController();
+      const loginTimeoutId = setTimeout(() => loginController.abort(), 15000); // 15 second timeout
+
+      const res = await axiosInstance.post(
+        "auth/wallet/login",
+        {
+          signature,
+          address: walletAddress,
+          token: authToken,
+        },
+        {
+          signal: loginController.signal,
+        }
+      );
+      clearTimeout(loginTimeoutId);
+
+      console.log("Login response:", res.data);
+
+      if (!res.data.token || !res.data.user_instance) {
+        throw new Error("Invalid login response - missing token or user data");
+      }
 
       const token: string = res.data.token;
       const user_instance = res.data.user_instance;
@@ -88,13 +203,15 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       const userDataToStoreInGlobalStore = {
         id: user_instance.id,
         email: user_instance.email,
-        badges: user_instance.badges,
+        badges: user_instance.badges || [],
         user_name: user_instance.username || "guest_user",
         description:
           user_instance.description || "this is a guest_user description",
         profile_image: user_instance.profile_image,
         banner_image: user_instance.banner_image,
       };
+
+      console.log("Setting user data in store:", userDataToStoreInGlobalStore);
 
       setUser(userDataToStoreInGlobalStore, token);
 
@@ -104,30 +221,65 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
         type: "privy",
       });
 
+      console.log("Authentication successful!");
       notifyResolve(notifyId, "Successfully connected with Google!", "success");
+      setRetryCount(0); // Reset retry count on success
       onSuccess?.();
     } catch (error: any) {
       console.error("Authentication error:", error);
+
+      const errorMessage = error?.message || "Unknown error";
+      setLastError(errorMessage);
 
       // Clean up on error
       unsetUser();
       disconnectWallet("evm");
 
-      try {
-        await logout();
-      } catch (logoutError) {
-        console.error("Logout failed:", logoutError);
-      }
-
-      const errorMessage = error?.message || "Unknown error";
-      if (error?.response?.status === 401) {
-        notifyResolve(notifyId, "Authentication failed", "error");
+      // Enhanced error handling
+      if (error.name === "AbortError") {
+        notifyResolve(
+          notifyId,
+          "Authentication timed out. Please try again.",
+          "error"
+        );
+      } else if (error?.response?.status === 401) {
+        notifyResolve(
+          notifyId,
+          "Authentication failed - invalid credentials",
+          "error"
+        );
+      } else if (error?.response?.status === 429) {
+        notifyResolve(
+          notifyId,
+          "Too many attempts. Please wait before trying again.",
+          "error"
+        );
+      } else if (error?.response?.data?.message) {
+        notifyResolve(
+          notifyId,
+          `Authentication failed: ${error.response.data.message}`,
+          "error"
+        );
+      } else if (errorMessage.includes("User rejected")) {
+        notifyResolve(notifyId, "Signature was cancelled", "error");
       } else {
         notifyResolve(
           notifyId,
-          `Failed to authenticate: ${errorMessage}`,
+          `Authentication failed: ${errorMessage}`,
           "error"
         );
+      }
+
+      // Only logout on certain types of errors to avoid infinite loops
+      if (
+        !errorMessage.includes("User rejected") &&
+        !errorMessage.includes("timed out")
+      ) {
+        try {
+          await logout();
+        } catch (logoutError) {
+          console.error("Logout failed:", logoutError);
+        }
       }
     } finally {
       // Clear authentication lock
@@ -135,21 +287,52 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       setAuthenticationLock(null);
       setIsLoading(false);
     }
-  };
+  }, [
+    authenticated,
+    user,
+    canAuthenticateWithTimeout,
+    setIsAuthenticating,
+    setAuthenticationLock,
+    setUser,
+    setEvmWallet,
+    unsetUser,
+    disconnectWallet,
+    logout,
+    signMessage,
+    onSuccess,
+  ]);
 
   // AUTO-AUTHENTICATION: Trigger when user becomes authenticated
   useEffect(() => {
-    if (authenticated && user?.wallet?.address && !isUserVerified && ready) {
-      setTimeout(() => {
+    if (
+      authenticated &&
+      user?.wallet?.address &&
+      !isUserVerified &&
+      ready &&
+      !isLoading
+    ) {
+      console.log("Auto-triggering authentication...");
+      const timer = setTimeout(() => {
         handleUserCreation();
-      }, 500);
+      }, 1000); // Increased delay to ensure Privy is fully ready
+
+      return () => clearTimeout(timer);
     }
-  }, [authenticated, user, isUserVerified, ready]);
+  }, [
+    authenticated,
+    user,
+    isUserVerified,
+    ready,
+    isLoading,
+    handleUserCreation,
+  ]);
 
   // Reset states when user logs out
   useEffect(() => {
     if (!authenticated) {
       setIsLoading(false);
+      setRetryCount(0);
+      setLastError(null);
       // Clear lock if this wallet was being authenticated
       if (
         authenticationLock &&
@@ -171,10 +354,17 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
   const handleLogout = async () => {
     try {
       setIsLoading(true);
+      console.log("Logging out...");
 
       // Clear global store
       unsetUser();
       disconnectWallet("evm");
+
+      // Clear any locks
+      setAuthenticationLock(null);
+      setIsAuthenticating(false);
+      setRetryCount(0);
+      setLastError(null);
 
       // Logout from Privy
       await logout();
@@ -185,11 +375,30 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     }
   };
 
+  // Manual retry function
+  const handleRetry = () => {
+    if (retryCount < 3) {
+      setRetryCount((prev) => prev + 1);
+      setLastError(null);
+      handleUserCreation();
+    }
+  };
+
+  // Force clear locks (debug function)
+  const clearLocks = () => {
+    console.log("Force clearing all locks...");
+    setAuthenticationLock(null);
+    setIsAuthenticating(false);
+    setIsLoading(false);
+    setLastError(null);
+    setRetryCount(0);
+  };
+
   if (!ready) {
     return (
       <div className="flex items-center justify-center p-4">
         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <span className="ml-2">Loading...</span>
+        <span className="ml-2">Loading Privy...</span>
       </div>
     );
   }
@@ -236,11 +445,33 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
   if (authenticated && user?.wallet?.address && !isUserVerified) {
     return (
       <div className="w-full space-y-4">
-        <div className="flex items-center justify-center p-4">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3"></div>
-          <span className="text-sm text-gray-700">
+        <div className="flex flex-col items-center justify-center p-4">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+          <span className="text-sm text-gray-700 mb-2">
             Completing authentication...
           </span>
+
+          {lastError && (
+            <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
+              <p className="text-sm text-red-700 mb-2">Error: {lastError}</p>
+              {retryCount < 3 && (
+                <button
+                  onClick={handleRetry}
+                  className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+                >
+                  Retry ({3 - retryCount} attempts left)
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Debug button - remove in production */}
+          <button
+            onClick={clearLocks}
+            className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
+          >
+            Clear Locks (Debug)
+          </button>
         </div>
       </div>
     );
@@ -248,15 +479,16 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
 
   // LOGIN STATE: Show Google login button
   return (
-    <div className="w-full">
+    <div className="w-full space-y-3">
       <button
         onClick={() => {
           setIsLoading(true);
+          setLastError(null);
+          setRetryCount(0);
+          console.log("Initiating Privy login...");
           login();
-          // Privy login will handle the authentication flow
-          // The useEffect will trigger handleUserCreation once authenticated
         }}
-        disabled={isLoading}
+        disabled={isLoading || isAuthenticating}
         className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isLoading ? (
@@ -268,6 +500,12 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
           "Connect with Google"
         )}
       </button>
+
+      {lastError && !isLoading && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">Error: {lastError}</p>
+        </div>
+      )}
     </div>
   );
 }

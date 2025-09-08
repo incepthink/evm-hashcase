@@ -84,6 +84,10 @@ const QuestDetailPageContent = () => {
   const [canMintAgain, setCanMintAgain] = useState<boolean>(false);
   const [nftClaimed, setNftClaimed] = useState<boolean>(false);
 
+  // Auto-mint states
+  const [autoMinting, setAutoMinting] = useState(false);
+  const autoMintAttempted = useRef(false);
+
   const { user, getWalletForChain, hasWalletForChain, setOpenModal } =
     useGlobalAppStore();
 
@@ -169,6 +173,9 @@ const QuestDetailPageContent = () => {
     if (prev !== isWalletConnected) {
       setLoading(true);
       setInitialLoad(true);
+      // Reset auto-mint when wallet changes
+      autoMintAttempted.current = false;
+      setAutoMinting(false);
     }
 
     if (prev === true && isWalletConnected === false) {
@@ -180,6 +187,8 @@ const QuestDetailPageContent = () => {
       setNftClaimed(false);
       setClaimableMetadata(null);
       setCanMintAgain(false);
+      autoMintAttempted.current = false;
+      setAutoMinting(false);
       try {
         localStorage.removeItem(`nft_claimed_${activeQuestCode}`);
         const keysToRemove: string[] = [];
@@ -384,6 +393,115 @@ const QuestDetailPageContent = () => {
     setCanMintAgain(canMint);
   };
 
+  // Auto-mint NFT function - simplified version
+  const handleAutoClaimNFT = async () => {
+    if (
+      !claimableMetadata ||
+      !walletAddress ||
+      autoMintAttempted.current ||
+      autoMinting
+    ) {
+      return;
+    }
+
+    console.log("Auto-claim conditions check:", {
+      questCompleted: activeQuest?.is_completed,
+      canMintAgain,
+      metadataActive: claimableMetadata.is_active,
+      nftClaimed,
+      walletAddress: !!walletAddress,
+    });
+
+    // Check all conditions
+    if (
+      !activeQuest?.is_completed ||
+      !canMintAgain ||
+      !claimableMetadata.is_active ||
+      nftClaimed
+    ) {
+      return;
+    }
+
+    autoMintAttempted.current = true;
+    setAutoMinting(true);
+
+    try {
+      console.log("Auto-claiming NFT:", {
+        metadata_id: claimableMetadata.id,
+        recipient: walletAddress,
+      });
+
+      const response = await axiosInstance.post("/platform/claim-quest-nft", {
+        metadata_id: claimableMetadata.id,
+        recipient: walletAddress,
+      });
+
+      if (response.data.success) {
+        toast.success("NFT automatically claimed!");
+        setNftClaimed(true);
+        setCanMintAgain(false);
+        localStorage.setItem(`nft_claimed_${activeQuestCode}`, "true");
+
+        setMintedNftData({
+          name: claimableMetadata.title,
+          description: claimableMetadata.description,
+          image_url: claimableMetadata.image_url,
+          recipient: walletAddress,
+        });
+        setShowNftModal(true);
+      } else {
+        console.error("Auto-claim failed:", response.data.message);
+        toast.error(response.data.message || "Failed to auto-claim NFT");
+        autoMintAttempted.current = false; // Reset on failure
+      }
+    } catch (error: any) {
+      console.error("Auto-claim error:", error);
+      const errorMessage = error.response?.data?.message || "Auto-claim failed";
+
+      if (errorMessage.includes("already claimed")) {
+        setNftClaimed(true);
+        setCanMintAgain(false);
+        localStorage.setItem(`nft_claimed_${activeQuestCode}`, "true");
+        toast.success("NFT has already been claimed");
+      } else {
+        toast.error(`Auto-claim failed: ${errorMessage}`);
+        autoMintAttempted.current = false; // Reset on failure
+      }
+    } finally {
+      setAutoMinting(false);
+    }
+  };
+
+  // Auto-claim trigger - simplified
+  useEffect(() => {
+    if (
+      mounted &&
+      claimableMetadata &&
+      activeQuest?.is_completed &&
+      canMintAgain &&
+      !nftClaimed &&
+      !autoMinting &&
+      !autoMintAttempted.current &&
+      walletAddress &&
+      claimableMetadata.is_active
+    ) {
+      console.log("Triggering auto-claim in 2 seconds...");
+      const timer = setTimeout(() => {
+        handleAutoClaimNFT();
+      }, 2000); // 2 second delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [
+    mounted,
+    claimableMetadata,
+    activeQuest?.is_completed,
+    canMintAgain,
+    nftClaimed,
+    autoMinting,
+    walletAddress,
+  ]);
+
   const handleNFTClaimSuccess = (claimedMetadata: MetadataInstance) => {
     setNftClaimed(true);
     setCanMintAgain(false);
@@ -474,6 +592,18 @@ const QuestDetailPageContent = () => {
             </h1>
           </div>
 
+          {/* Auto-claiming indicator */}
+          {autoMinting && (
+            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <div className="flex items-center justify-center gap-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-400"></div>
+                <p className="text-green-300 font-medium">
+                  Auto-claiming your NFT reward...
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Conditional Content Based on Wallet Connection and Claimable Metadata */}
           {!isWalletConnected && activeQuest.claimable_metadata ? (
             <ConnectWalletMessage />
@@ -516,16 +646,19 @@ const QuestDetailPageContent = () => {
             requiredChainType={requiredChainType}
           />
 
-          {/* NFT Claim Button - Shows below quest list */}
-          {claimableMetadata && isWalletConnected && walletAddress && (
-            <NFTClaimButton
-              metadata={claimableMetadata}
-              canMintAgain={canMintAgain && !nftClaimed}
-              walletAddress={walletAddress}
-              questCompleted={activeQuest.is_completed || false}
-              onClaimSuccess={handleNFTClaimSuccess}
-            />
-          )}
+          {/* NFT Claim Button - Only show if not auto-minting and conditions aren't met for auto-claim */}
+          {claimableMetadata &&
+            isWalletConnected &&
+            walletAddress &&
+            !autoMinting && (
+              <NFTClaimButton
+                metadata={claimableMetadata}
+                canMintAgain={canMintAgain && !nftClaimed}
+                walletAddress={walletAddress}
+                questCompleted={activeQuest.is_completed || false}
+                onClaimSuccess={handleNFTClaimSuccess}
+              />
+            )}
         </div>
       </div>
 
