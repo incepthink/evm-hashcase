@@ -20,7 +20,7 @@ interface QuestDetailClaimButtonProps {
   nftMinted: boolean;
   claiming: boolean;
   setClaiming: (claiming: boolean) => void;
-  setNftMinted: (minted: boolean) => void; // Add this prop to update parent state
+  setNftMinted: (minted: boolean) => void;
   completionPercentage: number;
   totalQuests: number;
   completedQuests: number;

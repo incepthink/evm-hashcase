@@ -16,9 +16,9 @@ import { ErrorScreen } from "../quests/ErrorScreen";
 import { Navigation } from "../quests/Navigation";
 import { NFTSuccessModal } from "../quests/NFTSuccessModal";
 import { QuestDetailList } from "./QuestDetailList";
-import { ClaimableNFTDisplay } from "./ClaimableNFTDisplay";
+import { QuestDetailHeader } from "./QuestDetailHeader";
 import { ConnectWalletMessage } from "./ConnectWalletMessage";
-import { NFTClaimButton } from "./NFTClaimButton";
+import { QuestDetailClaimButton } from "./QuestDetailClaimButton";
 
 interface Quest {
   id: number;
@@ -31,6 +31,13 @@ interface Quest {
   created_at: string;
   updated_at: string;
   claimable_metadata?: number | null;
+}
+
+interface MintedNftData {
+  name: string;
+  description: string;
+  image_url: string;
+  recipient: string;
 }
 
 interface MetadataInstance {
@@ -58,6 +65,9 @@ interface MetadataInstance {
   updatedAt: string;
 }
 
+// Hardcoded metadata ID
+const METADATA_ID = 22;
+
 const QuestDetailPageContent = () => {
   const params = useParams();
   const router = useRouter();
@@ -66,23 +76,23 @@ const QuestDetailPageContent = () => {
   const allowClaim = true;
 
   const [mounted, setMounted] = useState(false);
-  const [activeQuest, setActiveQuest] = useState<Quest | null>(null);
+  const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [claimingQuestId, setClaimingQuestId] = useState<number | null>(null);
   const [showNftModal, setShowNftModal] = useState(false);
-  const [mintedNftData, setMintedNftData] = useState<{
-    name: string;
-    description: string;
-    image_url: string;
-    recipient: string;
-  } | null>(null);
+  const [mintedNftData, setMintedNftData] = useState<MintedNftData | null>(
+    null
+  );
 
-  // Claimable NFT states
-  const [claimableMetadata, setClaimableMetadata] =
-    useState<MetadataInstance | null>(null);
-  const [canMintAgain, setCanMintAgain] = useState<boolean>(false);
-  const [nftClaimed, setNftClaimed] = useState<boolean>(false);
+  // NFT states
+  const [nftMinted, setNftMinted] = useState<boolean>(false);
+  const [claiming, setClaiming] = useState<boolean>(false);
+
+  // Metadata states
+  const [metadata, setMetadata] = useState<MetadataInstance | null>(null);
+  const [metadataLoading, setMetadataLoading] = useState<boolean>(true);
+  const [metadataError, setMetadataError] = useState<string>("");
 
   // Auto-mint states
   const [autoMinting, setAutoMinting] = useState(false);
@@ -95,14 +105,14 @@ const QuestDetailPageContent = () => {
   const { address: evmAddress } = useAccount(); // EVM wallet
   const { authenticated: privyAuthenticated, user: privyUser } = usePrivy(); // Privy
 
-  // Get collection from URL params
-  const cid = searchParams.get("collection_id");
+  // Use fallback collection_id of "217" if not present
+  const cid = searchParams.get("collection_id") || "218";
 
   const {
     collection,
     isLoading: isCollectionLoading,
     isError: isCollectionError,
-  } = useCollectionById(cid!);
+  } = useCollectionById(cid);
 
   // Always return "evm" since we only support EVM now
   const getRequiredChainType = (): "evm" => {
@@ -150,11 +160,50 @@ const QuestDetailPageContent = () => {
 
   useEffect(() => setMounted(true), []);
 
+  // Fetch metadata when wallet is connected
+  useEffect(() => {
+    if (mounted && isWalletConnected && walletAddress) {
+      fetchMetadata();
+    } else if (mounted && !isWalletConnected) {
+      // Reset metadata when wallet disconnected
+      setMetadata(null);
+      setMetadataLoading(true);
+      setMetadataError("");
+    }
+  }, [mounted, isWalletConnected, walletAddress]);
+
+  const fetchMetadata = async () => {
+    if (!walletAddress) return;
+
+    try {
+      setMetadataLoading(true);
+      setMetadataError("");
+
+      const response = await axiosInstance.get(
+        "/platform/metadata/geofenced-by-id",
+        {
+          params: {
+            metadata_id: METADATA_ID,
+            user_address: walletAddress,
+          },
+        }
+      );
+
+      const { metadata_instance } = response.data;
+      setMetadata(metadata_instance);
+    } catch (error: any) {
+      console.error("Error fetching metadata:", error);
+      setMetadataError("Failed to load NFT details");
+    } finally {
+      setMetadataLoading(false);
+    }
+  };
+
   // Cross-tab sync
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === "quest_progress_ping" && e.newValue) {
-        fetchActiveQuest();
+        fetchQuests();
       }
     };
     window.addEventListener("storage", onStorage);
@@ -179,18 +228,16 @@ const QuestDetailPageContent = () => {
     }
 
     if (prev === true && isWalletConnected === false) {
-      if (activeQuest) {
-        setActiveQuest((prev) =>
-          prev ? { ...prev, is_completed: false } : null
-        );
-      }
-      setNftClaimed(false);
-      setClaimableMetadata(null);
-      setCanMintAgain(false);
+      // Reset quest completion states
+      setQuests((prev) =>
+        prev.map((quest) => ({ ...quest, is_completed: false }))
+      );
+      setNftMinted(false);
       autoMintAttempted.current = false;
       setAutoMinting(false);
       try {
         localStorage.removeItem(`nft_claimed_${activeQuestCode}`);
+        localStorage.removeItem("nft_minted_ns_daily");
         const keysToRemove: string[] = [];
         for (let i = 0; i < sessionStorage.length; i++) {
           const k = sessionStorage.key(i);
@@ -200,33 +247,30 @@ const QuestDetailPageContent = () => {
         keysToRemove.forEach((k) => sessionStorage.removeItem(k));
       } catch {}
     }
-  }, [
-    mounted,
-    isWalletConnected,
-    activeQuest,
-    requiredChainType,
-    activeQuestCode,
-  ]);
+  }, [mounted, isWalletConnected, activeQuestCode]);
 
-  // Fetch active quest on mount and wallet change
+  // Fetch quests on mount and wallet change
   useEffect(() => {
-    if (mounted) {
+    if (mounted && isWalletConnected) {
       setLoading(true);
-      fetchActiveQuest();
+      fetchQuests();
     }
-  }, [user?.id, walletAddress]);
+  }, [user?.id, walletAddress, mounted, isWalletConnected]);
 
   useEffect(() => {
-    if (mounted && activeQuestCode) {
+    if (mounted && activeQuestCode && isWalletConnected) {
       setLoading(true);
-      fetchActiveQuest();
+      fetchQuests();
     }
-  }, [activeQuestCode, mounted]);
+  }, [activeQuestCode, mounted, isWalletConnected]);
 
-  const fetchActiveQuest = async () => {
+  const fetchQuests = async () => {
+    if (!isWalletConnected || !walletAddress) return;
+
     try {
       setLoading(true);
 
+      // First get the active quest to get owner_id
       const {
         data: { quest },
       } = await axiosInstance.get("/platform/quests/data/" + activeQuestCode);
@@ -234,6 +278,7 @@ const QuestDetailPageContent = () => {
         throw new Error("Quest code Invalid");
       }
 
+      // Then get all quests for this owner
       const params: { owner_id: number; wallet_address?: string } = {
         owner_id: quest.owner_id,
       };
@@ -255,45 +300,38 @@ const QuestDetailPageContent = () => {
           : [];
       } catch {}
 
-      // Find the specific quest with the active quest code
-      const questData = response.data.quests.find(
-        (q: any) => q.quest_code === activeQuestCode
+      // Transform all quests
+      const transformedQuests: Quest[] = response.data.quests.map(
+        (questData: any) => {
+          const isCompletedFromAPI =
+            questData.userProgress?.isCompleted || false;
+          const isCompletedFromSession = sessionCompleted.includes(
+            questData.id
+          );
+          const isCompleted = isCompletedFromAPI || isCompletedFromSession;
+
+          return {
+            id: questData.id,
+            title: questData.title,
+            description: questData.description,
+            quest_code: questData.quest_code,
+            points_reward: questData.reward_loyalty_points,
+            owner_id: questData.owner_id,
+            created_at: questData.createdAt,
+            updated_at: questData.updatedAt,
+            is_completed: walletAddress ? isCompleted : false,
+            claimable_metadata: questData.claimable_metadata,
+          };
+        }
       );
 
-      if (questData) {
-        const isCompletedFromAPI = questData.userProgress?.isCompleted || false;
-        const isCompletedFromSession = sessionCompleted.includes(questData.id);
-        const isCompleted = isCompletedFromAPI || isCompletedFromSession;
+      setQuests(transformedQuests);
 
-        const transformedQuest: Quest = {
-          id: questData.id,
-          title: questData.title,
-          description: questData.description,
-          quest_code: questData.quest_code,
-          points_reward: questData.reward_loyalty_points,
-          owner_id: questData.owner_id,
-          created_at: questData.createdAt,
-          updated_at: questData.updatedAt,
-          is_completed: walletAddress ? isCompleted : false,
-          claimable_metadata: questData.claimable_metadata,
-        };
-
-        setActiveQuest(transformedQuest);
-
-        // Check NFT claimed status
-        const claimedStatus = localStorage.getItem(
-          `nft_claimed_${activeQuestCode}`
-        );
-        setNftClaimed(claimedStatus === "true");
-
-        return transformedQuest;
-      } else {
-        throw new Error("Quest not found");
-      }
+      return transformedQuests;
     } catch (error) {
-      console.error("Error fetching quest:", error);
-      toast.error("Failed to load quest");
-      return null;
+      console.error("Error fetching quests:", error);
+      toast.error("Failed to load quests");
+      return [];
     } finally {
       setLoading(false);
       setInitialLoad(false);
@@ -301,6 +339,15 @@ const QuestDetailPageContent = () => {
   };
 
   const handleClaimQuest = async (questId: number) => {
+    // Find the quest being claimed
+    const questToClaim = quests.find((q) => q.id === questId);
+
+    // Only allow completion of the active quest
+    if (!questToClaim || questToClaim.quest_code !== activeQuestCode) {
+      toast.error("You can only complete the active quest");
+      return;
+    }
+
     // Validate wallet connection before proceeding
     if (!isWalletConnected || !walletAddress) {
       toast.error(
@@ -322,12 +369,12 @@ const QuestDetailPageContent = () => {
     try {
       setClaimingQuestId(questId);
 
-      if (!activeQuest || activeQuest.id !== questId) {
-        toast.error("Quest not found");
-        return;
-      }
-
-      setActiveQuest((prev) => (prev ? { ...prev, is_completed: true } : null));
+      // Update quest state optimistically
+      setQuests((prev) =>
+        prev.map((quest) =>
+          quest.id === questId ? { ...quest, is_completed: true } : quest
+        )
+      );
 
       try {
         const sessionKey = `quest_progress_session_${walletAddress}`;
@@ -346,13 +393,14 @@ const QuestDetailPageContent = () => {
       try {
         const response = await axiosInstance.post("/platform/quests/complete", {
           quest_id: questId,
-          owner_id: activeQuest.owner_id,
+          owner_id: questToClaim.owner_id,
           wallet_address: walletAddress,
           chain_type: requiredChainType, // Always "evm"
         });
 
-        const latest = await fetchActiveQuest();
-        const verified = latest?.is_completed === true;
+        const latest = await fetchQuests();
+        const latestQuest = latest?.find((q) => q.id === questId);
+        const verified = latestQuest?.is_completed === true;
         if (verified) {
           toast.success("Quest saved to your account");
         } else {
@@ -374,51 +422,39 @@ const QuestDetailPageContent = () => {
           );
         }
       }
-      fetchActiveQuest();
     } catch (error: any) {
       console.error("Error claiming quest:", error);
       const errorMessage =
         error.response?.data?.message || "Failed to claim quest";
       toast.error(errorMessage);
+
+      // Revert optimistic update on error
+      fetchQuests();
     } finally {
       setClaimingQuestId(null);
     }
   };
 
-  const handleMetadataLoaded = (
-    metadata: MetadataInstance,
-    canMint: boolean
-  ) => {
-    setClaimableMetadata(metadata);
-    setCanMintAgain(canMint);
-  };
+  // Calculate completion stats
+  const completedQuests = quests.filter((quest) => quest.is_completed).length;
+  const totalQuests = quests.length;
+  const completionPercentage =
+    totalQuests > 0 ? Math.round((completedQuests / totalQuests) * 100) : 0;
 
-  // Auto-mint NFT function - simplified version
+  // Auto-claim NFT function
   const handleAutoClaimNFT = async () => {
-    if (
-      !claimableMetadata ||
-      !walletAddress ||
-      autoMintAttempted.current ||
-      autoMinting
-    ) {
+    if (autoMintAttempted.current || autoMinting || !metadata) {
       return;
     }
 
     console.log("Auto-claim conditions check:", {
-      questCompleted: activeQuest?.is_completed,
-      canMintAgain,
-      metadataActive: claimableMetadata.is_active,
-      nftClaimed,
+      allQuestsCompleted: completionPercentage === 100,
+      nftMinted,
       walletAddress: !!walletAddress,
     });
 
     // Check all conditions
-    if (
-      !activeQuest?.is_completed ||
-      !canMintAgain ||
-      !claimableMetadata.is_active ||
-      nftClaimed
-    ) {
+    if (completionPercentage !== 100 || nftMinted) {
       return;
     }
 
@@ -426,27 +462,31 @@ const QuestDetailPageContent = () => {
     setAutoMinting(true);
 
     try {
-      console.log("Auto-claiming NFT:", {
-        metadata_id: claimableMetadata.id,
-        recipient: walletAddress,
-      });
+      console.log("Auto-claiming NFT for completed quests");
 
-      const response = await axiosInstance.post("/platform/claim-quest-nft", {
-        metadata_id: claimableMetadata.id,
-        recipient: walletAddress,
-      });
+      const nftData = {
+        collection_id: cid,
+        name: metadata.title,
+        description: metadata.description,
+        image_url: metadata.image_url,
+        attributes: metadata.attributes ? metadata.attributes.split(", ") : [],
+        recipient: walletAddress!,
+        chain_type: requiredChainType,
+      };
+
+      // Call the NFT minting endpoint directly
+      const response = await axiosInstance.post("/platform/mint-nft", nftData);
 
       if (response.data.success) {
         toast.success("NFT automatically claimed!");
-        setNftClaimed(true);
-        setCanMintAgain(false);
-        localStorage.setItem(`nft_claimed_${activeQuestCode}`, "true");
+        setNftMinted(true);
+        localStorage.setItem("nft_minted_ns_daily", "true");
 
         setMintedNftData({
-          name: claimableMetadata.title,
-          description: claimableMetadata.description,
-          image_url: claimableMetadata.image_url,
-          recipient: walletAddress,
+          name: metadata.title,
+          description: metadata.description,
+          image_url: metadata.image_url,
+          recipient: walletAddress!,
         });
         setShowNftModal(true);
       } else {
@@ -458,10 +498,12 @@ const QuestDetailPageContent = () => {
       console.error("Auto-claim error:", error);
       const errorMessage = error.response?.data?.message || "Auto-claim failed";
 
-      if (errorMessage.includes("already claimed")) {
-        setNftClaimed(true);
-        setCanMintAgain(false);
-        localStorage.setItem(`nft_claimed_${activeQuestCode}`, "true");
+      if (
+        errorMessage.includes("already claimed") ||
+        errorMessage.includes("already minted")
+      ) {
+        setNftMinted(true);
+        localStorage.setItem("nft_minted_ns_daily", "true");
         toast.success("NFT has already been claimed");
       } else {
         toast.error(`Auto-claim failed: ${errorMessage}`);
@@ -472,18 +514,17 @@ const QuestDetailPageContent = () => {
     }
   };
 
-  // Auto-claim trigger - simplified
+  // Auto-claim trigger
   useEffect(() => {
     if (
       mounted &&
-      claimableMetadata &&
-      activeQuest?.is_completed &&
-      canMintAgain &&
-      !nftClaimed &&
+      completionPercentage === 100 &&
+      !nftMinted &&
       !autoMinting &&
       !autoMintAttempted.current &&
       walletAddress &&
-      claimableMetadata.is_active
+      quests.length > 0 &&
+      metadata
     ) {
       console.log("Triggering auto-claim in 2 seconds...");
       const timer = setTimeout(() => {
@@ -494,25 +535,22 @@ const QuestDetailPageContent = () => {
     }
   }, [
     mounted,
-    claimableMetadata,
-    activeQuest?.is_completed,
-    canMintAgain,
-    nftClaimed,
+    completionPercentage,
+    nftMinted,
     autoMinting,
     walletAddress,
+    quests.length,
+    metadata,
   ]);
 
-  const handleNFTClaimSuccess = (claimedMetadata: MetadataInstance) => {
-    setNftClaimed(true);
-    setCanMintAgain(false);
-    localStorage.setItem(`nft_claimed_${activeQuestCode}`, "true");
-
-    setMintedNftData({
-      name: claimedMetadata.title,
-      description: claimedMetadata.description,
-      image_url: claimedMetadata.image_url,
-      recipient: walletAddress!,
-    });
+  const handleNFTMintSuccess = (nftData: any) => {
+    const formattedData: MintedNftData = {
+      name: nftData.name,
+      description: nftData.description,
+      image_url: nftData.image_url,
+      recipient: nftData.recipient,
+    };
+    setMintedNftData(formattedData);
     setShowNftModal(true);
   };
 
@@ -523,7 +561,7 @@ const QuestDetailPageContent = () => {
         router.push(`/loyalties/${cid}`);
         return;
       }
-      router.push("/loyalties/214");
+      router.push("/loyalties/217"); // Use fallback here too
     } catch {
       if (typeof window !== "undefined" && window.history.length > 1) {
         window.history.back();
@@ -537,6 +575,18 @@ const QuestDetailPageContent = () => {
   const getDisplayTitle = () => {
     return collection?.name || "Quest";
   };
+
+  // Prepare NFT data for components
+  const nftData = metadata
+    ? {
+        collection_id: cid,
+        name: metadata.title,
+        description: metadata.description,
+        image_url: metadata.image_url,
+        attributes: metadata.attributes ? metadata.attributes.split(", ") : [],
+        recipient: walletAddress,
+      }
+    : null;
 
   // Loading states
   if (!mounted) {
@@ -555,7 +605,7 @@ const QuestDetailPageContent = () => {
     );
   }
 
-  if (isCollectionError || (cid && !collection)) {
+  if (isCollectionError || !collection) {
     return (
       <ErrorScreen
         title="Collection Not Found"
@@ -566,10 +616,70 @@ const QuestDetailPageContent = () => {
     );
   }
 
-  if (initialLoad || loading || !activeQuest) {
+  // Show wallet connection required screen if not connected
+  if (!isWalletConnected) {
+    return (
+      <div
+        className={`min-h-screen ${
+          isNSCollection ? "bg-black" : "bg-[#000421]"
+        }`}
+      >
+        <Navigation onBack={handleBack} />
+        <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+                {getDisplayTitle()}
+              </h1>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-4xl sm:text-6xl mb-4">🔒</div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
+                Wallet Connection Required
+              </h3>
+              <p className="text-gray-400 text-sm sm:text-base mb-6">
+                Connect your EVM wallet to view quests and claim rewards
+              </p>
+              <button
+                onClick={() => setOpenModal(true)}
+                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                Connect Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen while fetching metadata
+  if (metadataLoading) {
     return (
       <LoadingScreen
-        message="Loading Quest..."
+        message="Loading NFT Details..."
+        collectionName={collection?.name}
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
+  // Show error if metadata failed to load
+  if (metadataError || !metadata) {
+    return (
+      <ErrorScreen
+        title="NFT Details Not Found"
+        message="Unable to load NFT reward details"
+        onBack={handleBack}
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
+  if (initialLoad || loading || quests.length === 0) {
+    return (
+      <LoadingScreen
+        message="Loading Quests..."
         collectionName={collection?.name}
         isNSCollection={isNSCollection}
       />
@@ -604,40 +714,38 @@ const QuestDetailPageContent = () => {
             </div>
           )}
 
-          {/* Conditional Content Based on Wallet Connection and Claimable Metadata */}
-          {!isWalletConnected && activeQuest.claimable_metadata ? (
-            <ConnectWalletMessage />
-          ) : isWalletConnected &&
-            activeQuest.claimable_metadata &&
-            walletAddress ? (
-            <>
-              {/* Claimable NFT Display */}
-              <ClaimableNFTDisplay
-                metadataId={activeQuest.claimable_metadata}
-                userAddress={walletAddress}
-                onMetadataLoaded={handleMetadataLoaded}
-              />
-            </>
-          ) : (
-            /* Default Quest Display for non-claimable quests */
-            <div className="text-center py-8 mb-8">
-              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                <h3 className="text-lg font-medium text-white mb-2">
-                  Quest Details
-                </h3>
-                <p className="text-gray-300 mb-4">
-                  Complete this quest to earn loyalty points
-                </p>
-                <div className="text-2xl font-bold text-yellow-400">
-                  {activeQuest.points_reward} Points
+          {/* NFT Display Header */}
+          {nftData && <QuestDetailHeader nftData={nftData} />}
+
+          {/* Quest Progress Header */}
+          <div className="text-center mb-8">
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <h3 className="text-lg font-medium text-white mb-4">
+                Available Quests
+              </h3>
+              <p className="text-gray-300 mb-4">
+                Requires EVM wallet connection
+              </p>
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-gray-400 mb-2">
+                  <span>Progress</span>
+                  <span>
+                    {completedQuests}/{totalQuests} ({completionPercentage}%)
+                  </span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${completionPercentage}%` }}
+                  />
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Quest Display - Single Quest Only */}
+          {/* Quest List */}
           <QuestDetailList
-            quests={[activeQuest]} // Pass only the active quest as an array
+            quests={quests}
             isWalletConnected={isWalletConnected}
             allowClaim={allowClaim}
             activeQuestCode={activeQuestCode}
@@ -646,19 +754,22 @@ const QuestDetailPageContent = () => {
             requiredChainType={requiredChainType}
           />
 
-          {/* NFT Claim Button - Only show if not auto-minting and conditions aren't met for auto-claim */}
-          {claimableMetadata &&
-            isWalletConnected &&
-            walletAddress &&
-            !autoMinting && (
-              <NFTClaimButton
-                metadata={claimableMetadata}
-                canMintAgain={canMintAgain && !nftClaimed}
-                walletAddress={walletAddress}
-                questCompleted={activeQuest.is_completed || false}
-                onClaimSuccess={handleNFTClaimSuccess}
-              />
-            )}
+          {/* Claim NFT Button */}
+          {nftData && (
+            <QuestDetailClaimButton
+              nftMinted={nftMinted}
+              claiming={claiming}
+              setClaiming={setClaiming}
+              setNftMinted={setNftMinted}
+              completionPercentage={completionPercentage}
+              totalQuests={totalQuests}
+              completedQuests={completedQuests}
+              isWalletConnected={isWalletConnected}
+              nftData={nftData}
+              onSuccess={handleNFTMintSuccess}
+              requiredChainType={requiredChainType}
+            />
+          )}
         </div>
       </div>
 

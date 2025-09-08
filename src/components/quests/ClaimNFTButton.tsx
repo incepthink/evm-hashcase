@@ -55,7 +55,7 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
         collection_id: collectionId,
         name: collection.name,
         description: collection.description,
-        image_url: collection.image_uri,
+        image_url: collection.image_uri || collection.image_url,
         recipient: walletAddress,
       };
 
@@ -120,8 +120,8 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
         collection_id: collectionId,
         name: collection.name,
         description: collection.description,
-        image_url: collection.image_uri,
-        attributes: collection.attributes?.split(", ") || [],
+        image_url: collection.image_uri || collection.image_url,
+        attributes: collection.attributes || [],
         recipient: walletAddress,
         chain: chain,
       };

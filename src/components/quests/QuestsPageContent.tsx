@@ -10,6 +10,7 @@ import { useAccount } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
 import { useCollectionById } from "@/hooks/useCollections";
 import { useQuests } from "@/hooks/useQuests";
+import axiosInstance from "@/utils/axios";
 import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
 
 // Components
@@ -28,6 +29,34 @@ interface MintedNftData {
   image_url: string;
   recipient: string;
 }
+
+interface MetadataInstance {
+  id: number;
+  title: string;
+  description: string;
+  image_url: string;
+  token_uri: string;
+  attributes: string;
+  collection: {
+    id: number;
+    name: string;
+    description: string;
+    image_uri: string;
+    chain_name: string;
+  };
+  collection_id: number;
+  animation_url?: string;
+  latitude?: number;
+  longitude?: number;
+  price?: number;
+  set_id?: number;
+  is_active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Hardcoded metadata ID
+const METADATA_ID = 22;
 
 const QuestsPageContent = () => {
   const router = useRouter();
@@ -53,6 +82,11 @@ const QuestsPageContent = () => {
     null
   );
 
+  // Metadata states
+  const [metadata, setMetadata] = useState<MetadataInstance | null>(null);
+  const [metadataLoading, setMetadataLoading] = useState<boolean>(true);
+  const [metadataError, setMetadataError] = useState<string>("");
+
   // Force re-render trigger for wallet state changes
   const [walletStateKey, setWalletStateKey] = useState(0);
 
@@ -73,13 +107,14 @@ const QuestsPageContent = () => {
     zkAddress,
   ]);
 
-  const cid = searchParams.get("collection_id");
+  // Use fallback collection_id of "217" if not present
+  const cid = searchParams.get("collection_id") || "218";
 
   const {
     collection,
     isLoading: isCollectionLoading,
     isError: isCollectionError,
-  } = useCollectionById(cid!);
+  } = useCollectionById(cid);
 
   // Memoize chain type calculation
   const requiredChainType = useMemo((): "sui" | "evm" => {
@@ -167,6 +202,45 @@ const QuestsPageContent = () => {
     walletStateKey, // Include this to force recalculation
   ]);
 
+  // Fetch metadata when wallet is connected
+  useEffect(() => {
+    if (mounted && isWalletConnected && walletAddress) {
+      fetchMetadata();
+    } else if (mounted && !isWalletConnected) {
+      // Reset metadata when wallet disconnected
+      setMetadata(null);
+      setMetadataLoading(true);
+      setMetadataError("");
+    }
+  }, [mounted, isWalletConnected, walletAddress]);
+
+  const fetchMetadata = async () => {
+    if (!walletAddress) return;
+
+    try {
+      setMetadataLoading(true);
+      setMetadataError("");
+
+      const response = await axiosInstance.get(
+        "/platform/metadata/geofenced-by-id",
+        {
+          params: {
+            metadata_id: METADATA_ID,
+            user_address: walletAddress,
+          },
+        }
+      );
+
+      const { metadata_instance } = response.data;
+      setMetadata(metadata_instance);
+    } catch (error: any) {
+      console.error("Error fetching metadata:", error);
+      setMetadataError("Failed to load NFT details");
+    } finally {
+      setMetadataLoading(false);
+    }
+  };
+
   const {
     quests,
     isLoading: questsLoading,
@@ -199,7 +273,7 @@ const QuestsPageContent = () => {
         router.push(`/loyalties/${cid}`);
         return;
       }
-      router.push("/loyalties/214");
+      router.push("/loyalties/217"); // Use fallback here too
     } catch {
       if (typeof window !== "undefined" && window.history.length > 1) {
         window.history.back();
@@ -236,6 +310,28 @@ const QuestsPageContent = () => {
       collection?.name === "Network School Collection Base"
     );
   }, [collection?.name]);
+
+  // Create collection-like object for NFTDisplay
+  const displayCollection = useMemo(() => {
+    if (!metadata) return null;
+    return {
+      name: metadata.title,
+      description: metadata.description,
+      image_uri: metadata.image_url,
+    };
+  }, [metadata]);
+
+  // Create collection-like object for ClaimNFTButton
+  const claimCollection = useMemo(() => {
+    if (!metadata) return null;
+    return {
+      name: metadata.title,
+      description: metadata.description,
+      image_uri: metadata.image_url,
+      image_url: metadata.image_url,
+      attributes: metadata.attributes ? metadata.attributes.split(", ") : [],
+    };
+  }, [metadata]);
 
   // Memoize stable props for modal
   const modalProps = useMemo(
@@ -282,6 +378,58 @@ const QuestsPageContent = () => {
     );
   }
 
+  // Show wallet connection required screen if not connected
+  if (!isWalletConnected) {
+    return (
+      <div className={`min-h-screen bg-[#000421]`}>
+        <Navigation onBack={handleBack} />
+        <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <div className="text-4xl sm:text-6xl mb-4">🔒</div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
+                Wallet Connection Required
+              </h3>
+              <p className="text-gray-400 text-sm sm:text-base mb-6">
+                Connect your {requiredChainType === "evm" ? "EVM" : "Sui"}{" "}
+                wallet to view quests and claim rewards
+              </p>
+              <button
+                onClick={() => setOpenModal(true)}
+                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                Connect Wallet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen while fetching metadata
+  if (metadataLoading) {
+    return (
+      <LoadingScreen
+        message="Loading NFT Details..."
+        collectionName={collection?.name}
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
+  // Show error if metadata failed to load
+  if (metadataError || !metadata) {
+    return (
+      <ErrorScreen
+        title="NFT Details Not Found"
+        message="Unable to load NFT reward details"
+        onBack={handleBack}
+        isNSCollection={isNSCollection}
+      />
+    );
+  }
+
   if (questsLoading || quests.length === 0) {
     return (
       <LoadingScreen
@@ -293,17 +441,15 @@ const QuestsPageContent = () => {
   }
 
   return (
-    <div
-      className={`min-h-screen ${isNSCollection ? "bg-black" : "bg-[#000421]"}`}
-    >
+    <div className={`min-h-screen bg-[#000421]`}>
       <Navigation onBack={handleBack} />
 
       {/* Main Content */}
       <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          {/* NFT Display Section */}
+          {/* NFT Display Section - Using Dynamic Metadata */}
           <NFTDisplay
-            collection={collection}
+            collection={displayCollection}
             backgroundImage={backgroundImageHeroSection}
           />
 
@@ -323,21 +469,21 @@ const QuestsPageContent = () => {
             requiredChainType={requiredChainType}
           />
 
-          {/* Claim NFT Button */}
-          {/* {quests.length > 0 && (
+          {/* Claim NFT Button - Using Dynamic Metadata */}
+          {quests.length > 0 && claimCollection && (
             <ClaimNFTButton
               nftMinted={nftMinted}
               completionPercentage={completionPercentage}
               totalQuests={totalQuests}
               completedQuests={completedQuests}
-              collection={collection}
-              collectionId={cid!}
+              collection={claimCollection}
+              collectionId={cid}
               onSuccess={handleNFTMintSuccess}
               onNftMintedChange={setNftMinted}
               chain={requiredChainType === "evm" ? "ethereum" : "sui"}
               requiredChainType={requiredChainType}
             />
-          )} */}
+          )}
         </div>
       </div>
 
@@ -348,3 +494,9 @@ const QuestsPageContent = () => {
 };
 
 export default QuestsPageContent;
+
+// ===== QuestDetailPageContent.tsx =====
+
+// ===== ClaimNFTButton.tsx =====
+
+// ===== QuestDetailClaimButton.tsx =====

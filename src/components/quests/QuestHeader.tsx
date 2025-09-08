@@ -17,23 +17,24 @@ export const QuestHeader: React.FC<QuestHeaderProps> = ({
   requiredChainType = "sui",
 }) => {
   return (
-    <div className="text-center mb-6">
-      <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">
-        Available Quests
-        {requiredChainType && (
-          <span className="text-sm font-normal text-gray-400 block mt-1">
-            Requires {requiredChainType === "evm" ? "EVM" : "Sui"} wallet
-            connection
-          </span>
-        )}
-      </h1>
-
-      <ProgressBar
-        completedQuests={completedQuests}
-        totalQuests={totalQuests}
-        completionPercentage={completionPercentage}
-        isVisible={showProgress}
-      />
+    <div className="text-center mb-8">
+      <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+        <h3 className="text-lg font-medium text-white mb-4">
+          Available Quests
+        </h3>
+        <p className="text-gray-300 mb-4">
+          Requires {requiredChainType === "evm" ? "EVM" : "Sui"} wallet
+          connection
+        </p>
+        <div className="mb-4">
+          <ProgressBar
+            completedQuests={completedQuests}
+            totalQuests={totalQuests}
+            completionPercentage={completionPercentage}
+            isVisible={showProgress}
+          />
+        </div>
+      </div>
     </div>
   );
 };
