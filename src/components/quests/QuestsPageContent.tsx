@@ -273,7 +273,7 @@ const QuestsPageContent = () => {
         router.push(`/loyalties/${cid}`);
         return;
       }
-      router.push("/loyalties/217"); // Use fallback here too
+      router.push("/loyalties/218"); // Use fallback here too
     } catch {
       if (typeof window !== "undefined" && window.history.length > 1) {
         window.history.back();
