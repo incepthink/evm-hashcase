@@ -213,7 +213,7 @@ const CollectionLoyaltiesPage = () => {
         {/* Tab Buttons Container */}
         <div className="backdrop-blur-sm rounded-xl border p-1.5 sm:p-2 flex gap-2 sm:gap-4 shadow-md w-full max-w-sm sm:max-w-md md:max-w-lg">
           {[
-            { key: "loyalty", label: "Loyalty Codes" },
+            { key: "loyalty", label: "Points" },
             { key: "badges", label: "Badges" },
           ].map((tab) => (
             <button

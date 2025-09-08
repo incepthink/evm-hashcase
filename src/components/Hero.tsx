@@ -5,35 +5,29 @@ import ArrowB from "../assets/images/arrowB.svg";
 import suiBg from "../assets/images/sui-bg.png";
 import Link from "next/link";
 import { Sparkles, Star, Users, Zap, ArrowRight, Wallet } from "lucide-react";
-import { useCurrentAccount } from "@mysten/dapp-kit";
-import { useZkLogin } from "@mysten/enoki/react";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import { useState, useEffect } from "react";
 
 const workSans = Work_Sans({ subsets: ["latin"] });
 
 export const Hero = () => {
-  const currentAccount = useCurrentAccount();
-  const { address: zkAddress } = useZkLogin();
-  const { isUserVerified } = useGlobalAppStore();
+  const { isUserVerified, getWalletForChain } = useGlobalAppStore();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-  const user_address = currentAccount?.address || zkAddress;
+  // Get EVM wallet from the store
+  const evmWallet = getWalletForChain("evm");
+  const user_address = evmWallet?.address;
   const isWalletConnected = !!(user_address && isUserVerified);
 
   useEffect(() => {
-    if (isUserVerified && currentAccount?.address) {
+    if (isUserVerified && evmWallet?.address) {
       setWalletAddress(
-        currentAccount.address.slice(0, 10) +
-          "..." +
-          currentAccount.address.slice(-8)
+        evmWallet.address.slice(0, 10) + "..." + evmWallet.address.slice(-8)
       );
-    } else if (isUserVerified && zkAddress) {
-      setWalletAddress(zkAddress.slice(0, 10) + "..." + zkAddress.slice(-8));
     } else {
       setWalletAddress(null);
     }
-  }, [zkAddress, currentAccount, isUserVerified]);
+  }, [evmWallet, isUserVerified]);
 
   return (
     <>
@@ -79,9 +73,6 @@ export const Hero = () => {
                 <span className="text-transparent bg-clip-text bg-blue-500">
                   Superfans!
                 </span>
-                {/* <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                <Star className="w-3 h-3 text-black" />
-              </div> */}
               </span>
             </h1>
 
@@ -132,13 +123,13 @@ export const Hero = () => {
                   <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-green-500/20 border border-green-500/30 text-green-400">
                     <Wallet className="w-5 h-5" />
                     <span className="font-semibold">
-                      Connected: {walletAddress}
+                      Connected: {walletAddress} ({evmWallet?.type})
                     </span>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <Link
-                      href="/quests"
+                      href="/quests?collection_id=218"
                       className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-black bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4DA2FF]/30 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(77,162,255,0.4)] hover:shadow-[0_25px_50px_-15px_rgba(77,162,255,0.5)]"
                     >
                       <Zap className="w-5 h-5" />
@@ -161,7 +152,7 @@ export const Hero = () => {
               /* Default State - Not Connected */
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
                 <Link
-                  href="/mint"
+                  href="/quests?collection_id=218"
                   className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-black bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4DA2FF]/30 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(77,162,255,0.4)] hover:shadow-[0_25px_50px_-15px_rgba(77,162,255,0.5)]"
                 >
                   <Zap className="w-5 h-5" />

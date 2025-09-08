@@ -1055,17 +1055,14 @@ export default function NFTPage() {
 
   return (
     <div className={`flex flex-col bg-[#00041F] ${workSans.className}`}>
-      <div className="flex flex-col px-6 md:px-10 max-w-6xl mx-auto w-full">
-        <Link
-          href={`/collection/${
-            nftData?.collection_address ||
-            "0x79e4f927919068602bae38387132f8c0dd52dc3207098355ece9e9ba61eb2290"
-          }`}
-          className="hidden md:flex items-center justify-start gap-x-2 my-4"
+      <div className="flex flex-col px-6 md:px-10 max-w-6xl mx-auto w-full pb-10">
+        <button
+          onClick={() => router.back()}
+          className="hidden md:flex items-center justify-start gap-x-2 my-4 cursor-pointer"
         >
           <ArrowW />
           <p className="text-2xl text-white/70">back</p>
-        </Link>
+        </button>
         <div className="my-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* NFT Image with Navigation */}
           <div className="relative flex justify-center lg:justify-start">
@@ -1182,7 +1179,7 @@ export default function NFTPage() {
             </div>
           </div>
         </div>
-        <hr className="my-8 bg-gradient-to-r from-transparent via-white to-transparent opacity-20" />
+        {/* <hr className="my-8 bg-gradient-to-r from-transparent via-white to-transparent opacity-20" />
         <div className="flex items-center justify-center mb-6">
           <div className="bg-[#1A1D35] rounded-lg p-4 w-full text-center text-white md:text-2xl text-lg font-semibold">
             <p>
@@ -1227,7 +1224,7 @@ export default function NFTPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       <UnlockableNft isOpen={isModalOpen} closeModal={closeModal} />
       {showSuccessModal && (

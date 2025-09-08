@@ -292,7 +292,7 @@ const LoyaltyCodesTable = ({
 
       {/* Off-Chain Points */}
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-4 sm:mb-6 bg-clip-text text-transparent text-white/90 drop-shadow-lg text-center px-2">
-        {`Off-Chain Points: ${offChainPointsState}`}
+        {`${collection.name} Points: ${offChainPointsState}`}
       </h1>
 
       {/* Streak Display */}
@@ -303,7 +303,7 @@ const LoyaltyCodesTable = ({
 
       {/* Loyalty Codes */}
       <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-4 sm:mb-6 text-blue-300 drop-shadow-md text-center px-2">
-        Loyalty Codes
+        Points
       </h1>
 
       {/* Mobile Card View */}

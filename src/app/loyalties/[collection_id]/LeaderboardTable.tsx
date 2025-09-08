@@ -195,7 +195,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       </div>
 
       {/* Time Period Buttons */}
-      <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 md:gap-6 w-full max-w-6xl mx-auto">
+      {/* <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 md:gap-6 w-full max-w-6xl mx-auto">
         {[
           { period: LeaderboardPeriod.MONTHLY, label: "Monthly" },
           { period: LeaderboardPeriod.WEEKLY, label: "Weekly" },
@@ -212,7 +212,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
             {label}
           </button>
         ))}
-      </div>
+      </div> */}
 
       {/* Wallet Connection Status */}
       {!isWalletConnected && (
