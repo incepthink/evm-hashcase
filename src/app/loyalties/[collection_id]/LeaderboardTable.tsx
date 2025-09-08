@@ -218,7 +218,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       {!isWalletConnected && (
         <div className="w-full max-w-6xl mx-auto bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 text-center">
           <p className="text-yellow-300 text-sm sm:text-base">
-            Connect an EVM wallet or sign in with Google to see your ranking and
+            Connect wallet or sign in with Google to see your ranking and
             interact with the leaderboard
           </p>
         </div>

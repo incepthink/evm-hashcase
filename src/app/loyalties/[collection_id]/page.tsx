@@ -236,19 +236,18 @@ const CollectionLoyaltiesPage = () => {
               />
             </button>
           ))}
+          {/* View Quests Button */}
+          <button
+            onClick={() => {
+              // Always allow viewing quests, regardless of wallet connection
+              router.push(`/quests?collection_id=${params.collection_id}`);
+            }}
+            className="relative flex-1 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg font-semibold text-xs sm:text-sm md:text-base transition-all duration-300 text-white/60 hover:text-white hover:bg-white/10"
+          >
+            <span className="block sm:hidden">Quests</span>
+            <span className="hidden sm:block">Quests</span>
+          </button>
         </div>
-
-        {/* View Quests Button */}
-        <button
-          onClick={() => {
-            // Always allow viewing quests, regardless of wallet connection
-            router.push(`/quests?collection_id=${params.collection_id}`);
-          }}
-          className="border-2 border-gray-600 hover:border-gray-500 text-white cursor-pointer hover:scale-105 transition duration-300 font-semibold sm:font-bold py-2.5 sm:py-3 md:py-3.5 px-4 sm:px-5 md:px-6 rounded-lg sm:rounded-xl text-xs sm:text-sm md:text-base transition-all duration-300 transform w-full max-w-xs sm:max-w-sm md:max-w-md"
-        >
-          <span className="block sm:hidden">View Quests</span>
-          <span className="hidden sm:block">View All Quests</span>
-        </button>
       </div>
 
       {ownerId && activeTab === "loyalty" && (

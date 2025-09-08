@@ -134,7 +134,7 @@ const LoyaltyCodesTable = ({
 
     const walletInfo = getWalletInfo();
     if (!walletInfo) {
-      toast.error("Please connect an EVM wallet or sign in with Google", {
+      toast.error("Please connect wallet or sign in with Google", {
         duration: 5000,
       });
       setOpenModal(true);
@@ -182,9 +182,7 @@ const LoyaltyCodesTable = ({
       setCurrentStreak(user_achievements.current_streak);
       setOffChainPointsState(user_achievements.total_loyalty_points);
 
-      console.log(
-        "LOYALTY_TABLE_DEBUG: Daily check-in successful with EVM wallet"
-      );
+      console.log("LOYALTY_TABLE_DEBUG: Daily check-in successful with wallet");
     } catch (error: any) {
       console.log("LOYALTY_TABLE_DEBUG: Daily check-in failed:", error);
 
@@ -354,7 +352,7 @@ const LoyaltyCodesTable = ({
                           hasTransactionError
                             ? "Code verification error - please refresh"
                             : !status.canRedeem
-                            ? "Connect EVM wallet or sign in with Google to redeem"
+                            ? "Connect wallet or sign in with Google to redeem"
                             : ""
                         }
                       >
@@ -484,7 +482,7 @@ const LoyaltyCodesTable = ({
                           hasTransactionError
                             ? "Code verification error - please refresh"
                             : !status.canRedeem
-                            ? "Connect EVM wallet or sign in with Google to redeem"
+                            ? "Connect wallet or sign in with Google to redeem"
                             : ""
                         }
                       >

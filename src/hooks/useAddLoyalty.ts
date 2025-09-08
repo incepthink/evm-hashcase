@@ -91,7 +91,7 @@ export const useAddLoyalty = ({
 
     const walletInfo = getWalletInfo();
     if (!walletInfo) {
-      toast.error("Please connect an EVM wallet or sign in with Google", {
+      toast.error("Please connect wallet or sign in with Google", {
         duration: 5000,
       });
       setOpenModal(true);
@@ -194,7 +194,7 @@ export const useAddLoyalty = ({
         );
       } else if (error.response?.data?.message?.includes("wrong wallet")) {
         toast.error(
-          "Incorrect wallet type connected. Please connect an EVM wallet or sign in with Google."
+          "Incorrect wallet type connected. Please connect wallet or sign in with Google."
         );
       } else if (error.response?.data?.message === "Loyalty code already claimed") {
         toast.error("This loyalty code has already been claimed.");

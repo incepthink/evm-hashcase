@@ -121,7 +121,8 @@ export default function NFTPage() {
   };
 
   // Use global app store for EVM wallet
-  const { getWalletForChain, hasWalletForChain } = useGlobalAppStore();
+  const { getWalletForChain, hasWalletForChain, setOpenModal } =
+    useGlobalAppStore();
 
   // Get EVM wallet info
   const evmWallet = getWalletForChain("evm");
@@ -934,29 +935,23 @@ export default function NFTPage() {
   if (!isEvmWalletConnected) {
     return (
       <div className="h-[80vh] max-w-screen bg-[#00041F] text-white flex flex-col items-center justify-center p-6 text-center gap-6">
-        {/* Wallet icon */}
-        <div className="relative">
-          <Wallet className="w-20 h-20 text-blue-400 animate-pulse" />
-        </div>
-
-        {/* Main message */}
-        <div className="space-y-4 max-w-md">
-          <h2 className="text-3xl font-bold text-blue-100">
-            Connect Your Wallet
-          </h2>
-          <p className="text-blue-300 text-lg">
-            Please connect your EVM wallet to view and mint NFTs
-          </p>
-          <p className="text-gray-400 text-sm">
-            You need an active wallet connection to access NFT content and
-            minting features
-          </p>
-        </div>
-
-        {/* Connect button placeholder */}
-        <div className="mt-6">
-          <div className="px-6 py-3 bg-[#4DA2FF] hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors cursor-pointer">
-            Connect EVM Wallet
+        <div className=" pb-6 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <div className="text-4xl sm:text-6xl mb-4">🔒</div>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
+                Login or Connect Wallet
+              </h3>
+              <p className="text-gray-400 text-sm sm:text-base mb-6">
+                Please Connect wallet to view quests and claim rewards
+              </p>
+              <button
+                onClick={() => setOpenModal(true)}
+                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                Connect Wallet or Login
+              </button>
+            </div>
           </div>
         </div>
       </div>

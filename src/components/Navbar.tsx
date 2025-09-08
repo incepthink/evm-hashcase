@@ -118,7 +118,7 @@ export const Navbar = () => {
       handleClose();
     } else {
       toast.error(
-        "Please connect an EVM wallet or sign in with Google to view your profile"
+        "Please connect wallet or sign in with Google to view your profile"
       );
     }
   };

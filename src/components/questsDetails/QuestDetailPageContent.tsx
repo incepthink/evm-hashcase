@@ -351,7 +351,7 @@ const QuestDetailPageContent = () => {
     // Validate wallet connection before proceeding
     if (!isWalletConnected || !walletAddress) {
       toast.error(
-        "Please connect an EVM wallet or sign in with Google to claim quests",
+        "Please connect wallet or sign in with Google to claim quests",
         {
           duration: 5000,
           style: {
@@ -418,7 +418,7 @@ const QuestDetailPageContent = () => {
         // Handle wallet-specific errors
         if (apiError.response?.data?.message?.includes("wrong wallet")) {
           toast.error(
-            "Incorrect wallet type connected. Please connect an EVM wallet or sign in with Google."
+            "Incorrect wallet type connected. Please connect wallet or sign in with Google."
           );
         }
       }
@@ -627,24 +627,19 @@ const QuestDetailPageContent = () => {
         <Navigation onBack={handleBack} />
         <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-                {getDisplayTitle()}
-              </h1>
-            </div>
             <div className="text-center py-12">
               <div className="text-4xl sm:text-6xl mb-4">🔒</div>
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                Wallet Connection Required
+                Login or Connect Wallet
               </h3>
               <p className="text-gray-400 text-sm sm:text-base mb-6">
-                Connect your EVM wallet to view quests and claim rewards
+                Please Connect wallet to view quests and claim rewards
               </p>
               <button
                 onClick={() => setOpenModal(true)}
                 className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
               >
-                Connect Wallet
+                Connect Wallet or Login
               </button>
             </div>
           </div>

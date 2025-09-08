@@ -73,7 +73,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
     if (!isWalletConnected || !walletAddress) {
       const chainName =
         requiredChainType === "evm"
-          ? "EVM wallet (MetaMask, Phantom, Coinbase)"
+          ? "wallet (MetaMask, Phantom, Coinbase)"
           : "Sui wallet";
 
       toast.error(`Please connect a ${chainName} to claim the NFT`, {

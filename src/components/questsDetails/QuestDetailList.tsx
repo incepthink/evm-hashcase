@@ -38,8 +38,7 @@ export const QuestDetailList: React.FC<QuestDetailListProps> = ({
 
   const getClaimButtonText = () => {
     if (!isWalletConnected) {
-      const chainName =
-        requiredChainType === "evm" ? "EVM Wallet" : "Sui Wallet";
+      const chainName = requiredChainType === "evm" ? "Wallet" : "Sui Wallet";
       return `Connect ${chainName}`;
     }
     return "Claim";

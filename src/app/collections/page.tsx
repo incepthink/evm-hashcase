@@ -202,7 +202,7 @@ const CollectionsPage: React.FC = () => {
                   {/* Image Section */}
                   <div className="relative w-full aspect-square overflow-hidden">
                     <Image
-                      src={collectionImage}
+                      src={collection.image_uri}
                       alt={collectionName}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"

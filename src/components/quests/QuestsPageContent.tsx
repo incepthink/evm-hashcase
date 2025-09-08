@@ -388,17 +388,16 @@ const QuestsPageContent = () => {
             <div className="text-center py-12">
               <div className="text-4xl sm:text-6xl mb-4">🔒</div>
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                Wallet Connection Required
+                Login or Connect Wallet
               </h3>
               <p className="text-gray-400 text-sm sm:text-base mb-6">
-                Connect your {requiredChainType === "evm" ? "EVM" : "Sui"}{" "}
-                wallet to view quests and claim rewards
+                Please Connect wallet to view quests and claim rewards
               </p>
               <button
                 onClick={() => setOpenModal(true)}
                 className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
               >
-                Connect Wallet
+                Connect Wallet or Login
               </button>
             </div>
           </div>
