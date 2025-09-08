@@ -136,10 +136,40 @@ export default function EVMWalletConnect() {
         type: "metamask",
       });
 
-      notifyResolve(notifyId, "Connected", "success");
-    } catch (error: unknown) {
-      console.log(error);
-      notifyResolve(notifyId, "Failed to login", "error");
+      notifyResolve(notifyId, "Connected successfully!", "success");
+    } catch (error: any) {
+      console.error("Authentication error:", error);
+
+      // Handle signature rejection (error code 4001)
+      if (error?.code === 4001 || error?.message?.includes("User rejected")) {
+        notifyResolve(
+          notifyId,
+          "Signature cancelled. You can try connecting again.",
+          "error"
+        );
+      } else {
+        notifyResolve(
+          notifyId,
+          "Failed to authenticate. Please try again.",
+          "error"
+        );
+      }
+
+      // Complete cleanup on any error
+      unsetUser();
+      disconnectWallet("evm");
+
+      // Disconnect wallet on authentication failure
+      if (isConnected) {
+        try {
+          disconnect();
+        } catch (disconnectError) {
+          console.warn(
+            "Failed to disconnect after auth error:",
+            disconnectError
+          );
+        }
+      }
     } finally {
       setOpenModal(false);
       setCreatingUser(false);
@@ -193,18 +223,35 @@ export default function EVMWalletConnect() {
         throw new Error("No wallet address available");
       }
 
-      // Request authentication
-      const response = await axiosInstance.get("auth/wallet/request-token");
+      // Request authentication with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+      const response = await axiosInstance.get("auth/wallet/request-token", {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
       const message = response.data.message as string;
       const authToken = response.data.token as string;
 
       const signature = await signMessageAsync({ message });
 
-      const res = await axiosInstance.post("auth/wallet/login", {
-        signature,
-        address: finalAddress,
-        token: authToken,
-      });
+      const loginController = new AbortController();
+      const loginTimeoutId = setTimeout(() => loginController.abort(), 15000);
+
+      const res = await axiosInstance.post(
+        "auth/wallet/login",
+        {
+          signature,
+          address: finalAddress,
+          token: authToken,
+        },
+        {
+          signal: loginController.signal,
+        }
+      );
+      clearTimeout(loginTimeoutId);
 
       const token: string = res.data.token;
       const user_instance = res.data.user_instance;
@@ -236,6 +283,7 @@ export default function EVMWalletConnect() {
     } catch (error: any) {
       console.error("Failed to connect EVM wallet:", error);
 
+      // Complete cleanup on any error
       unsetUser();
       disconnectWallet("evm");
 
@@ -243,21 +291,31 @@ export default function EVMWalletConnect() {
         disconnect();
       }
 
-      const errorMessage = error?.message || "Unknown error";
-      if (error?.code === 4001) {
-        notifyResolve(notifyId, "User rejected the signature request", "error");
-      } else if (errorMessage.includes("No wallet address available")) {
+      // Enhanced error handling
+      if (error?.code === 4001 || error?.message?.includes("User rejected")) {
         notifyResolve(
           notifyId,
-          "Wallet connected but no address found",
+          "Connection cancelled. You can try again anytime.",
+          "error"
+        );
+      } else if (error.name === "AbortError") {
+        notifyResolve(
+          notifyId,
+          "Connection timed out. Please try again.",
+          "error"
+        );
+      } else if (error?.message?.includes("No wallet address available")) {
+        notifyResolve(
+          notifyId,
+          "Wallet connected but no address found. Please try again.",
           "error"
         );
       } else {
-        notifyResolve(
-          notifyId,
-          `Failed to connect wallet: ${errorMessage}`,
-          "error"
-        );
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Connection failed";
+        notifyResolve(notifyId, `Failed to connect: ${errorMessage}`, "error");
       }
     } finally {
       setConnectingWallet(false);

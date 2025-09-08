@@ -69,6 +69,7 @@ interface AppState {
 
   // User interaction actions
   setUserHasInteracted: (interacted: boolean) => void;
+  resetUserInteraction: () => void;
 }
 
 /* ========= Helpers ========= */
@@ -107,7 +108,7 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
     set({ user, isUserVerified: true });
   },
 
-  // Unset user and remove cookies
+  // Unset user and remove cookies with complete cleanup
   unsetUser: () => {
     Cookies.remove("user");
     Cookies.remove("jwt");
@@ -119,7 +120,7 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       userWalletAddress: null,
       isAuthenticating: false,
       authenticationLock: null,
-      userHasInteracted: false,
+      // Don't reset userHasInteracted on logout - preserve user intent
     });
   },
 
@@ -146,10 +147,10 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  // Set modal state
+  // Set modal state with user interaction tracking
   setOpenModal: (open) => {
-    // Mark user interaction when opening modal
     if (open) {
+      // Mark user interaction when opening modal
       set({ openModal: open, userHasInteracted: true });
     } else {
       set({ openModal: open });
@@ -225,10 +226,12 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       userWalletAddress: null,
       isAuthenticating: false,
       authenticationLock: null,
+      // Reset user interaction on complete disconnect
+      userHasInteracted: false,
     });
   },
 
-  // Authentication lock actions
+  // Authentication lock actions with enhanced timeout handling
   setIsAuthenticating: (authenticating: boolean) => {
     set({ isAuthenticating: authenticating });
   },
@@ -246,8 +249,8 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       return true;
     }
     
-    // If lock is expired (10 seconds timeout), allow authentication
-    if (now - state.authenticationLock.timestamp > 10000) {
+    // If lock is expired (30 seconds timeout for better UX), allow authentication
+    if (now - state.authenticationLock.timestamp > 30000) {
       // Clear expired lock
       set({ authenticationLock: null, isAuthenticating: false });
       return true;
@@ -265,6 +268,10 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
   // User interaction actions
   setUserHasInteracted: (interacted: boolean) => {
     set({ userHasInteracted: interacted });
+  },
+
+  resetUserInteraction: () => {
+    set({ userHasInteracted: false });
   },
 }));
 

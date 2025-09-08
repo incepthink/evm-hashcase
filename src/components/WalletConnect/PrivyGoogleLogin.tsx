@@ -23,7 +23,6 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     setIsAuthenticating,
     authenticationLock,
     setAuthenticationLock,
-    canAuthenticate,
     userHasInteracted,
     setUserHasInteracted,
   } = useGlobalAppStore();
@@ -66,6 +65,16 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       setIsAuthenticating(false);
     }
   }, []);
+
+  // Complete cleanup function
+  const completeCleanup = useCallback(() => {
+    setIsAuthenticating(false);
+    setAuthenticationLock(null);
+    setIsLoading(false);
+    setLastError(null);
+    unsetUser();
+    disconnectWallet("evm");
+  }, [setIsAuthenticating, setAuthenticationLock, unsetUser, disconnectWallet]);
 
   // MANUAL AUTHENTICATION FUNCTION with enhanced error handling
   const handleUserCreation = useCallback(async () => {
@@ -129,8 +138,17 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       let signatureResult;
       try {
         signatureResult = await signMessage({ message });
-      } catch (signError) {
+      } catch (signError: any) {
         console.error("Signing failed:", signError);
+
+        // Handle user rejection specifically
+        if (
+          signError?.code === 4001 ||
+          signError?.message?.includes("User rejected") ||
+          signError?.message?.includes("denied")
+        ) {
+          throw new Error("USER_REJECTED_SIGNATURE");
+        }
         throw new Error("Failed to sign message. Please try again.");
       }
 
@@ -233,12 +251,20 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       const errorMessage = error?.message || "Unknown error";
       setLastError(errorMessage);
 
-      // Clean up on error
-      unsetUser();
-      disconnectWallet("evm");
+      // Enhanced error handling with specific cases
+      if (errorMessage === "USER_REJECTED_SIGNATURE") {
+        notifyResolve(
+          notifyId,
+          "Signature cancelled. You can try connecting again.",
+          "error"
+        );
 
-      // Enhanced error handling
-      if (error.name === "AbortError") {
+        // Complete cleanup for user rejection
+        completeCleanup();
+
+        // Don't logout on user rejection, just clean up states
+        return;
+      } else if (error.name === "AbortError") {
         notifyResolve(
           notifyId,
           "Authentication timed out. Please try again.",
@@ -262,8 +288,6 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
           `Authentication failed: ${error.response.data.message}`,
           "error"
         );
-      } else if (errorMessage.includes("User rejected")) {
-        notifyResolve(notifyId, "Signature was cancelled", "error");
       } else {
         notifyResolve(
           notifyId,
@@ -272,10 +296,14 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
         );
       }
 
+      // Complete cleanup on error
+      completeCleanup();
+
       // Only logout on certain types of errors to avoid infinite loops
       if (
         !errorMessage.includes("User rejected") &&
-        !errorMessage.includes("timed out")
+        !errorMessage.includes("timed out") &&
+        errorMessage !== "USER_REJECTED_SIGNATURE"
       ) {
         try {
           await logout();
@@ -284,7 +312,7 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
         }
       }
     } finally {
-      // Clear authentication lock
+      // Always clear authentication states
       setIsAuthenticating(false);
       setAuthenticationLock(null);
       setIsLoading(false);
@@ -297,8 +325,7 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     setAuthenticationLock,
     setUser,
     setEvmWallet,
-    unsetUser,
-    disconnectWallet,
+    completeCleanup,
     logout,
     signMessage,
     onSuccess,
@@ -362,15 +389,8 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       setIsLoading(true);
       console.log("Logging out...");
 
-      // Clear global store
-      unsetUser();
-      disconnectWallet("evm");
-
-      // Clear any locks
-      setAuthenticationLock(null);
-      setIsAuthenticating(false);
-      setRetryCount(0);
-      setLastError(null);
+      // Complete cleanup
+      completeCleanup();
 
       // Logout from Privy
       await logout();
@@ -393,11 +413,7 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
   // Force clear locks (debug function)
   const clearLocks = () => {
     console.log("Force clearing all locks...");
-    setAuthenticationLock(null);
-    setIsAuthenticating(false);
-    setIsLoading(false);
-    setLastError(null);
-    setRetryCount(0);
+    completeCleanup();
   };
 
   if (!ready) {
@@ -460,7 +476,7 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
           {lastError && (
             <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
               <p className="text-sm text-red-700 mb-2">Error: {lastError}</p>
-              {retryCount < 3 && (
+              {retryCount < 3 && !lastError.includes("cancelled") && (
                 <button
                   onClick={handleRetry}
                   className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
