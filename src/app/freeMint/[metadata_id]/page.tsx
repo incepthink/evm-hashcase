@@ -106,6 +106,9 @@ export default function NFTPage() {
   const [canMintAgain, setCanMintAgain] = useState(true);
   const [isMetadataActive, setIsMetadataActive] = useState(true);
 
+  // New state for tracking mint attempts
+  const [hasMintAttempted, setHasMintAttempted] = useState(false);
+
   // states for the modal for showing minting success
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -127,6 +130,26 @@ export default function NFTPage() {
   // Get EVM wallet info
   const evmWallet = getWalletForChain("evm");
   const isEvmWalletConnected = hasWalletForChain("evm");
+
+  // Helper function to generate mint attempt key
+  const getMintAttemptKey = (
+    metadataId: string | string[],
+    walletAddress: string
+  ) => {
+    const id = Array.isArray(metadataId) ? metadataId[0] : metadataId;
+    return `mint_attempted_${id}_${walletAddress}`;
+  };
+
+  // Check localStorage for previous mint attempts when NFT or wallet changes
+  useEffect(() => {
+    if (params.metadata_id && evmWallet?.address) {
+      const mintKey = getMintAttemptKey(params.metadata_id, evmWallet.address);
+      const previouslyAttempted = localStorage.getItem(mintKey) === "true";
+      setHasMintAttempted(previouslyAttempted);
+    } else {
+      setHasMintAttempted(false);
+    }
+  }, [params.metadata_id, evmWallet?.address]);
 
   // Preload images for faster navigation
   const preloadImage = React.useCallback(
@@ -746,6 +769,11 @@ export default function NFTPage() {
       return;
     }
 
+    // Mark mint attempt in localStorage immediately to prevent duplicate calls
+    const mintKey = getMintAttemptKey(params.metadata_id!, evmWallet.address);
+    localStorage.setItem(mintKey, "true");
+    setHasMintAttempted(true);
+
     setMinting(true);
     const notifyId = notifyPromise(
       "Minting NFT... this might take some time...",
@@ -824,6 +852,11 @@ export default function NFTPage() {
     } catch (error: any) {
       console.error("Minting error:", error);
 
+      // If minting failed, remove the localStorage flag to allow retry
+      const mintKey = getMintAttemptKey(params.metadata_id!, evmWallet.address);
+      localStorage.removeItem(mintKey);
+      setHasMintAttempted(false);
+
       let errorMessage = "Error minting NFT";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -853,6 +886,15 @@ export default function NFTPage() {
         disabled: true,
         text: "NFT Minted",
         className: "bg-green-500 text-white cursor-not-allowed opacity-75",
+        icon: <CheckCircle className="w-4 h-4" />,
+      };
+    }
+
+    if (hasMintAttempted) {
+      return {
+        disabled: true,
+        text: "Already Minted",
+        className: "bg-gray-500 text-white cursor-not-allowed opacity-75",
         icon: <CheckCircle className="w-4 h-4" />,
       };
     }
@@ -909,7 +951,8 @@ export default function NFTPage() {
         nftData && // NFT data is loaded
         !minting && // Not currently minting
         isMetadataActive && // Metadata is active
-        canMintAgain // User can mint again
+        canMintAgain && // User can mint again
+        !hasMintAttempted // Haven't attempted mint for this NFT yet
       );
     };
 
@@ -929,6 +972,7 @@ export default function NFTPage() {
     minting,
     isMetadataActive,
     canMintAgain,
+    hasMintAttempted, // Add this to dependencies
   ]);
 
   // Show wallet connection requirement if no EVM wallet connected
@@ -1152,12 +1196,14 @@ export default function NFTPage() {
                 </div>
               )}
 
-              {!canMintAgain && isMetadataActive && (
+              {(!canMintAgain || hasMintAttempted) && isMetadataActive && (
                 <div className="w-full p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-400" />
                     <p className="text-green-300 text-sm font-medium">
-                      You have already minted this NFT
+                      {!canMintAgain
+                        ? "You have already minted this NFT"
+                        : "NFT mint attempt completed"}
                     </p>
                   </div>
                 </div>

@@ -44,6 +44,9 @@ interface AppState {
   isAuthenticating: boolean;
   authenticationLock: AuthenticationLock | null;
 
+  // User interaction tracking
+  userHasInteracted: boolean;
+
   // Actions
   setUser: (user: User, jwt: string) => void;
   unsetUser: () => void;
@@ -63,6 +66,9 @@ interface AppState {
   setIsAuthenticating: (authenticating: boolean) => void;
   setAuthenticationLock: (lock: AuthenticationLock | null) => void;
   canAuthenticate: (walletAddress: string) => boolean;
+
+  // User interaction actions
+  setUserHasInteracted: (interacted: boolean) => void;
 }
 
 /* ========= Helpers ========= */
@@ -92,6 +98,7 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
   userWalletAddress: null,
   isAuthenticating: false,
   authenticationLock: null,
+  userHasInteracted: false,
 
   // Set user and JWT in cookies and state
   setUser: (user, jwt) => {
@@ -112,6 +119,7 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       userWalletAddress: null,
       isAuthenticating: false,
       authenticationLock: null,
+      userHasInteracted: false,
     });
   },
 
@@ -139,7 +147,14 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
   },
 
   // Set modal state
-  setOpenModal: (open) => set({ openModal: open }),
+  setOpenModal: (open) => {
+    // Mark user interaction when opening modal
+    if (open) {
+      set({ openModal: open, userHasInteracted: true });
+    } else {
+      set({ openModal: open });
+    }
+  },
 
   // Deprecated - kept for backward compatibility
   setUserWalletAddress: (address) => set({ userWalletAddress: address }),
@@ -245,6 +260,11 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
     
     // Different wallet address, allow (this will override the lock)
     return true;
+  },
+
+  // User interaction actions
+  setUserHasInteracted: (interacted: boolean) => {
+    set({ userHasInteracted: interacted });
   },
 }));
 

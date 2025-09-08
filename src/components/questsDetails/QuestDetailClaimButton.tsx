@@ -45,16 +45,6 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
 }) => {
   const { getWalletForChain, setOpenModal } = useGlobalAppStore();
 
-  // Check localStorage on component mount to restore minted state
-  useEffect(() => {
-    if (completionPercentage === 100) {
-      const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
-      if (savedNftStatus === "true" && !nftMinted) {
-        setNftMinted(true);
-      }
-    }
-  }, [completionPercentage, nftMinted, setNftMinted]);
-
   const handleClaimNFT = async () => {
     if (nftMinted) {
       toast("NFT already minted for today's quests!");
@@ -107,10 +97,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       const response = await axiosInstance.post(endpoint, mintData);
 
       if (response.data.success) {
-        // Set localStorage to persist minted state
-        localStorage.setItem("nft_minted_ns_daily", "true");
-
-        // Update component state
+        // Update component state - no more localStorage
         setNftMinted(true);
 
         // Call success handler
@@ -139,8 +126,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
         errorMessage.includes("already minted") ||
         errorMessage.includes("already claimed")
       ) {
-        // If NFT was already minted, set localStorage and update state
-        localStorage.setItem("nft_minted_ns_daily", "true");
+        // If NFT was already minted, update state
         setNftMinted(true);
 
         onSuccess({

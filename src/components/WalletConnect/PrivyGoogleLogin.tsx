@@ -24,6 +24,8 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     authenticationLock,
     setAuthenticationLock,
     canAuthenticate,
+    userHasInteracted,
+    setUserHasInteracted,
   } = useGlobalAppStore();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -302,16 +304,19 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     onSuccess,
   ]);
 
-  // AUTO-AUTHENTICATION: Trigger when user becomes authenticated
+  // FIXED: Only auto-authenticate if user has explicitly interacted
   useEffect(() => {
     if (
       authenticated &&
       user?.wallet?.address &&
       !isUserVerified &&
       ready &&
-      !isLoading
+      !isLoading &&
+      userHasInteracted // ADDED: Only authenticate if user has interacted
     ) {
-      console.log("Auto-triggering authentication...");
+      console.log(
+        "Auto-triggering Privy authentication after user interaction..."
+      );
       const timer = setTimeout(() => {
         handleUserCreation();
       }, 1000); // Increased delay to ensure Privy is fully ready
@@ -324,6 +329,7 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     isUserVerified,
     ready,
     isLoading,
+    userHasInteracted, // ADDED: Include in dependencies
     handleUserCreation,
   ]);
 
@@ -482,6 +488,8 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     <div className="w-full space-y-3">
       <button
         onClick={() => {
+          // Mark user interaction
+          setUserHasInteracted(true);
           setIsLoading(true);
           setLastError(null);
           setRetryCount(0);

@@ -16,6 +16,7 @@ const WalletConnectionModal = () => {
     isUserVerified,
     getWalletForChain,
     hasWalletForChain,
+    setUserHasInteracted,
   } = useGlobalAppStore();
 
   // EVM wallet connection
@@ -61,16 +62,17 @@ const WalletConnectionModal = () => {
     }
   };
 
-  // const handleEmailKeyPress = (e: React.KeyboardEvent) => {
-  //   if (e.key === "Enter") {
-  //     handleEmailSubmit();
-  //   }
-  // };
-
   const resetEmailFlow = () => {
     setEmailSubmitted(false);
     setEmail("");
   };
+
+  // Mark user interaction when modal opens
+  useEffect(() => {
+    if (openModal) {
+      setUserHasInteracted(true);
+    }
+  }, [openModal, setUserHasInteracted]);
 
   return (
     <Modal
@@ -116,63 +118,3 @@ const WalletConnectionModal = () => {
 };
 
 export default WalletConnectionModal;
-
-// {!emailSubmitted ? (
-//           /* Custom Email Input Field */
-//           <div className="w-full space-y-3">
-//             <div className="flex w-full">
-//               <input
-//                 type="email"
-//                 value={email}
-//                 onChange={(e) => setEmail(e.target.value)}
-//                 // onKeyPress={handleEmailKeyPress}
-//                 placeholder="Enter your email"
-//                 className=" flex-1 px-4 py-3 border border-gray-300 rounded-l-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white !text-black"
-//                 style={{
-//                   fontSize: "16px",
-//                   WebkitAppearance: "none",
-//                   position: "relative",
-//                   zIndex: 99999,
-//                   borderRadius: "8px 0 0 8px",
-//                   cursor: "pointer",
-//                 }}
-//                 autoComplete="email"
-//                 inputMode="email"
-//                 autoCapitalize="none"
-//                 autoCorrect="off"
-//                 spellCheck="false"
-//               />
-//               <button
-//                 onClick={handleEmailSubmit}
-//                 disabled={!email || !email.includes("@")}
-//                 className="px-4 py-3 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-//               >
-//                 <svg
-//                   className="w-5 h-5"
-//                   fill="none"
-//                   stroke="currentColor"
-//                   viewBox="0 0 24 24"
-//                 >
-//                   <path
-//                     strokeLinecap="round"
-//                     strokeLinejoin="round"
-//                     strokeWidth={2}
-//                     d="M9 5l7 7-7 7"
-//                   />
-//                 </svg>
-//               </button>
-//             </div>
-//             <p className="text-xs text-gray-500 text-center">
-//               This will create an EVM wallet linked to your email
-//             </p>
-//           </div>
-//         ) : (
-//           /* Privy Login Component */
-//           <div className="w-full">
-//             <PrivyLogin
-//               email={email}
-//               onSuccess={handlePrivySuccess}
-//               onBack={resetEmailFlow}
-//             />
-//           </div>
-//         )}

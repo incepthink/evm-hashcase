@@ -24,10 +24,12 @@ export default function EVMWalletConnect() {
     unsetUser,
     getWalletForChain,
     disconnectWallet,
+    userHasInteracted,
+    setUserHasInteracted,
   } = useGlobalAppStore();
 
   const { address, isConnected } = useAccount();
-  const { connectAsync } = useConnect(); // <-- use connectAsync instead of connect()
+  const { connectAsync } = useConnect();
   const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
   const connectors = useConnectors();
@@ -144,8 +146,6 @@ export default function EVMWalletConnect() {
     }
   };
 
-  const ranEffect = useRef(false);
-
   useEffect(() => {
     setLoading(false);
   }, [address]);
@@ -160,6 +160,9 @@ export default function EVMWalletConnect() {
   };
 
   const handleWalletConnect = async (connector: Connector) => {
+    // Mark user interaction
+    setUserHasInteracted(true);
+
     setConnectingWallet(true);
     const notifyId = notifyPromise(
       `Connecting to ${connector.name}...`,
@@ -261,7 +264,7 @@ export default function EVMWalletConnect() {
     }
   };
 
-  // Auto-authenticate when wallet connects
+  // FIXED: Only auto-authenticate if user has explicitly interacted
   useEffect(() => {
     if (
       isConnected &&
@@ -269,11 +272,12 @@ export default function EVMWalletConnect() {
       !isUserVerified &&
       !connectingWallet &&
       !evmWallet &&
-      !creatingUser
+      !creatingUser &&
+      userHasInteracted // ADDED: Only authenticate if user has interacted
     ) {
+      console.log("Auto-authenticating EVM wallet after user interaction");
       handleUserCreation();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isConnected,
     address,
@@ -281,6 +285,7 @@ export default function EVMWalletConnect() {
     connectingWallet,
     evmWallet,
     creatingUser,
+    userHasInteracted, // ADDED: Include in dependencies
   ]);
 
   const handleWalletDisconnect = async () => {
@@ -315,7 +320,6 @@ export default function EVMWalletConnect() {
   if (!filteredConnectors || filteredConnectors.length === 0) {
     return <div>No EVM wallets were found</div>;
   }
-  console.log("EVM DEBUG", connectingWallet, filteredConnectors);
 
   return (
     <>
@@ -358,9 +362,6 @@ export default function EVMWalletConnect() {
           </button>
         );
       })}
-
-      {/* Optional: add a visible disconnect button for testing */}
-      {/* <button onClick={handleWalletDisconnect}>Disconnect</button> */}
     </>
   );
 }

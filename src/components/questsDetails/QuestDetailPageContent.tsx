@@ -86,17 +86,17 @@ const QuestDetailPageContent = () => {
   );
 
   // NFT states
-  const [nftMinted, setNftMinted] = useState<boolean>(false);
   const [claiming, setClaiming] = useState<boolean>(false);
 
   // Metadata states
   const [metadata, setMetadata] = useState<MetadataInstance | null>(null);
   const [metadataLoading, setMetadataLoading] = useState<boolean>(true);
   const [metadataError, setMetadataError] = useState<string>("");
+  const [canMintAgain, setCanMintAgain] = useState<boolean>(true);
 
-  // Auto-mint states
+  // Auto-mint prevention states
+  const [hasAutoMintAttempted, setHasAutoMintAttempted] = useState(false);
   const [autoMinting, setAutoMinting] = useState(false);
-  const autoMintAttempted = useRef(false);
 
   const { user, getWalletForChain, hasWalletForChain, setOpenModal } =
     useGlobalAppStore();
@@ -146,6 +146,22 @@ const QuestDetailPageContent = () => {
   const isWalletConnected = isCorrectWalletConnected();
   const requiredChainType = getRequiredChainType();
 
+  // Helper function to generate auto-mint attempt key
+  const getAutoMintAttemptKey = (questCode: string, walletAddr: string) => {
+    return `auto_mint_attempted_quest_${questCode}_${walletAddr}`;
+  };
+
+  // Check localStorage for previous auto-mint attempts when wallet connection changes
+  useEffect(() => {
+    if (activeQuestCode && walletAddress) {
+      const autoMintKey = getAutoMintAttemptKey(activeQuestCode, walletAddress);
+      const previouslyAttempted = localStorage.getItem(autoMintKey) === "true";
+      setHasAutoMintAttempted(previouslyAttempted);
+    } else {
+      setHasAutoMintAttempted(false);
+    }
+  }, [activeQuestCode, walletAddress]);
+
   // Get wallet type for display purposes
   const getWalletType = (): "EVM" | "Google" | null => {
     if (evmAddress) return "EVM";
@@ -169,6 +185,7 @@ const QuestDetailPageContent = () => {
       setMetadata(null);
       setMetadataLoading(true);
       setMetadataError("");
+      setCanMintAgain(true);
     }
   }, [mounted, isWalletConnected, walletAddress]);
 
@@ -189,8 +206,9 @@ const QuestDetailPageContent = () => {
         }
       );
 
-      const { metadata_instance } = response.data;
+      const { metadata_instance, can_mint_again } = response.data;
       setMetadata(metadata_instance);
+      setCanMintAgain(can_mint_again !== undefined ? can_mint_again : true);
     } catch (error: any) {
       console.error("Error fetching metadata:", error);
       setMetadataError("Failed to load NFT details");
@@ -223,7 +241,7 @@ const QuestDetailPageContent = () => {
       setLoading(true);
       setInitialLoad(true);
       // Reset auto-mint when wallet changes
-      autoMintAttempted.current = false;
+      setHasAutoMintAttempted(false);
       setAutoMinting(false);
     }
 
@@ -232,12 +250,11 @@ const QuestDetailPageContent = () => {
       setQuests((prev) =>
         prev.map((quest) => ({ ...quest, is_completed: false }))
       );
-      setNftMinted(false);
-      autoMintAttempted.current = false;
+      setCanMintAgain(true);
+      setHasAutoMintAttempted(false);
       setAutoMinting(false);
       try {
         localStorage.removeItem(`nft_claimed_${activeQuestCode}`);
-        localStorage.removeItem("nft_minted_ns_daily");
         const keysToRemove: string[] = [];
         for (let i = 0; i < sessionStorage.length; i++) {
           const k = sessionStorage.key(i);
@@ -441,24 +458,28 @@ const QuestDetailPageContent = () => {
   const completionPercentage =
     totalQuests > 0 ? Math.round((completedQuests / totalQuests) * 100) : 0;
 
-  // Auto-claim NFT function
+  // Auto-claim NFT function with secure duplicate prevention
   const handleAutoClaimNFT = async () => {
-    if (autoMintAttempted.current || autoMinting || !metadata) {
+    if (hasAutoMintAttempted || autoMinting || !metadata || !walletAddress) {
       return;
     }
 
     console.log("Auto-claim conditions check:", {
       allQuestsCompleted: completionPercentage === 100,
-      nftMinted,
+      canMintAgain,
       walletAddress: !!walletAddress,
+      hasAutoMintAttempted,
     });
 
-    // Check all conditions
-    if (completionPercentage !== 100 || nftMinted) {
+    // Check all conditions including server-side can_mint_again
+    if (completionPercentage !== 100 || !canMintAgain) {
       return;
     }
 
-    autoMintAttempted.current = true;
+    // Mark that we've attempted auto-mint to prevent duplicates
+    const autoMintKey = getAutoMintAttemptKey(activeQuestCode, walletAddress);
+    localStorage.setItem(autoMintKey, "true");
+    setHasAutoMintAttempted(true);
     setAutoMinting(true);
 
     try {
@@ -470,7 +491,7 @@ const QuestDetailPageContent = () => {
         description: metadata.description,
         image_url: metadata.image_url,
         attributes: metadata.attributes ? metadata.attributes.split(", ") : [],
-        recipient: walletAddress!,
+        recipient: walletAddress,
         chain_type: requiredChainType,
       };
 
@@ -479,20 +500,21 @@ const QuestDetailPageContent = () => {
 
       if (response.data.success) {
         toast.success("NFT automatically claimed!");
-        setNftMinted(true);
-        localStorage.setItem("nft_minted_ns_daily", "true");
+        setCanMintAgain(false);
 
         setMintedNftData({
           name: metadata.title,
           description: metadata.description,
           image_url: metadata.image_url,
-          recipient: walletAddress!,
+          recipient: walletAddress,
         });
         setShowNftModal(true);
       } else {
         console.error("Auto-claim failed:", response.data.message);
         toast.error(response.data.message || "Failed to auto-claim NFT");
-        autoMintAttempted.current = false; // Reset on failure
+        // Reset auto-mint attempt flag on failure
+        localStorage.removeItem(autoMintKey);
+        setHasAutoMintAttempted(false);
       }
     } catch (error: any) {
       console.error("Auto-claim error:", error);
@@ -502,30 +524,35 @@ const QuestDetailPageContent = () => {
         errorMessage.includes("already claimed") ||
         errorMessage.includes("already minted")
       ) {
-        setNftMinted(true);
-        localStorage.setItem("nft_minted_ns_daily", "true");
+        setCanMintAgain(false);
         toast.success("NFT has already been claimed");
       } else {
         toast.error(`Auto-claim failed: ${errorMessage}`);
-        autoMintAttempted.current = false; // Reset on failure
+        // Reset auto-mint attempt flag on failure
+        localStorage.removeItem(autoMintKey);
+        setHasAutoMintAttempted(false);
       }
     } finally {
       setAutoMinting(false);
     }
   };
 
-  // Auto-claim trigger
+  // Auto-claim trigger with secure duplicate prevention
   useEffect(() => {
-    if (
-      mounted &&
-      completionPercentage === 100 &&
-      !nftMinted &&
-      !autoMinting &&
-      !autoMintAttempted.current &&
-      walletAddress &&
-      quests.length > 0 &&
-      metadata
-    ) {
+    const shouldAutoMint = () => {
+      return (
+        mounted &&
+        completionPercentage === 100 &&
+        canMintAgain && // Use server-side can_mint_again instead of localStorage
+        !autoMinting &&
+        !hasAutoMintAttempted &&
+        walletAddress &&
+        quests.length > 0 &&
+        metadata
+      );
+    };
+
+    if (shouldAutoMint()) {
       console.log("Triggering auto-claim in 2 seconds...");
       const timer = setTimeout(() => {
         handleAutoClaimNFT();
@@ -536,8 +563,9 @@ const QuestDetailPageContent = () => {
   }, [
     mounted,
     completionPercentage,
-    nftMinted,
+    canMintAgain, // Use can_mint_again instead of nftMinted
     autoMinting,
+    hasAutoMintAttempted,
     walletAddress,
     quests.length,
     metadata,
@@ -552,6 +580,8 @@ const QuestDetailPageContent = () => {
     };
     setMintedNftData(formattedData);
     setShowNftModal(true);
+    // Update can_mint_again state after successful mint
+    setCanMintAgain(false);
   };
 
   const handleBack = () => {
@@ -752,10 +782,10 @@ const QuestDetailPageContent = () => {
           {/* Claim NFT Button */}
           {nftData && (
             <QuestDetailClaimButton
-              nftMinted={nftMinted}
+              nftMinted={!canMintAgain} // Use inverse of can_mint_again
               claiming={claiming}
               setClaiming={setClaiming}
-              setNftMinted={setNftMinted}
+              setNftMinted={(minted: boolean) => setCanMintAgain(!minted)}
               completionPercentage={completionPercentage}
               totalQuests={totalQuests}
               completedQuests={completedQuests}

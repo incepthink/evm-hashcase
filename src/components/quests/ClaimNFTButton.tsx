@@ -41,13 +41,10 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
   const walletAddress = walletInfo?.address;
   const isWalletConnected = hasWalletForChain(requiredChainType);
 
-  // Handle success case and set localStorage
+  // Handle success case
   useEffect(() => {
     if (isSuccess && data?.success && walletAddress) {
-      // Set the localStorage item to persist minted state
-      localStorage.setItem("nft_minted_ns_daily", "true");
-
-      // Update component state
+      // Update component state - no more localStorage
       onNftMintedChange(true);
 
       // Prepare NFT data for modal
@@ -74,16 +71,6 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
     collection,
     walletAddress,
   ]);
-
-  // Check localStorage on component mount to restore minted state
-  useEffect(() => {
-    if (completionPercentage === 100) {
-      const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
-      if (savedNftStatus === "true" && !nftMinted) {
-        onNftMintedChange(true);
-      }
-    }
-  }, [completionPercentage, nftMinted, onNftMintedChange]);
 
   const handleClaimNFT = async () => {
     if (nftMinted) {

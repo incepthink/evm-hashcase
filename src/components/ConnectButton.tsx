@@ -16,6 +16,7 @@ const ConnectButton: React.FC = () => {
     hasWalletForChain,
     disconnectWallet,
     disconnectAllWallets,
+    setUserHasInteracted,
   } = useGlobalAppStore();
 
   // Wallet connections
@@ -97,6 +98,8 @@ const ConnectButton: React.FC = () => {
   const handleModal = () => {
     // Only allow opening modal if not initializing and no wallet is connected
     if (!isInitializing && !walletAddress) {
+      // Mark user interaction when opening modal
+      setUserHasInteracted(true);
       setOpenModal(!openModal);
     }
   };
