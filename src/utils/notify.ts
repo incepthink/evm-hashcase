@@ -102,3 +102,15 @@ export const getNotificationAbortSignal = (notificationId: string): AbortSignal 
   }
   return undefined;
 };
+
+export const notify = (message: string, type: "info" | "success" | "error") => {
+  const controller = notifyPromise(message, type);
+  
+  // Map info type to success for resolve, or handle it differently
+  const resolveType = type === "info" ? "success" : type;
+  
+  setTimeout(() => {
+    notifyResolve(controller, message, resolveType);
+  }, 3000); // Auto-dismiss after 3 seconds
+  return controller;
+};

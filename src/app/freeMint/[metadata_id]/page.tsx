@@ -6,7 +6,7 @@ import ArrowW from "@/assets/images/arrowW.svg";
 import ArrowB from "@/assets/images/arrowB.svg";
 import Eye from "@/assets/images/eye_Icon.png";
 import { Work_Sans } from "next/font/google";
-import notify, { notifyPromise, notifyResolve } from "@/utils/notify";
+import { notify, notifyPromise, notifyResolve } from "@/utils/notify";
 import EyeW from "@/assets/eye-white.svg";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -765,7 +765,7 @@ export default function NFTPage() {
 
     // Check if EVM wallet is connected
     if (!isEvmWalletConnected || !evmWallet?.address) {
-      notify("Please connect your EVM wallet first", "error");
+      notify("Please connect your wallet first", "error");
       return;
     }
 

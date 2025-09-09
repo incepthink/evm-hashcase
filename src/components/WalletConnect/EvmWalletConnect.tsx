@@ -41,9 +41,16 @@ export default function EVMWalletConnect() {
 
   // Filter to only show specific wallets
   const allowedWallets = ["MetaMask", "Phantom", "Coinbase Wallet"];
-  const filteredConnectors = connectors.filter((connector) =>
-    allowedWallets.some((allowed) => connector.name.includes(allowed))
-  );
+  const filteredConnectors = connectors
+    .filter((connector) =>
+      allowedWallets.some((allowed) => connector.name.includes(allowed))
+    )
+    .sort((a, b) => {
+      const order = ["MetaMask", "Phantom", "Coinbase Wallet"];
+      const aIndex = order.findIndex((name) => a.name.includes(name));
+      const bIndex = order.findIndex((name) => b.name.includes(name));
+      return aIndex - bIndex;
+    });
 
   // Safety check with improved conditions - NO AUTO AUTHENTICATION
   useEffect(() => {

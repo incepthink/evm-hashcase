@@ -134,12 +134,9 @@ const WalletConnectionModal = () => {
           </div>
         )} */}
 
-        {/* EVM Wallet Connection */}
-        <div className="w-full space-y-3">
-          <h3 className="text-sm font-medium text-gray-700 text-center">
-            External Wallets
-          </h3>
-          <EVMWalletConnect />
+        {/* Google Login Section */}
+        <div className="w-full space-y-3 mt-2">
+          <PrivyGoogleLogin onSuccess={handlePrivySuccess} />
         </div>
 
         {/* Divider */}
@@ -149,12 +146,9 @@ const WalletConnectionModal = () => {
           <div className="flex-grow border-t border-gray-300"></div>
         </div>
 
-        {/* Google Login Section */}
+        {/* EVM Wallet Connection */}
         <div className="w-full space-y-3">
-          <h3 className="text-sm font-medium text-gray-700 text-center">
-            Easy Login
-          </h3>
-          <PrivyGoogleLogin onSuccess={handlePrivySuccess} />
+          <EVMWalletConnect />
         </div>
 
         {/* Instructions Footer */}
