@@ -9,7 +9,7 @@ import Send from "@/assets/images/send-Regular.svg";
 import Eye from "@/assets/images/eye_Icon.png";
 import Nft from "@/assets/nft-token.jpeg";
 import { Work_Sans } from "next/font/google";
-import notify, { notifyPromise, notifyResolve } from "@/utils/notify";
+import { notifyPromise, notifyResolve } from "@/utils/notify";
 import { Bounce, toast } from "react-toastify";
 import EyeW from "@/assets/eye-white.svg";
 
