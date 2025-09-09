@@ -6,8 +6,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/utils/axios";
 import toast from "react-hot-toast";
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import { useAccount } from "wagmi";
-import { usePrivy } from "@privy-io/react-auth";
 import { useCollectionById } from "@/hooks/useCollections";
 
 // Components
@@ -19,6 +17,7 @@ import { QuestDetailList } from "./QuestDetailList";
 import { QuestDetailHeader } from "./QuestDetailHeader";
 import { ConnectWalletMessage } from "./ConnectWalletMessage";
 import { QuestDetailClaimButton } from "./QuestDetailClaimButton";
+import { METADATA_ID } from "@/utils/constants";
 
 interface Quest {
   id: number;
@@ -65,9 +64,6 @@ interface MetadataInstance {
   updatedAt: string;
 }
 
-// Hardcoded metadata ID
-const METADATA_ID = 22;
-
 const QuestDetailPageContent = () => {
   const params = useParams();
   const router = useRouter();
@@ -92,20 +88,20 @@ const QuestDetailPageContent = () => {
   const [metadata, setMetadata] = useState<MetadataInstance | null>(null);
   const [metadataLoading, setMetadataLoading] = useState<boolean>(true);
   const [metadataError, setMetadataError] = useState<string>("");
-  const [canMintAgain, setCanMintAgain] = useState<boolean>(true);
 
-  // Auto-mint prevention states
-  const [hasAutoMintAttempted, setHasAutoMintAttempted] = useState(false);
-  const [autoMinting, setAutoMinting] = useState(false);
+  const {
+    user,
+    getWalletForChain,
+    hasWalletForChain,
+    setOpenModal,
+    nftClaiming,
+    setIsMinting,
+    setCanMintAgain,
+    setAutoClaimInProgress,
+    canStartMinting,
+  } = useGlobalAppStore();
 
-  const { user, getWalletForChain, hasWalletForChain, setOpenModal } =
-    useGlobalAppStore();
-
-  // Wallet connections - EVM and Privy only
-  const { address: evmAddress } = useAccount(); // EVM wallet
-  const { authenticated: privyAuthenticated, user: privyUser } = usePrivy(); // Privy
-
-  // Use fallback collection_id of "217" if not present
+  // Use fallback collection_id if not present
   const cid = searchParams.get("collection_id") || "218";
 
   const {
@@ -119,54 +115,19 @@ const QuestDetailPageContent = () => {
     return "evm";
   };
 
-  // Get the appropriate wallet address (EVM or Privy)
-  const getWalletAddress = (): string | null => {
-    if (!mounted) return null;
-
-    // First check for regular EVM wallet
-    if (evmAddress) {
-      return evmAddress;
-    }
-
-    // Then check for Privy wallet
-    if (privyAuthenticated && privyUser?.wallet?.address) {
-      return privyUser.wallet.address;
-    }
-
-    return null;
-  };
-
-  // Check if user has any EVM wallet connected (regular or Privy)
-  const isCorrectWalletConnected = (): boolean => {
-    if (!mounted) return false;
-    return !!(evmAddress || (privyAuthenticated && privyUser?.wallet?.address));
-  };
-
-  const walletAddress = getWalletAddress();
-  const isWalletConnected = isCorrectWalletConnected();
   const requiredChainType = getRequiredChainType();
 
-  // Helper function to generate auto-mint attempt key
-  const getAutoMintAttemptKey = (questCode: string, walletAddr: string) => {
-    return `auto_mint_attempted_quest_${questCode}_${walletAddr}`;
-  };
-
-  // Check localStorage for previous auto-mint attempts when wallet connection changes
-  useEffect(() => {
-    if (activeQuestCode && walletAddress) {
-      const autoMintKey = getAutoMintAttemptKey(activeQuestCode, walletAddress);
-      const previouslyAttempted = localStorage.getItem(autoMintKey) === "true";
-      setHasAutoMintAttempted(previouslyAttempted);
-    } else {
-      setHasAutoMintAttempted(false);
-    }
-  }, [activeQuestCode, walletAddress]);
+  // Get wallet info from global store only
+  const walletInfo = mounted ? getWalletForChain(requiredChainType) : null;
+  const walletAddress = walletInfo?.address || null;
+  const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
   // Get wallet type for display purposes
   const getWalletType = (): "EVM" | "Google" | null => {
-    if (evmAddress) return "EVM";
-    if (privyAuthenticated && privyUser?.wallet?.address) return "Google";
-    return null;
+    if (!walletInfo) return null;
+    // You can determine this based on wallet type in the global store
+    // For now, returning "EVM" as default
+    return "EVM";
   };
 
   const isNSCollection =
@@ -187,7 +148,7 @@ const QuestDetailPageContent = () => {
       setMetadataError("");
       setCanMintAgain(true);
     }
-  }, [mounted, isWalletConnected, walletAddress]);
+  }, [mounted, isWalletConnected, walletAddress, setCanMintAgain]);
 
   const fetchMetadata = async () => {
     if (!walletAddress) return;
@@ -207,6 +168,8 @@ const QuestDetailPageContent = () => {
       );
 
       const { metadata_instance, can_mint_again } = response.data;
+      console.log("can_mint_again", can_mint_again);
+
       setMetadata(metadata_instance);
       setCanMintAgain(can_mint_again !== undefined ? can_mint_again : true);
     } catch (error: any) {
@@ -240,9 +203,6 @@ const QuestDetailPageContent = () => {
     if (prev !== isWalletConnected) {
       setLoading(true);
       setInitialLoad(true);
-      // Reset auto-mint when wallet changes
-      setHasAutoMintAttempted(false);
-      setAutoMinting(false);
     }
 
     if (prev === true && isWalletConnected === false) {
@@ -251,8 +211,6 @@ const QuestDetailPageContent = () => {
         prev.map((quest) => ({ ...quest, is_completed: false }))
       );
       setCanMintAgain(true);
-      setHasAutoMintAttempted(false);
-      setAutoMinting(false);
       try {
         localStorage.removeItem(`nft_claimed_${activeQuestCode}`);
         const keysToRemove: string[] = [];
@@ -264,7 +222,7 @@ const QuestDetailPageContent = () => {
         keysToRemove.forEach((k) => sessionStorage.removeItem(k));
       } catch {}
     }
-  }, [mounted, isWalletConnected, activeQuestCode]);
+  }, [mounted, isWalletConnected, activeQuestCode, setCanMintAgain]);
 
   // Fetch quests on mount and wallet change
   useEffect(() => {
@@ -291,6 +249,9 @@ const QuestDetailPageContent = () => {
       const {
         data: { quest },
       } = await axiosInstance.get("/platform/quests/data/" + activeQuestCode);
+
+      console.log("QUEST", quest);
+
       if (!quest) {
         throw new Error("Quest code Invalid");
       }
@@ -458,29 +419,29 @@ const QuestDetailPageContent = () => {
   const completionPercentage =
     totalQuests > 0 ? Math.round((completedQuests / totalQuests) * 100) : 0;
 
-  // Auto-claim NFT function with secure duplicate prevention
+  // Auto-claim NFT function with global state management
   const handleAutoClaimNFT = async () => {
-    if (hasAutoMintAttempted || autoMinting || !metadata || !walletAddress) {
+    if (!metadata || !walletAddress) {
       return;
     }
 
-    console.log("Auto-claim conditions check:", {
-      allQuestsCompleted: completionPercentage === 100,
-      canMintAgain,
-      walletAddress: !!walletAddress,
-      hasAutoMintAttempted,
-    });
-
-    // Check all conditions including server-side can_mint_again
-    if (completionPercentage !== 100 || !canMintAgain) {
+    // Check if we can start minting using global state
+    if (!canStartMinting(walletAddress, METADATA_ID)) {
+      console.log("Cannot start minting - global check failed");
       return;
     }
 
-    // Mark that we've attempted auto-mint to prevent duplicates
-    const autoMintKey = getAutoMintAttemptKey(activeQuestCode, walletAddress);
-    localStorage.setItem(autoMintKey, "true");
-    setHasAutoMintAttempted(true);
-    setAutoMinting(true);
+    // Double-check local conditions
+    if (completionPercentage !== 100 || !nftClaiming.canMintAgain) {
+      console.log("Cannot start minting - local conditions not met");
+      return;
+    }
+
+    console.log("Starting auto-claim NFT process");
+
+    // Set global auto-claim state
+    setAutoClaimInProgress(true);
+    setIsMinting(true, METADATA_ID, walletAddress);
 
     try {
       console.log("Auto-claiming NFT for completed quests");
@@ -493,6 +454,7 @@ const QuestDetailPageContent = () => {
         attributes: metadata.attributes ? metadata.attributes.split(", ") : [],
         recipient: walletAddress,
         chain_type: requiredChainType,
+        metadata_id: METADATA_ID,
       };
 
       // Call the NFT minting endpoint directly
@@ -512,9 +474,6 @@ const QuestDetailPageContent = () => {
       } else {
         console.error("Auto-claim failed:", response.data.message);
         toast.error(response.data.message || "Failed to auto-claim NFT");
-        // Reset auto-mint attempt flag on failure
-        localStorage.removeItem(autoMintKey);
-        setHasAutoMintAttempted(false);
       }
     } catch (error: any) {
       console.error("Auto-claim error:", error);
@@ -528,27 +487,27 @@ const QuestDetailPageContent = () => {
         toast.success("NFT has already been claimed");
       } else {
         toast.error(`Auto-claim failed: ${errorMessage}`);
-        // Reset auto-mint attempt flag on failure
-        localStorage.removeItem(autoMintKey);
-        setHasAutoMintAttempted(false);
       }
     } finally {
-      setAutoMinting(false);
+      // Always reset global states
+      setAutoClaimInProgress(false);
+      setIsMinting(false);
     }
   };
 
-  // Auto-claim trigger with secure duplicate prevention
+  // Auto-claim trigger with global state management
   useEffect(() => {
     const shouldAutoMint = () => {
       return (
         mounted &&
         completionPercentage === 100 &&
-        canMintAgain && // Use server-side can_mint_again instead of localStorage
-        !autoMinting &&
-        !hasAutoMintAttempted &&
+        nftClaiming.canMintAgain &&
+        !nftClaiming.isMinting &&
+        !nftClaiming.autoClaimInProgress &&
         walletAddress &&
         quests.length > 0 &&
-        metadata
+        metadata &&
+        canStartMinting(walletAddress, METADATA_ID)
       );
     };
 
@@ -563,9 +522,9 @@ const QuestDetailPageContent = () => {
   }, [
     mounted,
     completionPercentage,
-    canMintAgain, // Use can_mint_again instead of nftMinted
-    autoMinting,
-    hasAutoMintAttempted,
+    nftClaiming.canMintAgain,
+    nftClaiming.isMinting,
+    nftClaiming.autoClaimInProgress,
     walletAddress,
     quests.length,
     metadata,
@@ -591,7 +550,7 @@ const QuestDetailPageContent = () => {
         router.push(`/loyalties/${cid}`);
         return;
       }
-      router.push("/loyalties/218"); // Use fallback here too
+      router.push("/loyalties/218");
     } catch {
       if (typeof window !== "undefined" && window.history.length > 1) {
         window.history.back();
@@ -728,7 +687,7 @@ const QuestDetailPageContent = () => {
           </div>
 
           {/* Auto-claiming indicator */}
-          {autoMinting && (
+          {nftClaiming.autoClaimInProgress && (
             <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
               <div className="flex items-center justify-center gap-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-400"></div>
@@ -748,9 +707,6 @@ const QuestDetailPageContent = () => {
               <h3 className="text-lg font-medium text-white mb-4">
                 Available Quests
               </h3>
-              <p className="text-gray-300 mb-4">
-                Requires EVM wallet connection
-              </p>
               <div className="mb-4">
                 <div className="flex justify-between text-sm text-gray-400 mb-2">
                   <span>Progress</span>
@@ -782,7 +738,7 @@ const QuestDetailPageContent = () => {
           {/* Claim NFT Button */}
           {nftData && (
             <QuestDetailClaimButton
-              nftMinted={!canMintAgain} // Use inverse of can_mint_again
+              nftMinted={!nftClaiming.canMintAgain}
               claiming={claiming}
               setClaiming={setClaiming}
               setNftMinted={(minted: boolean) => setCanMintAgain(!minted)}
@@ -793,6 +749,9 @@ const QuestDetailPageContent = () => {
               nftData={nftData}
               onSuccess={handleNFTMintSuccess}
               requiredChainType={requiredChainType}
+              disabled={
+                nftClaiming.isMinting || nftClaiming.autoClaimInProgress
+              }
             />
           )}
         </div>

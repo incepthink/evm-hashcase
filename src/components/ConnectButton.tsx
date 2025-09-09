@@ -1,8 +1,6 @@
 "use client";
 
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import { useAccount, useDisconnect as useEvmDisconnect } from "wagmi";
-import { usePrivy } from "@privy-io/react-auth";
 import { Wallet } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
@@ -19,81 +17,56 @@ const ConnectButton: React.FC = () => {
     setUserHasInteracted,
   } = useGlobalAppStore();
 
-  // Wallet connections
-  const { address: evmAddress, isConnected: isEvmConnected } = useAccount(); // EVM wallet
-  const {
-    authenticated: privyAuthenticated,
-    user: privyUser,
-    logout: privyLogout,
-    ready: privyReady,
-  } = usePrivy(); // Privy
-
-  // Disconnect functions
-  const { disconnect: disconnectEvm } = useEvmDisconnect();
-
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [activeWalletType, setActiveWalletType] = useState<
     "evm" | "privy" | null
   >(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Get wallet info from store
+  // Get wallet info from store only
   const evmWallet = getWalletForChain("evm");
 
   // Handle initialization state
   useEffect(() => {
-    // Consider initialization complete when Privy is ready
-    if (privyReady) {
+    // Simple initialization - just set to false after a short delay
+    const timer = setTimeout(() => {
       setIsInitializing(false);
-    }
-  }, [privyReady]);
+    }, 500);
 
-  // Update display based on connected wallets
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Update display based on verified user and store wallets ONLY
   useEffect(() => {
     let displayAddress: string | null = null;
     let walletType: "evm" | "privy" | null = null;
 
-    // If user is verified, check for wallet connections
-    if (isUserVerified) {
-      // Priority 1: EVM wallet from store (most reliable after refresh)
-      if (evmWallet && evmWallet.address) {
-        displayAddress = `${evmWallet.address.slice(
-          0,
-          10
-        )}...${evmWallet.address.slice(-8)}`;
-        walletType = "evm";
-      }
-      // Priority 2: Live EVM connection
-      else if (isEvmConnected && evmAddress) {
-        displayAddress = `${evmAddress.slice(0, 10)}...${evmAddress.slice(-8)}`;
-        walletType = "evm";
-      }
-      // Priority 3: Privy wallet (either from store or live)
-      else if (privyAuthenticated && privyUser?.wallet?.address) {
-        const address = privyUser.wallet.address;
-        displayAddress = `${address.slice(0, 10)}...${address.slice(-8)}`;
+    // Only show wallet info if user is verified AND has wallet in store
+    if (isUserVerified && evmWallet && evmWallet.address) {
+      displayAddress = `${evmWallet.address.slice(
+        0,
+        10
+      )}...${evmWallet.address.slice(-8)}`;
+
+      // Determine wallet type from store
+      if (evmWallet.type === "privy") {
         walletType = "privy";
+      } else {
+        walletType = "evm";
       }
     }
 
     setWalletAddress(displayAddress);
     setActiveWalletType(walletType);
-  }, [
-    isUserVerified,
-    evmWallet,
-    evmAddress,
-    isEvmConnected,
-    privyAuthenticated,
-    privyUser,
-  ]);
+  }, [isUserVerified, evmWallet]);
 
-  // Clear wallet address when user is not verified and no wallets connected
+  // Clear wallet address when user is not verified
   useEffect(() => {
-    if (!isUserVerified && !evmAddress && !privyAuthenticated) {
+    if (!isUserVerified) {
       setWalletAddress(null);
       setActiveWalletType(null);
     }
-  }, [isUserVerified, evmAddress, privyAuthenticated]);
+  }, [isUserVerified]);
 
   const handleModal = () => {
     // Only allow opening modal if not initializing and no wallet is connected
@@ -114,20 +87,9 @@ const ConnectButton: React.FC = () => {
     disconnectAllWallets();
 
     try {
-      // Disconnect based on active wallet type or disconnect all
-      if (activeWalletType === "evm" && evmAddress) {
-        disconnectEvm();
-      } else if (activeWalletType === "privy" && privyAuthenticated) {
-        await privyLogout();
-      } else {
-        // Disconnect all if unsure
-        if (evmAddress) {
-          disconnectEvm();
-        }
-        if (privyAuthenticated) {
-          await privyLogout();
-        }
-      }
+      // Since we removed direct wallet hooks, we don't need to call
+      // disconnect functions here - the cleanup is handled by the global store
+      console.log("Disconnected all wallets from global store");
     } catch (error) {
       console.error("Error during disconnect:", error);
     }
@@ -143,8 +105,8 @@ const ConnectButton: React.FC = () => {
     );
   }
 
-  // If any wallet is connected and user is verified, show address and disconnect button
-  if (walletAddress && isUserVerified) {
+  // If user is verified and has wallet in store, show address and disconnect button
+  if (walletAddress && isUserVerified && evmWallet) {
     const walletTypeDisplay = activeWalletType === "evm" ? "EVM" : "Google";
 
     return (
@@ -172,7 +134,7 @@ const ConnectButton: React.FC = () => {
   return (
     <button
       onClick={handleModal}
-      disabled={isInitializing || (isUserVerified && !walletAddress)}
+      disabled={isInitializing}
       className="flex justify-center items-center gap-x-2 sm:gap-x-3 md:gap-x-5 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-white font-medium sm:font-semibold rounded-2xl w-max ml-4 sm:ml-6 md:ml-10 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span className="hidden sm:inline">Connect</span>

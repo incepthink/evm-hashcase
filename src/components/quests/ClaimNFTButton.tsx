@@ -1,22 +1,29 @@
 // components/ClaimNFTButton.tsx
 "use client";
 
-import { useEffect } from "react";
-import toast from "react-hot-toast";
-import { useNFTMinting, MintNFTData } from "@/hooks/useNFTMinting";
+import { useState } from "react";
+import { useNFTClaiming } from "@/hooks/useNFTClaiming";
 import { useGlobalAppStore } from "@/store/globalAppStore";
+import toast from "react-hot-toast";
+import { METADATA_ID } from "@/utils/constants";
 
 interface ClaimNFTButtonProps {
   nftMinted: boolean;
   completionPercentage: number;
   totalQuests: number;
   completedQuests: number;
-  collection: any;
+  collection: {
+    name: string;
+    description: string;
+    image_url: string;
+    attributes: string[];
+  };
   collectionId: string;
   onSuccess: (nftData: any) => void;
   onNftMintedChange: (minted: boolean) => void;
-  chain?: "sui" | "ethereum" | "polygon" | "solana";
-  requiredChainType?: "sui" | "evm";
+  chain: string;
+  requiredChainType: "sui" | "evm";
+  disabled?: boolean;
 }
 
 export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
@@ -28,145 +35,130 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
   collectionId,
   onSuccess,
   onNftMintedChange,
-  chain = "sui",
-  requiredChainType = "sui",
+  chain,
+  requiredChainType,
+  disabled: externalDisabled = false,
 }) => {
-  const { getWalletForChain, hasWalletForChain, setOpenModal } =
-    useGlobalAppStore();
+  const [localClaiming, setLocalClaiming] = useState(false);
 
-  const { mintNFT, isLoading: claiming, isSuccess, data } = useNFTMinting();
+  const {
+    isMinting,
+    canMintAgain,
+    autoClaimInProgress,
+    claimNFT,
+    canStartClaiming,
+    isClaimDisabled,
+  } = useNFTClaiming();
 
-  // Get wallet info from store
-  const walletInfo = getWalletForChain(requiredChainType);
-  const walletAddress = walletInfo?.address;
-  const isWalletConnected = hasWalletForChain(requiredChainType);
+  const { getWalletForChain } = useGlobalAppStore();
 
-  // Handle success case
-  useEffect(() => {
-    if (isSuccess && data?.success && walletAddress) {
-      // Update component state - no more localStorage
-      onNftMintedChange(true);
+  // Get wallet address
+  const getWalletAddress = (): string | null => {
+    const walletInfo = getWalletForChain(requiredChainType);
+    return walletInfo?.address || null;
+  };
 
-      // Prepare NFT data for modal
+  const walletAddress = getWalletAddress();
+
+  const handleClaimNFT = async () => {
+    if (!walletAddress) {
+      toast.error("Wallet address not found");
+      return;
+    }
+
+    if (!canStartClaiming(walletAddress, METADATA_ID)) {
+      toast.error("Cannot start claiming at this time");
+      return;
+    }
+
+    setLocalClaiming(true);
+
+    try {
       const nftData = {
         collection_id: collectionId,
         name: collection.name,
         description: collection.description,
-        image_url: collection.image_uri || collection.image_url,
+        image_url: collection.image_url,
+        attributes: collection.attributes,
         recipient: walletAddress,
+        chain_type: requiredChainType,
+        metadata_id: METADATA_ID,
       };
 
-      // Call success handler
-      onSuccess(nftData);
+      const result = await claimNFT(nftData);
 
-      // Show success toast
-      toast.success("NFT successfully minted!");
-    }
-  }, [
-    isSuccess,
-    data,
-    onNftMintedChange,
-    onSuccess,
-    collectionId,
-    collection,
-    walletAddress,
-  ]);
-
-  const handleClaimNFT = async () => {
-    if (nftMinted) {
-      toast("NFT already minted for today's quests!");
-      return;
-    }
-
-    if (completionPercentage !== 100) {
-      toast.error("Complete all quests to claim the NFT");
-      return;
-    }
-
-    if (!isWalletConnected || !walletAddress) {
-      const chainName =
-        requiredChainType === "evm"
-          ? "wallet (MetaMask, Phantom, Coinbase)"
-          : "Sui wallet";
-
-      toast.error(`Please connect a ${chainName} to claim the NFT`, {
-        duration: 5000,
-        style: {
-          background: "#1f2937",
-          color: "#fff",
-          border: "1px solid #374151",
-        },
-      });
-
-      setOpenModal(true);
-      return;
-    }
-
-    try {
-      const nftData: MintNFTData = {
-        collection_id: collectionId,
-        name: collection.name,
-        description: collection.description,
-        image_url: collection.image_uri || collection.image_url,
-        attributes: collection.attributes || [],
-        recipient: walletAddress,
-        chain: chain,
-      };
-
-      mintNFT(nftData);
-    } catch (error) {
-      console.error("Failed to mint NFT:", error);
+      if (result.success) {
+        toast.success("NFT claimed successfully!");
+        onSuccess(result.data);
+        onNftMintedChange(true);
+      } else {
+        toast.error(result.error || "Failed to claim NFT");
+      }
+    } catch (error: any) {
+      console.error("Error in handleClaimNFT:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLocalClaiming(false);
     }
   };
 
-  const getButtonText = () => {
-    if (nftMinted) return "✓ NFT Minted";
-    if (claiming) return "🎨 Minting NFT...";
-    if (!isWalletConnected) {
-      const chainName =
-        requiredChainType === "evm" ? "EVM Wallet" : "Sui Wallet";
-      return `Connect ${chainName} to Claim NFT`;
+  // Determine if button should be disabled
+  const isButtonDisabled =
+    externalDisabled ||
+    isClaimDisabled ||
+    localClaiming ||
+    completionPercentage < 100 ||
+    nftMinted ||
+    !walletAddress;
+
+  // Determine button text and state
+  const getButtonContent = () => {
+    if (autoClaimInProgress) {
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          <span>Auto-claiming...</span>
+        </div>
+      );
     }
-    if (completionPercentage === 100) return "🎉 Claim NFT";
-    return `Complete ${totalQuests - completedQuests} more quests to Claim NFT`;
+
+    if (localClaiming || isMinting) {
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          <span>Claiming NFT...</span>
+        </div>
+      );
+    }
+
+    if (nftMinted || !canMintAgain) {
+      return "NFT Already Claimed";
+    }
+
+    if (completionPercentage < 100) {
+      return "Complete All Quests to Claim Reward";
+    }
+
+    return "Claim NFT Reward";
   };
 
-  const getMobileButtonText = () => {
-    if (nftMinted) return "✓ NFT Minted";
-    if (claiming) return "Minting...";
-    if (!isWalletConnected) {
-      const chainName = requiredChainType === "evm" ? "EVM" : "Sui";
-      return `Connect ${chainName}`;
-    }
-    if (completionPercentage === 100) return "Claim NFT";
-    return `Complete ${totalQuests - completedQuests} more`;
-  };
-
-  const getButtonStyle = () => {
-    if (nftMinted) {
-      return "bg-white text-black cursor-default";
-    }
-    if (!isWalletConnected) {
-      return "bg-gray-600 text-gray-300 cursor-not-allowed opacity-60";
-    }
-    if (completionPercentage === 100 && !claiming) {
-      return "bg-white text-black shadow-lg hover:shadow-xl cursor-pointer";
-    }
-    return "bg-gray-700 text-gray-400 cursor-not-allowed opacity-50";
-  };
+  // Don't render if conditions aren't met
+  if (completionPercentage < 100 && !nftMinted) {
+    return null;
+  }
 
   return (
-    <div className="text-center mt-6 sm:mt-8">
+    <div className="mt-8 text-center">
       <button
         onClick={handleClaimNFT}
-        disabled={claiming || !isWalletConnected || nftMinted}
-        className={`
-          w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold text-sm sm:text-base md:text-lg transition-all duration-300 transform
-          ${getButtonStyle()}
-        `}
+        disabled={isButtonDisabled}
+        className={`w-full max-w-md py-4 px-6 rounded-lg font-semibold text-white transition-all duration-200 ${
+          isButtonDisabled
+            ? "bg-gray-600 cursor-not-allowed opacity-50"
+            : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:scale-105"
+        }`}
       >
-        <span className="block sm:hidden">{getMobileButtonText()}</span>
-        <span className="hidden sm:block">{getButtonText()}</span>
+        {getButtonContent()}
       </button>
     </div>
   );

@@ -59,6 +59,8 @@ export const useQuests = ({
         const response = await axiosInstance.get("/platform/quest/by-owner", {
           params,
         });
+        console.log("QUEST", response.data);
+        
 
         let sessionCompleted: number[] = [];
         try {

@@ -24,7 +24,6 @@ export default function EVMWalletConnect() {
     unsetUser,
     getWalletForChain,
     disconnectWallet,
-    userHasInteracted,
     setUserHasInteracted,
   } = useGlobalAppStore();
 
@@ -35,7 +34,6 @@ export default function EVMWalletConnect() {
   const connectors = useConnectors();
 
   const [loading, setLoading] = useState(true);
-  const [creatingUser, setCreatingUser] = useState(false);
   const [connectingWallet, setConnectingWallet] = useState(false);
 
   // Check if EVM wallet is connected in store
@@ -47,21 +45,20 @@ export default function EVMWalletConnect() {
     allowedWallets.some((allowed) => connector.name.includes(allowed))
   );
 
-  // Safety check with improved conditions
+  // Safety check with improved conditions - NO AUTO AUTHENTICATION
   useEffect(() => {
     const resetConnectionState = async () => {
       // Add a small delay to let wagmi settle
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Only disconnect if we're absolutely sure there's a stale connection
-      // and the user hasn't initiated any connection process
+      // and NO authentication process should happen
       if (
         isConnected &&
         !evmWallet &&
         !isUserVerified &&
         address &&
-        !connectingWallet &&
-        !creatingUser
+        !connectingWallet
       ) {
         console.log(
           "Cleaning up stale wallet connection for address:",
@@ -76,14 +73,7 @@ export default function EVMWalletConnect() {
     };
 
     // Only run if we detect an actual stale connection
-    // and ensure we're not in the middle of any authentication process
-    if (
-      isConnected &&
-      !isUserVerified &&
-      !evmWallet &&
-      !connectingWallet &&
-      !creatingUser
-    ) {
+    if (isConnected && !isUserVerified && !evmWallet && !connectingWallet) {
       resetConnectionState();
     }
   }, []); // Keep empty dependency array to run only once on mount
@@ -95,24 +85,42 @@ export default function EVMWalletConnect() {
     console.log("EVM wallet in store:", evmWallet);
   }, [filteredConnectors, address, isUserVerified, evmWallet]);
 
-  const handleUserCreation = async () => {
-    if (isUserVerified || !address) return;
+  // MANUAL AUTHENTICATION FUNCTION - Only called when user clicks authenticate
+  const handleUserAuthentication = async (walletAddress: string) => {
+    if (isUserVerified) return { success: true };
 
-    setCreatingUser(true);
-    const notifyId = notifyPromise("Authenticating...", "info");
+    const notificationController = notifyPromise("Authenticating...", "info");
 
     try {
-      const response = await axiosInstance.get("auth/wallet/request-token");
+      // Create abort controller for this authentication
+      const authController = new AbortController();
+
+      // Connect the notification cancellation to the auth controller
+      const originalCancel = notificationController.cancel;
+      notificationController.cancel = () => {
+        authController.abort();
+        originalCancel();
+      };
+
+      const response = await axiosInstance.get("auth/wallet/request-token", {
+        signal: authController.signal,
+      });
       const message = response.data.message as string;
       const authToken = response.data.token as string;
 
       const signature = await signMessageAsync({ message });
 
-      const res = await axiosInstance.post("auth/evm-wallet/login", {
-        signature,
-        address,
-        token: authToken,
-      });
+      const res = await axiosInstance.post(
+        "auth/wallet/login",
+        {
+          signature,
+          address: walletAddress,
+          token: authToken,
+        },
+        {
+          signal: authController.signal,
+        }
+      );
 
       const token: string = res.data.token;
       const user_instance = res.data.user_instance;
@@ -130,26 +138,37 @@ export default function EVMWalletConnect() {
 
       setUser(userDataToStoreInGlobalStore, token);
 
-      // Set EVM wallet in store (best-effort wallet type guess)
+      // Set EVM wallet in store
       setEvmWallet({
-        address,
+        address: walletAddress,
         type: "metamask",
       });
 
-      notifyResolve(notifyId, "Connected successfully!", "success");
+      notifyResolve(
+        notificationController,
+        "Connected successfully!",
+        "success"
+      );
+      return { success: true };
     } catch (error: any) {
       console.error("Authentication error:", error);
 
-      // Handle signature rejection (error code 4001)
-      if (error?.code === 4001 || error?.message?.includes("User rejected")) {
+      // Handle different error types
+      if (error.name === "AbortError") {
+        // User cancelled - don't show error notification
+        return { success: false, cancelled: true };
+      } else if (
+        error?.code === 4001 ||
+        error?.message?.includes("User rejected")
+      ) {
         notifyResolve(
-          notifyId,
+          notificationController,
           "Signature cancelled. You can try connecting again.",
           "error"
         );
       } else {
         notifyResolve(
-          notifyId,
+          notificationController,
           "Failed to authenticate. Please try again.",
           "error"
         );
@@ -170,9 +189,8 @@ export default function EVMWalletConnect() {
           );
         }
       }
-    } finally {
-      setOpenModal(false);
-      setCreatingUser(false);
+
+      return { success: false };
     }
   };
 
@@ -194,16 +212,26 @@ export default function EVMWalletConnect() {
     setUserHasInteracted(true);
 
     setConnectingWallet(true);
-    const notifyId = notifyPromise(
+    const notificationController = notifyPromise(
       `Connecting to ${connector.name}...`,
       "info"
     );
 
     try {
+      // Create abort controller for this connection
+      const connectController = new AbortController();
+
+      // Connect the notification cancellation to the connect controller
+      const originalCancel = notificationController.cancel;
+      notificationController.cancel = () => {
+        connectController.abort();
+        originalCancel();
+      };
+
       // Initiate connection and wait for completion
       await connectAsync({ connector });
 
-      // After connectAsync resolves, either read from connector or from the hook
+      // After connectAsync resolves, get the wallet address
       let walletAddress = address;
       if (!walletAddress) {
         try {
@@ -223,65 +251,22 @@ export default function EVMWalletConnect() {
         throw new Error("No wallet address available");
       }
 
-      // Request authentication with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      const response = await axiosInstance.get("auth/wallet/request-token", {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      const message = response.data.message as string;
-      const authToken = response.data.token as string;
-
-      const signature = await signMessageAsync({ message });
-
-      const loginController = new AbortController();
-      const loginTimeoutId = setTimeout(() => loginController.abort(), 15000);
-
-      const res = await axiosInstance.post(
-        "auth/wallet/login",
-        {
-          signature,
-          address: finalAddress,
-          token: authToken,
-        },
-        {
-          signal: loginController.signal,
-        }
-      );
-      clearTimeout(loginTimeoutId);
-
-      const token: string = res.data.token;
-      const user_instance = res.data.user_instance;
-
-      const userDataToStoreInGlobalStore = {
-        id: user_instance.id,
-        email: user_instance.email,
-        badges: user_instance.badges,
-        user_name: user_instance.username || "guest_user",
-        description:
-          user_instance.description || "this is a guest_user description",
-        profile_image: user_instance.profile_image,
-        banner_image: user_instance.banner_image,
-      };
-
-      setUser(userDataToStoreInGlobalStore, token);
-
-      // Set EVM wallet in store
-      setEvmWallet({
-        address: finalAddress,
-        type: getWalletType(connector.name),
-      });
-
       notifyResolve(
-        notifyId,
-        `Successfully connected to ${connector.name}!`,
+        notificationController,
+        "Wallet connected! Click authenticate to continue.",
         "success"
       );
+
+      // DO NOT AUTO-AUTHENTICATE - Let user decide when to authenticate
+      console.log("Wallet connected. User must manually authenticate.");
     } catch (error: any) {
       console.error("Failed to connect EVM wallet:", error);
+
+      // Handle different error types
+      if (error.name === "AbortError") {
+        // User cancelled - don't show error notification
+        return;
+      }
 
       // Complete cleanup on any error
       unsetUser();
@@ -294,19 +279,13 @@ export default function EVMWalletConnect() {
       // Enhanced error handling
       if (error?.code === 4001 || error?.message?.includes("User rejected")) {
         notifyResolve(
-          notifyId,
+          notificationController,
           "Connection cancelled. You can try again anytime.",
-          "error"
-        );
-      } else if (error.name === "AbortError") {
-        notifyResolve(
-          notifyId,
-          "Connection timed out. Please try again.",
           "error"
         );
       } else if (error?.message?.includes("No wallet address available")) {
         notifyResolve(
-          notifyId,
+          notificationController,
           "Wallet connected but no address found. Please try again.",
           "error"
         );
@@ -315,36 +294,29 @@ export default function EVMWalletConnect() {
           error?.response?.data?.message ||
           error?.message ||
           "Connection failed";
-        notifyResolve(notifyId, `Failed to connect: ${errorMessage}`, "error");
+        notifyResolve(
+          notificationController,
+          `Failed to connect: ${errorMessage}`,
+          "error"
+        );
       }
     } finally {
       setConnectingWallet(false);
     }
   };
 
-  // FIXED: Only auto-authenticate if user has explicitly interacted
-  useEffect(() => {
-    if (
-      isConnected &&
-      address &&
-      !isUserVerified &&
-      !connectingWallet &&
-      !evmWallet &&
-      !creatingUser &&
-      userHasInteracted // ADDED: Only authenticate if user has interacted
-    ) {
-      console.log("Auto-authenticating EVM wallet after user interaction");
-      handleUserCreation();
+  // MANUAL AUTHENTICATE BUTTON - Only way to trigger authentication
+  const handleManualAuthenticate = async () => {
+    if (!address) {
+      console.log("No wallet address available for authentication");
+      return;
     }
-  }, [
-    isConnected,
-    address,
-    isUserVerified,
-    connectingWallet,
-    evmWallet,
-    creatingUser,
-    userHasInteracted, // ADDED: Include in dependencies
-  ]);
+
+    const result = await handleUserAuthentication(address);
+    if (result.success) {
+      setOpenModal(false);
+    }
+  };
 
   const handleWalletDisconnect = async () => {
     try {
@@ -370,7 +342,36 @@ export default function EVMWalletConnect() {
     return (
       <div className="bg-blue-600 border-black/20 px-6 py-2 text-white font-semibold rounded-full w-full flex items-center gap-x-8 justify-center">
         <LucideWalletIcon className="w-4 h-4" />
-        EVM Wallet Connected
+        EVM Wallet Connected & Authenticated
+      </div>
+    );
+  }
+
+  // Show authenticate button if wallet is connected but not authenticated
+  if (isConnected && address && !isUserVerified && !connectingWallet) {
+    return (
+      <div className="w-full space-y-3">
+        <div className="bg-yellow-100 border border-yellow-300 px-4 py-2 rounded-lg">
+          <p className="text-sm text-yellow-800 mb-2">
+            Wallet connected: {address.slice(0, 8)}...{address.slice(-6)}
+          </p>
+          <p className="text-xs text-yellow-700">
+            Click authenticate to complete the connection
+          </p>
+        </div>
+        <button
+          onClick={handleManualAuthenticate}
+          className="bg-green-600 border-black/20 px-6 py-2 text-white font-semibold rounded-full w-full flex items-center gap-x-4 justify-center hover:bg-green-700"
+        >
+          <LucideWalletIcon className="w-4 h-4" />
+          Authenticate Wallet
+        </button>
+        <button
+          onClick={handleWalletDisconnect}
+          className="bg-red-600 border-black/20 px-6 py-2 text-white font-semibold rounded-full w-full flex items-center gap-x-4 justify-center hover:bg-red-700"
+        >
+          Disconnect
+        </button>
       </div>
     );
   }
@@ -392,14 +393,14 @@ export default function EVMWalletConnect() {
         return (
           <button
             key={connector.id}
-            disabled={connectingWallet || creatingUser || !connector}
+            disabled={connectingWallet || !connector}
             className="bg-[#ffffff] border-black/20 px-6 py-2 text-black font-semibold rounded-full w-full flex items-center gap-x-8 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleWalletConnect(connector)}
           >
-            {connectingWallet || creatingUser ? (
+            {connectingWallet ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black" />
-                {creatingUser ? "Authenticating..." : "Connecting..."}
+                Connecting...
               </>
             ) : (
               <>

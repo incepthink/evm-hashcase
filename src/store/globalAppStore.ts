@@ -29,6 +29,15 @@ interface AuthenticationLock {
   timestamp: number;
 }
 
+interface NFTClaimingState {
+  isMinting: boolean;
+  canMintAgain: boolean;
+  mintingMetadataId: number | null;
+  mintingWalletAddress: string | null;
+  lastMintAttempt: number | null;
+  autoClaimInProgress: boolean;
+}
+
 interface AppState {
   user: User | null;
   isUserVerified: boolean;
@@ -46,6 +55,9 @@ interface AppState {
 
   // User interaction tracking
   userHasInteracted: boolean;
+
+  // NFT Claiming state
+  nftClaiming: NFTClaimingState;
 
   // Actions
   setUser: (user: User, jwt: string) => void;
@@ -70,6 +82,13 @@ interface AppState {
   // User interaction actions
   setUserHasInteracted: (interacted: boolean) => void;
   resetUserInteraction: () => void;
+
+  // NFT Claiming actions
+  setIsMinting: (minting: boolean, metadataId?: number, walletAddress?: string) => void;
+  setCanMintAgain: (canMint: boolean) => void;
+  setAutoClaimInProgress: (inProgress: boolean) => void;
+  canStartMinting: (walletAddress: string, metadataId: number) => boolean;
+  resetNFTClaimingState: () => void;
 }
 
 /* ========= Helpers ========= */
@@ -101,6 +120,16 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
   authenticationLock: null,
   userHasInteracted: false,
 
+  // NFT Claiming initial state
+  nftClaiming: {
+    isMinting: false,
+    canMintAgain: true,
+    mintingMetadataId: null,
+    mintingWalletAddress: null,
+    lastMintAttempt: null,
+    autoClaimInProgress: false,
+  },
+
   // Set user and JWT in cookies and state
   setUser: (user, jwt) => {
     Cookies.set("user", JSON.stringify(user), { expires: COOKIE_EXPIRY_DATE() });
@@ -120,6 +149,15 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       userWalletAddress: null,
       isAuthenticating: false,
       authenticationLock: null,
+      // Reset NFT claiming state on logout
+      nftClaiming: {
+        isMinting: false,
+        canMintAgain: true,
+        mintingMetadataId: null,
+        mintingWalletAddress: null,
+        lastMintAttempt: null,
+        autoClaimInProgress: false,
+      },
       // Don't reset userHasInteracted on logout - preserve user intent
     });
   },
@@ -226,6 +264,15 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
       userWalletAddress: null,
       isAuthenticating: false,
       authenticationLock: null,
+      // Reset NFT claiming state on complete disconnect
+      nftClaiming: {
+        isMinting: false,
+        canMintAgain: true,
+        mintingMetadataId: null,
+        mintingWalletAddress: null,
+        lastMintAttempt: null,
+        autoClaimInProgress: false,
+      },
       // Reset user interaction on complete disconnect
       userHasInteracted: false,
     });
@@ -272,6 +319,80 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
 
   resetUserInteraction: () => {
     set({ userHasInteracted: false });
+  },
+
+  // NFT Claiming actions
+  setIsMinting: (minting: boolean, metadataId?: number, walletAddress?: string) => {
+    const currentState = get().nftClaiming;
+    set({
+      nftClaiming: {
+        ...currentState,
+        isMinting: minting,
+        mintingMetadataId: minting ? (metadataId || null) : null,
+        mintingWalletAddress: minting ? (walletAddress || null) : null,
+        lastMintAttempt: minting ? Date.now() : currentState.lastMintAttempt,
+      },
+    });
+  },
+
+  setCanMintAgain: (canMint: boolean) => {
+    const currentState = get().nftClaiming;
+    set({
+      nftClaiming: {
+        ...currentState,
+        canMintAgain: canMint,
+      },
+    });
+  },
+
+  setAutoClaimInProgress: (inProgress: boolean) => {
+    const currentState = get().nftClaiming;
+    set({
+      nftClaiming: {
+        ...currentState,
+        autoClaimInProgress: inProgress,
+      },
+    });
+  },
+
+  canStartMinting: (walletAddress: string, metadataId: number): boolean => {
+    const state = get().nftClaiming;
+    const now = Date.now();
+    
+    // If already minting, block
+    if (state.isMinting) {
+      return false;
+    }
+    
+    // If auto-claim is in progress, block manual claims
+    if (state.autoClaimInProgress) {
+      return false;
+    }
+    
+    // If can't mint again, block
+    if (!state.canMintAgain) {
+      return false;
+    }
+    
+    // Rate limiting: prevent rapid attempts (5 second cooldown)
+    if (state.lastMintAttempt && now - state.lastMintAttempt < 5000) {
+      return false;
+    }
+    
+    return true;
+  },
+
+  resetNFTClaimingState: () => {
+    set({
+      nftClaiming: {
+        isMinting: false,
+        canMintAgain: true,
+        mintingMetadataId: null,
+        mintingWalletAddress: null,
+        lastMintAttempt: null,
+        autoClaimInProgress: false,
+      },
+    });
   },
 }));
 
