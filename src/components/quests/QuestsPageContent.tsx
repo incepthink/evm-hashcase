@@ -81,7 +81,7 @@ const QuestsPageContent = () => {
   }, []);
 
   // Use fallback collection_id if not present
-  const cid = searchParams.get("collection_id") || "218";
+  const cid = searchParams.get("collection_id") || "219";
 
   const {
     collection,
@@ -180,7 +180,7 @@ const QuestsPageContent = () => {
         router.push(`/loyalties/${cid}`);
         return;
       }
-      router.push("/loyalties/218");
+      router.push("/loyalties/219");
     } catch {
       if (typeof window !== "undefined" && window.history.length > 1) {
         window.history.back();

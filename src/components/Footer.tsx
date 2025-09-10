@@ -5,91 +5,49 @@ import YT from "@/assets/images/yt.svg";
 import IG from "@/assets/images/insta.svg";
 import X from "@/assets/images/twitter.svg";
 import { Work_Sans } from "next/font/google";
-import Logo from "@/assets/images/hashcase-text.svg";
-import { Heart, ArrowUp } from "lucide-react";
 
 const workSans = Work_Sans({ subsets: ["latin"] });
 
 const Footer = () => {
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   return (
-    <footer className="relative bg-gradient-to-b from-[#1A1D35] to-[#0f111a] border-t border-white/10">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5 hidden md:block">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-500 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-        {/* Main Footer Content */}
-        <div className="py-12 md:py-16">
-          <div className="flex flex-col items-center text-center space-y-8">
-            {/* Brand Section */}
-            <div className="max-w-md">
-              <div className="flex justify-center mb-6">
-                <Logo className="h-8 md:h-10" />
-              </div>
-              <p className="text-white/70 text-sm md:text-base leading-relaxed">
-                Revolutionizing loyalty programs with blockchain technology.
-                Turn your audience into superfans with our innovative NFT-based
-                rewards platform.
-              </p>
-            </div>
-
-            {/* Social Media Links */}
-            <div className="flex items-center gap-4">
-              <Link
-                href="#"
-                className="group p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 hover:scale-110"
-                aria-label="YouTube"
-              >
-                <YT className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="group p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 hover:scale-110"
-                aria-label="Instagram"
-              >
-                <IG className="w-5 h-5" />
-              </Link>
-              <Link
-                href="#"
-                className="group p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 hover:scale-110"
-                aria-label="Twitter"
-              >
-                <X className="w-5 h-5" />
-              </Link>
-            </div>
+    <footer className="bg-[#1A1D35] border-t border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Social Media Links */}
+          <div className="flex items-center gap-4 order-2 sm:order-1">
+            <Link
+              href="#"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
+              aria-label="YouTube"
+            >
+              <YT className="w-5 h-5" />
+            </Link>
+            <Link
+              href="#"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
+              aria-label="Instagram"
+            >
+              <IG className="w-5 h-5" />
+            </Link>
+            <Link
+              href="#"
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
+              aria-label="Twitter"
+            >
+              <X className="w-5 h-5" />
+            </Link>
           </div>
-        </div>
 
-        {/* Bottom Bar */}
-        <div className="py-6 border-t border-white/10">
-          <div className="flex flex-col items-center justify-center gap-2 text-center">
-            <div className="flex flex-col sm:flex-row items-center gap-2 text-white/60 text-sm">
-              <span>© 2024 HashCase. All rights reserved.</span>
-              <span className="hidden sm:inline">•</span>
-              <div className="flex items-center gap-1">
-                <span>Made with</span>
-                <Heart className="w-4 h-4 text-red-400" />
-                <span>for the Web3 community</span>
-              </div>
-            </div>
+          {/* Copyright */}
+          <div className="order-1 sm:order-2">
+            <p
+              className={`${workSans.className} text-white/60 text-sm text-center sm:text-right`}
+            >
+              © 2024 HashCase. All rights reserved.
+            </p>
           </div>
         </div>
       </div>
-
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className="fixed bottom-6 right-6 p-3 bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-50"
-        aria-label="Scroll to top"
-      >
-        <ArrowUp className="w-5 h-5" />
-      </button>
     </footer>
   );
 };

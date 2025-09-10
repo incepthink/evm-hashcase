@@ -3,7 +3,8 @@
 import axiosInstance from "@/utils/axios";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import ArrowW from "@/assets/images/arrowW.svg";
 
 interface NFTMetadata {
   id: number;
@@ -22,6 +23,7 @@ interface NFTMetadata {
 const NFTMetadataPage = () => {
   const [metadata, setMetadata] = useState<NFTMetadata[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const params = useParams();
 
@@ -62,13 +64,22 @@ const NFTMetadataPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#00041f] to-[#030828] px-4 sm:px-6 lg:px-8 py-8 text-white">
       {/* Header Section */}
-      <div className="text-center mb-8 sm:mb-12">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
-          Mintable NFTs
-        </h1>
-        <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
-          Discover and mint unique digital assets from our curated collection
-        </p>
+      <div className="max-w-7xl mx-auto">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center justify-start gap-x-2 cursor-pointer mb-4"
+        >
+          <ArrowW />
+          <p className="text-2xl text-white/70">back</p>
+        </button>
+        <div className="text-center mb-8 sm:mb-12 max-w-7xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
+            Mintable NFTs
+          </h1>
+          <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
+            Discover and mint unique digital assets from our curated collection
+          </p>
+        </div>
       </div>
 
       {/* NFT Grid Container */}

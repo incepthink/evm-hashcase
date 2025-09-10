@@ -151,7 +151,7 @@ const CollectionLoyaltiesPage = () => {
   // Show loading spinner while collection is loading
   if (!mounted || isCollectionLoading) {
     return (
-      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center bg-gradient-to-br from-[#000212] via-[#03082a] to-[#0a0e3a] px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="w-full min-h-[90vh] flex flex-col items-center justify-center bg-gradient-to-br from-[#000212] via-[#03082a] to-[#0a0e3a] px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-blue-900/20 to-transparent -skew-x-12 -translate-x-1/3"></div>
         <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-to-l from-purple-900/20 to-transparent skew-x-12 translate-x-1/3"></div>
 
@@ -208,7 +208,7 @@ const CollectionLoyaltiesPage = () => {
     <>
       {/* Navbar Element */}
       <div
-        className={`bg-[#00041f] flex flex-col items-center pt-12 sm:pt-16 md:pt-20 gap-3 sm:gap-4 px-4 pb-3 md:pb-0`}
+        className={`bg-[#00041f] flex flex-col items-center pt-12 sm:pt-16 md:pt-10 gap-3 sm:gap-4 px-4 pb-3 md:pb-4`}
       >
         {/* Tab Buttons Container */}
         <div className="backdrop-blur-sm rounded-xl border p-1.5 sm:p-2 flex gap-2 sm:gap-4 shadow-md w-full max-w-sm sm:max-w-md md:max-w-lg">
@@ -246,6 +246,18 @@ const CollectionLoyaltiesPage = () => {
           >
             <span className="block sm:hidden">Quests</span>
             <span className="hidden sm:block">Quests</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(`/metadata/${params.collection_id}`);
+            }}
+            className="relative flex-1 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg font-semibold text-xs sm:text-sm md:text-base transition-all duration-300 text-white/60 hover:text-white hover:bg-white/10"
+          >
+            NFTs
           </button>
         </div>
       </div>

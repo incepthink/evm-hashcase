@@ -62,11 +62,11 @@ export const Hero = () => {
           ></div>
         </div>
 
-        <div className="container mx-auto px-6 md:px-8 relative z-10">
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Main heading */}
+        <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 relative z-10">
+          <div className="text-center max-w-6xl mx-auto">
+            {/* Main heading - Improved responsive sizing */}
             <h1
-              className={`text-5xl md:text-5xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight mb-8 drop-shadow-lg ${workSans.className}`}
+              className={`text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold tracking-tight text-white leading-tight mb-6 sm:mb-8 md:mb-10 drop-shadow-lg ${workSans.className}`}
             >
               Turn your audience into{" "}
               <span className="relative">
@@ -76,9 +76,9 @@ export const Hero = () => {
               </span>
             </h1>
 
-            {/* Enhanced Description */}
-            <div className="space-y-6 mb-12">
-              <p className="text-xl md:text-2xl text-white/90 leading-relaxed max-w-4xl mx-auto font-medium">
+            {/* Enhanced Description - Better responsive sizing */}
+            <div className="space-y-4 sm:space-y-6 mb-8 sm:mb-10 md:mb-12">
+              <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed max-w-4xl mx-auto font-medium px-2 sm:px-4">
                 Engage your audience with better, smarter loyalty and reward
                 campaigns.
                 <span className="text-[#4DA2FF] font-semibold">
@@ -88,8 +88,8 @@ export const Hero = () => {
                 into your application with near-zero effort.
               </p>
 
-              {/* Feature highlights */}
-              <div className="flex flex-wrap items-center justify-center gap-6 text-white/70">
+              {/* Feature highlights - Hidden on mobile, responsive on larger screens */}
+              <div className="hidden sm:flex flex-wrap items-center justify-center gap-4 md:gap-6 text-white/70">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium">
@@ -117,56 +117,61 @@ export const Hero = () => {
 
             {/* Enhanced CTA Section - Connected State */}
             {isWalletConnected && walletAddress ? (
-              <div className="mb-16">
-                {/* Connected State */}
-                <div className="flex flex-col items-center justify-center gap-6">
-                  <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-green-500/20 border border-green-500/30 text-green-400">
-                    <Wallet className="w-5 h-5" />
-                    <span className="font-semibold">
-                      Connected: {walletAddress} ({evmWallet?.type})
+              <div className="mb-12 sm:mb-14 md:mb-16">
+                {/* Connected State - Responsive design */}
+                <div className="flex flex-col items-center justify-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 md:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-green-500/20 border border-green-500/30 text-green-400 max-w-full">
+                    <Wallet className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <span className="font-semibold text-xs sm:text-sm md:text-base truncate">
+                      Connected:{" "}
+                      <span className="hidden xs:inline">{walletAddress}</span>
+                      <span className="xs:hidden">
+                        {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                      </span>{" "}
+                      ({evmWallet?.type})
                     </span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Link
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
+                    {/* <Link
                       href="/quests?collection_id=218"
-                      className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-black bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4DA2FF]/30 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(77,162,255,0.4)] hover:shadow-[0_25px_50px_-15px_rgba(77,162,255,0.5)]"
+                      className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base text-black bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4DA2FF]/30 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(77,162,255,0.4)] hover:shadow-[0_25px_50px_-15px_rgba(77,162,255,0.5)] min-w-fit whitespace-nowrap"
                     >
-                      <Zap className="w-5 h-5" />
+                      <Zap className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                       <span>Start Quests</span>
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                    </Link> */}
 
                     <Link
                       href="/collections"
-                      className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 transition-all duration-300"
+                      className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 transition-all duration-300 min-w-fit whitespace-nowrap"
                     >
-                      <Users className="w-5 h-5" />
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                       <span>Explore Collections</span>
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                     </Link>
                   </div>
                 </div>
               </div>
             ) : (
               /* Default State - Not Connected */
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                <Link
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-14 md:mb-16 w-full">
+                {/* <Link
                   href="/quests?collection_id=218"
-                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-black bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4DA2FF]/30 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(77,162,255,0.4)] hover:shadow-[0_25px_50px_-15px_rgba(77,162,255,0.5)]"
+                  className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base text-black bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#4DA2FF]/30 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(77,162,255,0.4)] hover:shadow-[0_25px_50px_-15px_rgba(77,162,255,0.5)] min-w-fit whitespace-nowrap"
                 >
-                  <Zap className="w-5 h-5" />
+                  <Zap className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   <span>Claim Free NFT Now</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                </Link> */}
 
                 <Link
                   href="/collections"
-                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 transition-all duration-300"
+                  className="group inline-flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base text-white bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/30 transition-all duration-300 min-w-fit whitespace-nowrap"
                 >
-                  <Users className="w-5 h-5" />
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   <span>Explore Collections</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform flex-shrink-0" />
                 </Link>
               </div>
             )}
@@ -176,11 +181,11 @@ export const Hero = () => {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        {/* <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-pulse"></div>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

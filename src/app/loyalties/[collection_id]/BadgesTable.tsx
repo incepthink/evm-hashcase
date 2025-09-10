@@ -75,7 +75,7 @@ const BadgesTable = ({ owner_id }: { owner_id: number }) => {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-b from-[#00041f] to-[#030828] text-center py-8 px-4">
+      <div className="bg-gradient-to-b from-[#00041f] to-[#030828] text-center py-8 px-4 min-h-[70vh]">
         <div className="text-white">Loading badges...</div>
       </div>
     );
@@ -83,8 +83,8 @@ const BadgesTable = ({ owner_id }: { owner_id: number }) => {
 
   if (!badges || badges.length === 0) {
     return (
-      <div className="bg-gradient-to-b from-[#00041f] to-[#030828] text-center py-8 px-4">
-        <div className="text-white">No badges found</div>
+      <div className="bg-gradient-to-b from-[#00041f] to-[#030828] text-center py-8 px-4 min-h-[70vh]">
+        <div className="text-white">No badges in this Collection</div>
       </div>
     );
   }
@@ -100,7 +100,7 @@ const BadgesTable = ({ owner_id }: { owner_id: number }) => {
   };
 
   return (
-    <div className="bg-gradient-to-b from-[#00041f] to-[#030828] min-h-screen">
+    <div className="bg-gradient-to-b from-[#00041f] to-[#030828] min-h-[70vh]">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header */}
         <div className="mb-6">

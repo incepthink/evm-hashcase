@@ -1,8 +1,10 @@
 "use client";
 
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import { Wallet } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Wallet, User, LogOut, ChevronDown } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { useDisconnect, useAccount } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 
 const ConnectButton: React.FC = () => {
   const {
@@ -22,9 +24,46 @@ const ConnectButton: React.FC = () => {
     "evm" | "privy" | null
   >(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  // Refs for dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Wallet hooks
+  const { disconnect: disconnectWagmi } = useDisconnect();
+  const {
+    logout: logoutPrivy,
+    authenticated: privyAuthenticated,
+    user: privyUser,
+  } = usePrivy();
+  const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
 
   // Get wallet info from store only
   const evmWallet = getWalletForChain("evm");
+
+  // Handle clicks outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   // Handle initialization state
   useEffect(() => {
@@ -35,6 +74,29 @@ const ConnectButton: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Check for pending state
+  useEffect(() => {
+    let pending = false;
+
+    // Check if Privy is connected but user not verified
+    if (privyAuthenticated && privyUser?.wallet?.address && !isUserVerified) {
+      pending = true;
+    }
+
+    // Check if Wagmi is connected but user not verified
+    if (wagmiConnected && wagmiAddress && !isUserVerified) {
+      pending = true;
+    }
+
+    setIsPending(pending);
+  }, [
+    privyAuthenticated,
+    privyUser,
+    wagmiConnected,
+    wagmiAddress,
+    isUserVerified,
+  ]);
 
   // Update display based on verified user and store wallets ONLY
   useEffect(() => {
@@ -65,33 +127,72 @@ const ConnectButton: React.FC = () => {
     if (!isUserVerified) {
       setWalletAddress(null);
       setActiveWalletType(null);
+      setDropdownOpen(false);
     }
   }, [isUserVerified]);
 
   const handleModal = () => {
-    // Only allow opening modal if not initializing and no wallet is connected
-    if (!isInitializing && !walletAddress) {
+    // Only allow opening modal if not initializing, no wallet is connected, and not pending
+    if (!isInitializing && !walletAddress && !isPending) {
       // Mark user interaction when opening modal
       setUserHasInteracted(true);
       setOpenModal(!openModal);
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleAddressClick = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleProfile = () => {
+    setDropdownOpen(false);
+    // Add your profile navigation logic here
+    console.log("Navigate to profile");
+    // Example: router.push('/profile');
+  };
+
+  const handleCompleteDisconnect = async () => {
+    setDropdownOpen(false);
+
     // Clear wallet address state immediately for instant UI feedback
     setWalletAddress(null);
     setActiveWalletType(null);
+    setIsPending(false);
 
     // Clear user data from global store immediately
     unsetUser();
     disconnectAllWallets();
 
     try {
-      // Since we removed direct wallet hooks, we don't need to call
-      // disconnect functions here - the cleanup is handled by the global store
-      console.log("Disconnected all wallets from global store");
+      // Complete disconnect from all wallet providers
+      if (activeWalletType === "privy" || privyAuthenticated) {
+        // Disconnect from Privy (Google login)
+        await logoutPrivy();
+        console.log("Disconnected from Privy");
+      }
+
+      if (activeWalletType === "evm" || wagmiConnected) {
+        // Disconnect from Wagmi (MetaMask, etc.)
+        disconnectWagmi();
+        console.log("Disconnected from Wagmi");
+      }
+
+      // Additional cleanup - clear any localStorage tokens or session data
+      if (typeof window !== "undefined") {
+        // Clear any auth tokens stored in localStorage
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("walletConnect");
+
+        // Clear any session storage
+        sessionStorage.clear();
+
+        // You might have other storage keys to clear based on your app
+      }
+
+      console.log("Complete disconnect successful");
     } catch (error) {
-      console.error("Error during disconnect:", error);
+      console.error("Error during complete disconnect:", error);
     }
   };
 
@@ -105,27 +206,64 @@ const ConnectButton: React.FC = () => {
     );
   }
 
-  // If user is verified and has wallet in store, show address and disconnect button
+  // If user is verified and has wallet in store, show address with dropdown
   if (walletAddress && isUserVerified && evmWallet) {
     const walletTypeDisplay = activeWalletType === "evm" ? "EVM" : "Google";
 
     return (
-      <div className="ml-4 sm:ml-6 md:ml-10 flex items-center gap-x-2 sm:gap-x-3 px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-white border-gray-300 w-max font-medium sm:font-semibold rounded-2xl text-xs sm:text-sm md:text-base">
-        <div className="flex items-center gap-x-2 sm:gap-x-3">
+      <div className="ml-4 sm:ml-6 md:ml-10 relative">
+        <button
+          ref={buttonRef}
+          onClick={handleAddressClick}
+          className="flex items-center gap-x-2 sm:gap-x-3 px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-white border-gray-300 w-max font-medium sm:font-semibold rounded-2xl text-xs sm:text-sm md:text-base hover:bg-white/10 transition-colors"
+        >
           <Wallet className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">{walletAddress}</span>
+          <span className="hidden sm:inline">
+            {walletAddress.slice(0, 5)}...{walletAddress.slice(-3)}
+          </span>
           <span className="sm:hidden">
             {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
           </span>
-          <span className="text-xs opacity-75">({walletTypeDisplay})</span>
-        </div>
-        <button
-          onClick={handleDisconnect}
-          className="text-red-400 hover:text-red-300 font-medium text-xs sm:text-sm"
-        >
-          <span className="hidden sm:inline">Disconnect</span>
-          <span className="sm:hidden">✕</span>
+          <ChevronDown
+            className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${
+              dropdownOpen ? "rotate-180" : ""
+            }`}
+          />
         </button>
+
+        {/* Dropdown Menu */}
+        {dropdownOpen && (
+          <div
+            ref={dropdownRef}
+            className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px] overflow-hidden"
+          >
+            <button
+              onClick={handleProfile}
+              className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-3 text-sm font-medium transition-colors"
+            >
+              <User className="w-4 h-4" />
+              Profile
+            </button>
+            <div className="border-t border-gray-100"></div>
+            <button
+              onClick={handleCompleteDisconnect}
+              className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 flex items-center gap-3 text-sm font-medium transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Disconnect
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // If wallet is connected but not authenticated, show pending state
+  if (isPending) {
+    return (
+      <div className="ml-4 sm:ml-6 md:ml-10 flex items-center gap-x-2 sm:gap-x-3 px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-yellow-200 border-yellow-300 w-max font-medium sm:font-semibold rounded-2xl text-xs sm:text-sm md:text-base">
+        <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
+        <span>Pending...</span>
       </div>
     );
   }
@@ -134,8 +272,8 @@ const ConnectButton: React.FC = () => {
   return (
     <button
       onClick={handleModal}
-      disabled={isInitializing}
-      className="flex justify-center items-center gap-x-2 sm:gap-x-3 md:gap-x-5 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-white font-medium sm:font-semibold rounded-2xl w-max ml-4 sm:ml-6 md:ml-10 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+      disabled={isInitializing || isPending}
+      className="flex justify-center items-center gap-x-2 sm:gap-x-3 md:gap-x-5 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-white font-medium sm:font-semibold rounded-2xl w-max ml-4 sm:ml-6 md:ml-10 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
     >
       <span className="hidden sm:inline">Connect</span>
       <span className="sm:hidden">Connect</span>

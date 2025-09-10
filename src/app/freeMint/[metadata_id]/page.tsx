@@ -1094,7 +1094,7 @@ export default function NFTPage() {
 
   return (
     <div className={`flex flex-col bg-[#00041F] ${workSans.className}`}>
-      <div className="flex flex-col px-6 md:px-10 max-w-6xl mx-auto w-full pb-10">
+      <div className="flex flex-col px-6 md:px-10 max-w-6xl mx-auto w-full">
         <button
           onClick={() => router.back()}
           className="hidden md:flex items-center justify-start gap-x-2 my-4 cursor-pointer"
@@ -1102,10 +1102,10 @@ export default function NFTPage() {
           <ArrowW />
           <p className="text-2xl text-white/70">back</p>
         </button>
-        <div className="my-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <div className="my-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start pb-32">
           {/* NFT Image with Navigation */}
           <div className="relative flex justify-center lg:justify-start">
-            <div className="relative w-full max-w-md lg:max-w-lg xl:max-w-xl">
+            <div className="relative w-full max-w-md lg:max-w-lg xl:max-w-xl max-h-[500px]">
               {/* Loading Spinner */}
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-800 rounded-2xl z-10">
@@ -1114,7 +1114,7 @@ export default function NFTPage() {
               )}
 
               <img
-                className="w-full h-auto rounded-2xl transition-opacity duration-300 shadow-2xl border border-white/10"
+                className="w-full h-full rounded-2xl transition-opacity duration-300 shadow-2xl border border-white/10 object-cover"
                 src={nftData.image_url}
                 alt="nft"
                 style={{

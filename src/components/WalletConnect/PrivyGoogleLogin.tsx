@@ -336,6 +336,19 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     ]
   );
 
+  // MANUAL AUTHENTICATE FUNCTION - Wrapper for external calls
+  const handleManualAuthenticate = async () => {
+    if (!authenticated || !user?.wallet?.address) {
+      console.log("Not authenticated or no wallet address");
+      return;
+    }
+
+    const result = await handleUserAuthentication(user.wallet.address);
+    if (result.success) {
+      // Success handled in the authentication function
+    }
+  };
+
   // Reset states when user logs out
   useEffect(() => {
     if (!authenticated) {
@@ -373,19 +386,6 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
       console.error("Logout failed:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // MANUAL AUTHENTICATE BUTTON - Only way to trigger authentication
-  const handleManualAuthenticate = async () => {
-    if (!authenticated || !user?.wallet?.address) {
-      console.log("Not authenticated or no wallet address");
-      return;
-    }
-
-    const result = await handleUserAuthentication(user.wallet.address);
-    if (result.success) {
-      // Success handled in the authentication function
     }
   };
 
@@ -449,92 +449,29 @@ export default function PrivyGoogleLogin({ onSuccess }: PrivyGoogleLoginProps) {
     );
   }
 
-  // INTERMEDIATE STATE: Show authenticate button if logged in but not verified
-  if (authenticated && user?.wallet?.address && !isUserVerified) {
-    return (
-      <div className="w-full space-y-4">
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-center space-x-2 mb-2">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            <span className="text-sm font-medium text-yellow-800">
-              Google Connected - Authentication Required
-            </span>
-          </div>
-
-          {user.email && (
-            <p className="text-sm text-yellow-700 mb-2">
-              Email: {user.email.address}
-            </p>
-          )}
-
-          <p className="text-sm text-yellow-700 mb-3">
-            Wallet: {user.wallet.address.slice(0, 8)}...
-            {user.wallet.address.slice(-6)}
-          </p>
-
-          <p className="text-xs text-yellow-600 mb-3">
-            Click authenticate to complete the connection
-          </p>
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleManualAuthenticate}
-              disabled={isLoading || isAuthenticating}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-            >
-              {isLoading || isAuthenticating ? (
-                <div className="flex items-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Authenticating...
-                </div>
-              ) : (
-                "Authenticate Wallet"
-              )}
-            </button>
-
-            <button
-              onClick={handleLogout}
-              disabled={isLoading}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-            >
-              Disconnect
-            </button>
-          </div>
-
-          {lastError && (
-            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded">
-              <p className="text-sm text-red-700">Error: {lastError}</p>
-            </div>
-          )}
-
-          {/* Debug button - remove in production */}
-          <button
-            onClick={clearLocks}
-            className="mt-2 px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600"
-          >
-            Clear Locks (Debug)
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // LOGIN STATE: Show Google login button
+  // LOGIN STATE: Show Google login button that handles both login and authentication
   return (
     <div className="w-full space-y-3">
       <button
         onClick={() => {
           // Mark user interaction
           setUserHasInteracted(true);
-          setIsLoading(true);
-          setLastError(null);
-          console.log("Initiating Privy login...");
-          login();
+
+          if (authenticated && user?.wallet?.address) {
+            // If already logged in with Privy, authenticate directly
+            handleManualAuthenticate();
+          } else {
+            // If not logged in, start Privy login first
+            setIsLoading(true);
+            setLastError(null);
+            console.log("Initiating Privy login...");
+            login();
+          }
         }}
         disabled={isLoading || isAuthenticating}
         className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {isLoading ? (
+        {isLoading || isAuthenticating ? (
           <div className="flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
             Connecting...

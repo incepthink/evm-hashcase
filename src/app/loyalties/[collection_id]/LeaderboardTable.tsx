@@ -216,8 +216,8 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
 
       {/* Wallet Connection Status */}
       {!isWalletConnected && (
-        <div className="w-full max-w-6xl mx-auto bg-yellow-500/20 border border-yellow-400/30 rounded-lg p-4 text-center">
-          <p className="text-yellow-300 text-sm sm:text-base">
+        <div className="w-full max-w-6xl mx-auto bg-blue-500/20 border border-blue-400/30 rounded-lg p-4 text-center">
+          <p className="text-blue-300 text-sm sm:text-base">
             Connect wallet or sign in with Google to see your ranking and
             interact with the leaderboard
           </p>
@@ -240,8 +240,8 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
                   <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-sm font-bold">
                     #{userRank.rank}
                   </span>
-                  <span className="text-yellow-300 text-sm font-medium">
-                    (You - {getCurrentUserType()})
+                  <span className="text-blue-100 text-sm font-medium">
+                    (You)
                   </span>
                 </div>
                 <div className="text-white font-bold text-lg">
@@ -265,7 +265,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
               key={index}
               className={`bg-white/10 backdrop-blur-lg rounded-lg p-4 shadow-lg transition-all duration-300 hover:bg-white/20 ${
                 isCurrentUser
-                  ? "ring-2 ring-yellow-400 bg-gradient-to-r from-yellow-600/20 to-orange-600/20"
+                  ? "ring-2 ring-blue-400 bg-gradient-to-r from-blue-600/20 to-purple-600/20"
                   : ""
               }`}
             >
@@ -275,8 +275,8 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
                     #{entry.rank}
                   </span>
                   {isCurrentUser && (
-                    <span className="text-yellow-300 text-sm font-medium">
-                      (You - {getCurrentUserType()})
+                    <span className="text-blue-100 text-sm font-medium">
+                      (You)
                     </span>
                   )}
                 </div>
@@ -313,12 +313,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
           !leaderboardData.some((entry) => entry.user_id === user?.id) && (
             <div className="flex justify-between items-center w-full px-4 md:px-6 py-3 rounded-md text-base md:text-lg text-white bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-400/30 backdrop-blur-lg shadow-lg">
               <p className="w-1/3 text-center">#{userRank.rank}</p>
-              <p className="w-1/3 text-center">
-                {getCurrentUserAddress()}
-                <span className="ml-2 text-blue-300 text-sm">
-                  ({getCurrentUserType()})
-                </span>
-              </p>
+              <p className="w-1/3 text-center">{getCurrentUserAddress()}</p>
               <p className="w-1/3 text-center">
                 {typeof userRank.points === "number"
                   ? userRank.points.toFixed(2)
@@ -336,7 +331,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
               key={index}
               className={`flex justify-between items-center w-full px-4 md:px-6 py-3 rounded-md text-base md:text-lg text-white bg-white/10 backdrop-blur-lg shadow-lg transition-all duration-300 hover:bg-white/20 hover:scale-105 ${
                 isCurrentUser
-                  ? "ring-2 ring-yellow-400 bg-gradient-to-r from-yellow-600/20 to-orange-600/20"
+                  ? "ring-2 ring-blue-400 bg-gradient-to-r from-blue-600/20 to-purple-600/20"
                   : ""
               }`}
             >
@@ -344,9 +339,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
               <p className="w-1/3 text-center">
                 {getUserIdentifier(entry)}
                 {isCurrentUser && (
-                  <span className="ml-2 text-yellow-300 text-sm">
-                    (You - {getCurrentUserType()})
-                  </span>
+                  <span className="ml-2 text-blue-100 text-sm">(You)</span>
                 )}
               </p>
               <p className="w-1/3 text-center">

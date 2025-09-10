@@ -14,7 +14,7 @@ import { useCollections } from "@/hooks/useCollections";
 
 const HeaderSection = () => {
   return (
-    <div className="relative w-full py-16">
+    <div className="relative w-full pt-16 pb-6">
       <div className="max-w-6xl mx-auto px-6">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -23,10 +23,6 @@ const HeaderSection = () => {
               Collections
             </span>
           </h1>
-          <p className="text-lg text-white/80 max-w-2xl mx-auto">
-            Explore unique digital collections and discover amazing NFTs on the
-            Sui blockchain
-          </p>
         </div>
       </div>
     </div>
@@ -161,6 +157,7 @@ const CollectionsPage: React.FC = () => {
         {/* Collections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {collections.map((collection: any) => {
+            if (collection.id === 218) return;
             // Handle different possible data structures
             let contractAddress =
               collection.contract?.contract_address ||
@@ -242,7 +239,7 @@ const CollectionsPage: React.FC = () => {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                      <button
+                      {/* <button
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
@@ -253,7 +250,7 @@ const CollectionsPage: React.FC = () => {
                         aria-label={`View NFTs for ${collectionName}`}
                       >
                         View Mintable NFTs
-                      </button>
+                      </button> */}
                       {/* <button className="flex-1 text-center rounded-lg px-3 py-2 text-sm font-medium text-white bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-200">
                         View
                       </button> */}

@@ -201,6 +201,19 @@ export default function EVMWalletConnect() {
     }
   };
 
+  // MANUAL AUTHENTICATE FUNCTION - Wrapper for external calls
+  const handleManualAuthenticate = async () => {
+    if (!address) {
+      console.log("No wallet address available for authentication");
+      return;
+    }
+
+    const result = await handleUserAuthentication(address);
+    if (result.success) {
+      setOpenModal(false);
+    }
+  };
+
   useEffect(() => {
     setLoading(false);
   }, [address]);
@@ -217,6 +230,12 @@ export default function EVMWalletConnect() {
   const handleWalletConnect = async (connector: Connector) => {
     // Mark user interaction
     setUserHasInteracted(true);
+
+    // If already connected to this wallet, authenticate directly
+    if (isConnected && address) {
+      await handleManualAuthenticate();
+      return;
+    }
 
     setConnectingWallet(true);
     const notificationController = notifyPromise(
@@ -260,12 +279,18 @@ export default function EVMWalletConnect() {
 
       notifyResolve(
         notificationController,
-        "Wallet connected! Click authenticate to continue.",
+        "Wallet connected! Authenticating...",
         "success"
       );
 
-      // DO NOT AUTO-AUTHENTICATE - Let user decide when to authenticate
-      console.log("Wallet connected. User must manually authenticate.");
+      // Automatically authenticate after successful connection
+      const authResult = await handleUserAuthentication(finalAddress);
+
+      if (authResult.success) {
+        console.log("Wallet connected and authenticated successfully");
+      } else {
+        console.log("Wallet connected but authentication failed");
+      }
     } catch (error: any) {
       console.error("Failed to connect EVM wallet:", error);
 
@@ -312,19 +337,6 @@ export default function EVMWalletConnect() {
     }
   };
 
-  // MANUAL AUTHENTICATE BUTTON - Only way to trigger authentication
-  const handleManualAuthenticate = async () => {
-    if (!address) {
-      console.log("No wallet address available for authentication");
-      return;
-    }
-
-    const result = await handleUserAuthentication(address);
-    if (result.success) {
-      setOpenModal(false);
-    }
-  };
-
   const handleWalletDisconnect = async () => {
     try {
       unsetUser();
@@ -350,35 +362,6 @@ export default function EVMWalletConnect() {
       <div className="bg-blue-600 border-black/20 px-6 py-2 text-white font-semibold rounded-full w-full flex items-center gap-x-8 justify-center">
         <LucideWalletIcon className="w-4 h-4" />
         EVM Wallet Connected & Authenticated
-      </div>
-    );
-  }
-
-  // Show authenticate button if wallet is connected but not authenticated
-  if (isConnected && address && !isUserVerified && !connectingWallet) {
-    return (
-      <div className="w-full space-y-3">
-        <div className="bg-yellow-100 border border-yellow-300 px-4 py-2 rounded-lg">
-          <p className="text-sm text-yellow-800 mb-2">
-            Wallet connected: {address.slice(0, 8)}...{address.slice(-6)}
-          </p>
-          <p className="text-xs text-yellow-700">
-            Click authenticate to complete the connection
-          </p>
-        </div>
-        <button
-          onClick={handleManualAuthenticate}
-          className="bg-green-600 border-black/20 px-6 py-2 text-white font-semibold rounded-full w-full flex items-center gap-x-4 justify-center hover:bg-green-700"
-        >
-          <LucideWalletIcon className="w-4 h-4" />
-          Authenticate Wallet
-        </button>
-        <button
-          onClick={handleWalletDisconnect}
-          className="bg-red-600 border-black/20 px-6 py-2 text-white font-semibold rounded-full w-full flex items-center gap-x-4 justify-center hover:bg-red-700"
-        >
-          Disconnect
-        </button>
       </div>
     );
   }
