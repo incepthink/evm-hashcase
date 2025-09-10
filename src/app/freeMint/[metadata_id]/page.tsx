@@ -769,16 +769,14 @@ export default function NFTPage() {
       return;
     }
 
-    // Mark mint attempt in localStorage immediately to prevent duplicate calls
-    const mintKey = getMintAttemptKey(params.metadata_id!, evmWallet.address);
-    localStorage.setItem(mintKey, "true");
-    setHasMintAttempted(true);
-
-    setMinting(true);
+    // Show notification FIRST before any state changes
     const notifyId = notifyPromise(
       "Minting NFT... this might take some time...",
       "info"
     );
+
+    // Set minting state but NOT the localStorage yet
+    setMinting(true);
 
     console.log("NFT DATA", nftData);
     console.log("EVM WALLET", evmWallet);
@@ -836,6 +834,11 @@ export default function NFTPage() {
         }
       );
 
+      // ONLY set localStorage AFTER successful minting
+      const mintKey = getMintAttemptKey(params.metadata_id!, evmWallet.address);
+      localStorage.setItem(mintKey, "true");
+      setHasMintAttempted(true);
+
       notifyResolve(
         notifyId,
         "NFT Minted Successfully! Please Check Your Wallet",
@@ -852,11 +855,7 @@ export default function NFTPage() {
     } catch (error: any) {
       console.error("Minting error:", error);
 
-      // If minting failed, remove the localStorage flag to allow retry
-      const mintKey = getMintAttemptKey(params.metadata_id!, evmWallet.address);
-      localStorage.removeItem(mintKey);
-      setHasMintAttempted(false);
-
+      // No need to clear localStorage since we didn't set it yet
       let errorMessage = "Error minting NFT";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

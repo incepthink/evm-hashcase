@@ -157,7 +157,7 @@ const CollectionsPage: React.FC = () => {
         {/* Collections Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {collections.map((collection: any) => {
-            if (collection.id === 218) return;
+            if (collection.id === 219 || collection.id === 216) return;
             // Handle different possible data structures
             let contractAddress =
               collection.contract?.contract_address ||
