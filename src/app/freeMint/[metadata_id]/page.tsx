@@ -1003,7 +1003,7 @@ export default function NFTPage() {
 
   if (loading) {
     return (
-      <div className="h-[70vh] max-w-screen bg-[#00041F] flex justify-center items-center text-center">
+      <div className="h-[90vh] max-w-screen bg-[#00041F] flex justify-center items-center text-center">
         <div className="text-center">
           <svg
             className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4"
