@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useNFTClaiming } from "@/hooks/useNFTClaiming";
 import { useGlobalAppStore } from "@/store/globalAppStore";
+import { MintingStateManager } from "@/utils/mintingStateManager";
 import toast from "react-hot-toast";
 import { METADATA_ID } from "@/utils/constants";
 
@@ -24,6 +25,7 @@ interface ClaimNFTButtonProps {
   chain: string;
   requiredChainType: "sui" | "evm";
   disabled?: boolean;
+  onCustomClaim?: () => Promise<void>;
 }
 
 export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
@@ -38,6 +40,7 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
   chain,
   requiredChainType,
   disabled: externalDisabled = false,
+  onCustomClaim,
 }) => {
   const [localClaiming, setLocalClaiming] = useState(false);
 
@@ -50,7 +53,7 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
     isClaimDisabled,
   } = useNFTClaiming();
 
-  const { getWalletForChain } = useGlobalAppStore();
+  const { getWalletForChain, setOpenModal } = useGlobalAppStore();
 
   // Get wallet address
   const getWalletAddress = (): string | null => {
@@ -62,10 +65,35 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
 
   const handleClaimNFT = async () => {
     if (!walletAddress) {
-      toast.error("Wallet address not found");
+      toast.error("Please connect your wallet first");
+      setOpenModal(true);
       return;
     }
 
+    if (externalDisabled || localClaiming || isClaimDisabled) {
+      return;
+    }
+
+    // Check cross-tab minting lock
+    if (MintingStateManager.isMintingLocked(walletAddress, METADATA_ID)) {
+      toast.error("NFT minting is in progress in another tab");
+      return;
+    }
+
+    // Use custom claim function if provided (from QuestsPageContent)
+    if (onCustomClaim) {
+      setLocalClaiming(true);
+      try {
+        await onCustomClaim();
+      } catch (error) {
+        console.error("Custom claim error:", error);
+      } finally {
+        setLocalClaiming(false);
+      }
+      return;
+    }
+
+    // Default claim logic using the hook
     if (!canStartClaiming(walletAddress, METADATA_ID)) {
       toast.error("Cannot start claiming at this time");
       return;
@@ -109,10 +137,19 @@ export const ClaimNFTButton: React.FC<ClaimNFTButtonProps> = ({
     localClaiming ||
     completionPercentage < 100 ||
     nftMinted ||
-    !walletAddress;
+    !walletAddress ||
+    !canMintAgain ||
+    MintingStateManager.isMintingLocked(walletAddress || "", METADATA_ID);
 
   // Determine button text and state
   const getButtonContent = () => {
+    if (
+      MintingStateManager.isMintingLocked(walletAddress || "", METADATA_ID) &&
+      !autoClaimInProgress
+    ) {
+      return "Minting in another tab...";
+    }
+
     if (autoClaimInProgress) {
       return (
         <div className="flex items-center justify-center gap-2">

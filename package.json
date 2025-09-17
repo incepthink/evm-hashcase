@@ -20,6 +20,7 @@
     "@mysten/enoki": "^0.3.10",
     "@mysten/sui": "^1.37.1",
     "@mysten/sui.js": "^0.54.1",
+    "@next/third-parties": "^15.5.3",
     "@privy-io/react-auth": "^2.24.0",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@suiet/wallet-kit": "^0.3.2",

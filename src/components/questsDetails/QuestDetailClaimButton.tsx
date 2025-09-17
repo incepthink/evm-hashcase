@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useNFTClaiming } from "@/hooks/useNFTClaiming";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import toast from "react-hot-toast";
-import { METADATA_ID } from "@/utils/constants";
 
 interface QuestDetailClaimButtonProps {
   nftMinted: boolean;
@@ -17,7 +16,7 @@ interface QuestDetailClaimButtonProps {
   completedQuests: number;
   isWalletConnected: boolean;
   nftData: {
-    collection_id: string;
+    collection_id: number; // Changed from string to number
     name: string;
     description: string;
     image_url: string;
@@ -27,6 +26,7 @@ interface QuestDetailClaimButtonProps {
   onSuccess: (nftData: any) => void;
   requiredChainType: "sui" | "evm";
   disabled?: boolean;
+  metadataId?: number; // Added metadata_id prop
 }
 
 export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
@@ -42,6 +42,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
   onSuccess,
   requiredChainType,
   disabled: externalDisabled = false,
+  metadataId,
 }) => {
   const { setOpenModal } = useGlobalAppStore();
 
@@ -66,7 +67,12 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       return;
     }
 
-    if (!canStartClaiming(nftData.recipient, METADATA_ID)) {
+    if (!metadataId) {
+      toast.error("NFT metadata not found");
+      return;
+    }
+
+    if (!canStartClaiming(nftData.recipient, metadataId)) {
       toast.error("Cannot start claiming at this time");
       return;
     }
@@ -75,14 +81,14 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
 
     try {
       const claimData = {
-        collection_id: nftData.collection_id,
+        collection_id: nftData.collection_id.toString(), // Convert to string for API
         name: nftData.name,
         description: nftData.description,
         image_url: nftData.image_url,
         attributes: nftData.attributes,
         recipient: nftData.recipient,
-        chain_type: requiredChainType,
-        metadata_id: METADATA_ID,
+        chain_type: requiredChainType === "evm" ? "ethereum" : "sui",
+        metadata_id: metadataId,
       };
 
       const result = await claimNFT(claimData);
@@ -110,12 +116,17 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
     completionPercentage < 100 ||
     nftMinted ||
     !isWalletConnected ||
-    !nftData.recipient;
+    !nftData.recipient ||
+    !metadataId;
 
   // Determine button text and state
   const getButtonContent = () => {
     if (!isWalletConnected) {
       return "Connect Wallet to Claim";
+    }
+
+    if (!metadataId) {
+      return "NFT Data Loading...";
     }
 
     if (autoClaimInProgress) {
@@ -141,7 +152,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
     }
 
     if (completionPercentage < 100) {
-      return `Complete All Quests (${completedQuests}/${totalQuests})`;
+      return `Complete All Tasks (${completedQuests}/${totalQuests})`;
     }
 
     return "Claim NFT Reward";
@@ -165,6 +176,13 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       >
         {getButtonContent()}
       </button>
+
+      {/* Additional info when quest is completed but NFT not yet claimed */}
+      {completionPercentage === 100 && !nftMinted && !autoClaimInProgress && (
+        <p className="text-sm text-gray-400 mt-3">
+          Complete all tasks to unlock your NFT reward
+        </p>
+      )}
     </div>
   );
 };

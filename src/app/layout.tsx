@@ -11,6 +11,7 @@ import WalletConnectionModal from "@/components/WalletConnectionModal";
 import Footer from "@/components/Footer";
 import RainbowkitProvider from "@/providers/RainbowkitProvider";
 import PrivyLoginProvider from "@/providers/PrivyLoginProvider";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
 
@@ -45,6 +46,7 @@ export default function RootLayout({
             </TanstackProvider>
           </RainbowkitProvider>
         </PrivyLoginProvider>
+        <GoogleAnalytics gaId="G-N13DDCYFYT" />
       </body>
     </html>
   );

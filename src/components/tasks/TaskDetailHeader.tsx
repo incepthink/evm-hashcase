@@ -1,10 +1,10 @@
-// components/quests/QuestDetailHeader.tsx
+// components/quests/TaskDetailHeader.tsx
 "use client";
 
 import Image from "next/image";
 
 interface NFTData {
-  collection_id: number; // Changed from string to number
+  collection_id: number;
   name: string;
   description: string;
   image_url: string;
@@ -12,11 +12,11 @@ interface NFTData {
   recipient: string | null;
 }
 
-interface QuestDetailHeaderProps {
+interface TaskDetailHeaderProps {
   nftData: NFTData;
 }
 
-export const QuestDetailHeader: React.FC<QuestDetailHeaderProps> = ({
+export const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
   nftData,
 }) => {
   return (
@@ -32,7 +32,6 @@ export const QuestDetailHeader: React.FC<QuestDetailHeaderProps> = ({
               width={192}
               height={192}
               onError={(e) => {
-                // Fallback to a default image if the NFT image fails to load
                 (e.target as HTMLImageElement).src = "/default-nft.png";
               }}
             />

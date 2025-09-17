@@ -8,6 +8,10 @@ import { useCollectionById } from "@/hooks/useCollections";
 import { useQuests } from "@/hooks/useQuests";
 import axiosInstance from "@/utils/axios";
 import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
+// import {
+//   NFTMintingService,
+//   MintingStateManager,
+// } from "@/utils/mintingStateManager";  // ← COMMENTED OUT
 
 // Components
 import { LoadingScreen } from "./LoadingScreen";
@@ -18,7 +22,7 @@ import { QuestHeader } from "./QuestHeader";
 import { QuestList } from "./QuestList";
 import { ClaimNFTButton } from "./ClaimNFTButton";
 import { NFTSuccessModal } from "./NFTSuccessModal";
-import { METADATA_ID } from "@/utils/constants";
+// import { METADATA_ID } from "@/utils/constants";  // ← COMMENTED OUT
 
 interface MintedNftData {
   name: string;
@@ -52,6 +56,44 @@ interface MetadataInstance {
   updatedAt: string;
 }
 
+// Updated Quest interface to match the new structure
+interface RequirementRule {
+  type: string;
+  value: any;
+}
+
+interface Task {
+  id: number;
+  quest_id: number;
+  owner_id: number;
+  title: string;
+  description: string | null;
+  task_code: string | null;
+  requirement_rules: RequirementRule[] | string;
+  required_completions: number;
+  reward_loyalty_points: number;
+  is_active: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+  is_completed?: boolean;
+}
+
+interface Quest {
+  id: number;
+  owner_id: number;
+  title: string;
+  description?: string;
+  is_active?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  claimable_metadata?: number | null;
+  tasks: Task[];
+  total_tasks: number;
+  completed_tasks: number;
+  is_completed: boolean;
+  total_points: number;
+}
+
 const QuestsPageContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,6 +105,9 @@ const QuestsPageContent = () => {
     isUserVerified,
     nftClaiming,
     setCanMintAgain,
+    // canStartMinting,        // ← COMMENTED OUT
+    // setAutoClaimInProgress, // ← COMMENTED OUT
+    setIsMinting,
   } = useGlobalAppStore();
 
   const [mounted, setMounted] = useState(false);
@@ -105,7 +150,38 @@ const QuestsPageContent = () => {
   const walletAddress = walletInfo?.address || null;
   const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
-  // Fetch metadata when wallet is connected
+  // ========== COMMENTED OUT COMPLEX MINTING STATE SYNC ==========
+  // useEffect(() => {
+  //   if (mounted && walletAddress) {
+  //     // Check if already minted
+  //     const hasMinted = MintingStateManager.hasMintedSuccessfully(
+  //       walletAddress,
+  //       METADATA_ID
+  //     );
+  //     if (hasMinted) {
+  //       setCanMintAgain(false);
+  //     }
+
+  //     // Check if minting is locked by another tab
+  //     const isLocked = MintingStateManager.isMintingLocked(
+  //       walletAddress,
+  //       METADATA_ID
+  //     );
+  //     if (isLocked) {
+  //       console.log("Minting locked by another tab");
+  //     }
+  //   }
+  // }, [mounted, walletAddress, setCanMintAgain]);
+
+  // ========== COMMENTED OUT CLEANUP LISTENERS ==========
+  // useEffect(() => {
+  //   return () => {
+  //     const store = useGlobalAppStore.getState();
+  //     store.cleanupMintingListeners();
+  //   };
+  // }, []);
+
+  // Simplified metadata fetch - only depends on API response
   useEffect(() => {
     if (mounted && isWalletConnected && walletAddress) {
       fetchMetadata();
@@ -125,11 +201,18 @@ const QuestsPageContent = () => {
       setMetadataLoading(true);
       setMetadataError("");
 
+      // Note: You'll need to determine which metadata_id to use here
+      // since METADATA_ID is commented out. This might come from quest data
+      // or collection data, depending on your implementation
+
+      // Placeholder - you'll need to replace this with actual metadata_id logic
+      const metadataId = 1; // Replace with actual logic
+
       const response = await axiosInstance.get(
         "/platform/metadata/geofenced-by-id",
         {
           params: {
-            metadata_id: METADATA_ID,
+            metadata_id: metadataId,
             user_address: walletAddress,
           },
         }
@@ -139,6 +222,8 @@ const QuestsPageContent = () => {
 
       console.log("can_mint_again", can_mint_again);
       setMetadata(metadata_instance);
+
+      // SIMPLIFIED: Only depend on API response
       setCanMintAgain(can_mint_again !== undefined ? can_mint_again : true);
     } catch (error: any) {
       console.error("Error fetching metadata:", error);
@@ -243,6 +328,48 @@ const QuestsPageContent = () => {
     };
   }, [metadata]);
 
+  // ========== COMMENTED OUT CUSTOM CLAIM FUNCTION ==========
+  // const handleCustomClaim = useCallback(async () => {
+  //   if (!walletAddress || !metadata) return;
+
+  //   // Check if we can start minting
+  //   if (!canStartMinting(walletAddress, METADATA_ID)) {
+  //     console.log("Cannot start minting - global check failed");
+  //     return;
+  //   }
+
+  //   const nftData = {
+  //     collection_id: cid,
+  //     name: metadata.title,
+  //     description: metadata.description,
+  //     image_url: metadata.image_url,
+  //     attributes: metadata.attributes ? metadata.attributes.split(", ") : [],
+  //     recipient: walletAddress,
+  //     chain_type: requiredChainType === "evm" ? "ethereum" : "sui",
+  //     metadata_id: METADATA_ID,
+  //   };
+
+  //   // Use the enhanced minting service
+  //   await NFTMintingService.mintNFT({
+  //     walletAddress,
+  //     metadataId: METADATA_ID,
+  //     nftData,
+  //     onSuccess: (data) => {
+  //       handleNFTMintSuccess(data);
+  //     },
+  //     onError: (error) => {
+  //       console.error("Manual claim error:", error);
+  //     },
+  //   });
+  // }, [
+  //   walletAddress,
+  //   metadata,
+  //   cid,
+  //   requiredChainType,
+  //   handleNFTMintSuccess,
+  //   canStartMinting,
+  // ]);
+
   // Memoize stable props for modal
   const modalProps = useMemo(
     () => ({
@@ -320,7 +447,7 @@ const QuestsPageContent = () => {
   if (metadataLoading) {
     return (
       <LoadingScreen
-        message="Loading NFT Details..."
+        message="Loading Collection Details..."
         collectionName={collection?.name}
         isNSCollection={isNSCollection}
       />
@@ -349,6 +476,9 @@ const QuestsPageContent = () => {
     );
   }
 
+  // ========== SIMPLIFIED MINTING DISABLED CHECK ==========
+  const isMintingDisabled = nftClaiming.isMinting;
+
   return (
     <div className={`min-h-screen bg-[#000421]`}>
       <Navigation onBack={handleBack} />
@@ -356,9 +486,25 @@ const QuestsPageContent = () => {
       {/* Main Content */}
       <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
+          {/* ========== COMMENTED OUT CROSS-TAB MINTING INDICATOR ========== */}
+          {/* {MintingStateManager.isMintingLocked(
+            walletAddress || "",
+            METADATA_ID
+          ) &&
+            !nftClaiming.autoClaimInProgress && (
+              <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="animate-pulse h-3 w-3 bg-blue-400 rounded-full"></div>
+                  <p className="text-blue-300 font-medium">
+                    NFT minting in progress in another tab...
+                  </p>
+                </div>
+              </div>
+            )} */}
+
           {/* NFT Display Section - Using Dynamic Metadata */}
           <NFTDisplay
-            collection={displayCollection}
+            collection={collection}
             backgroundImage={backgroundImageHeroSection}
           />
 
@@ -376,10 +522,11 @@ const QuestsPageContent = () => {
             quests={quests}
             isWalletConnected={isWalletConnected}
             requiredChainType={requiredChainType}
+            collectionId={cid}
           />
 
-          {/* Claim NFT Button - Using Dynamic Metadata */}
-          {quests.length > 0 && claimCollection && (
+          {/* ========== COMMENTED OUT CLAIM NFT BUTTON ========== */}
+          {/* {quests.length > 0 && claimCollection && (
             <ClaimNFTButton
               nftMinted={!nftClaiming.canMintAgain}
               completionPercentage={completionPercentage}
@@ -391,11 +538,10 @@ const QuestsPageContent = () => {
               onNftMintedChange={(minted: boolean) => setCanMintAgain(!minted)}
               chain={requiredChainType === "evm" ? "ethereum" : "sui"}
               requiredChainType={requiredChainType}
-              disabled={
-                nftClaiming.isMinting || nftClaiming.autoClaimInProgress
-              }
+              disabled={isMintingDisabled}
+              onCustomClaim={handleCustomClaim}
             />
-          )}
+          )} */}
         </div>
       </div>
 

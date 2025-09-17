@@ -6,16 +6,42 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axios";
 import toast from "react-hot-toast";
 
+interface RequirementRule {
+  type: string;
+  value: any;
+}
+
+interface Task {
+  id: number;
+  quest_id: number;
+  owner_id: number;
+  title: string;
+  description: string | null;
+  task_code: string | null;
+  requirement_rules: RequirementRule[] | string;
+  required_completions: number;
+  reward_loyalty_points: number;
+  is_active: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+  is_completed?: boolean;
+}
+
 interface Quest {
   id: number;
-  title: string;
-  description: string;
-  quest_code: string;
-  points_reward: number;
-  is_completed?: boolean;
   owner_id: number;
-  created_at: string;
-  updated_at: string;
+  title: string;
+  description?: string;
+  is_active?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  claimable_metadata?: number | null;
+  tasks: Task[];
+  // Computed properties
+  total_tasks: number;
+  completed_tasks: number;
+  is_completed: boolean;
+  total_points: number;
 }
 
 interface UseQuestsProps {
@@ -49,44 +75,63 @@ export const useQuests = ({
       }
 
       try {
-        const params: { owner_id: number; wallet_address?: string } = {
-          owner_id: collection.owner_id,
-        };
-        if (walletAddress) {
-          params.wallet_address = walletAddress;
-        }
-
-        const response = await axiosInstance.get("/platform/quest/by-owner", {
-          params,
-        });
+        // Use the new API endpoint
+        const response = await axiosInstance.get(`/platform/quest/owner/${collection.owner_id}`);
         console.log("QUEST", response.data);
         
-
-        let sessionCompleted: number[] = [];
+        // Get session completed tasks if wallet is connected
+        let sessionCompletedTasks: number[] = [];
         try {
           const sessionKey = walletAddress
-            ? `quest_progress_session_${walletAddress}`
+            ? `task_progress_session_${walletAddress}`
             : null;
-          sessionCompleted = sessionKey
+          sessionCompletedTasks = sessionKey
             ? JSON.parse(sessionStorage.getItem(sessionKey) || "[]")
             : [];
         } catch {}
 
         return (response.data.quests || []).map((quest: any) => {
-          const isCompletedFromAPI = quest.userProgress?.isCompleted || false;
-          const isCompletedFromSession = sessionCompleted.includes(quest.id);
-          const isCompleted = isCompletedFromAPI || isCompletedFromSession;
+          const tasks = (quest.tasks || []).map((task: any) => {
+            // Check if task is completed from session storage
+            const isCompletedFromSession = sessionCompletedTasks.includes(task.id);
+            
+            return {
+              id: task.id,
+              quest_id: task.quest_id,
+              owner_id: task.owner_id,
+              title: task.title,
+              description: task.description,
+              task_code: task.task_code,
+              requirement_rules: task.requirement_rules,
+              required_completions: task.required_completions,
+              reward_loyalty_points: task.reward_loyalty_points,
+              is_active: task.is_active,
+              created_at: task.created_at,
+              updated_at: task.updated_at,
+              is_completed: walletAddress ? isCompletedFromSession : false,
+            } as Task;
+          });
+
+          // Calculate quest completion metrics
+          const totalTasks = tasks.length;
+          const completedTasks = tasks.filter((task: any) => task.is_completed).length;
+          const isQuestCompleted = totalTasks > 0 && completedTasks === totalTasks;
+          const totalPoints = tasks.reduce((sum: any, task: any) => sum + task.reward_loyalty_points, 0);
 
           return {
             id: quest.id,
+            owner_id: quest.owner_id,
             title: quest.title,
             description: quest.description,
-            quest_code: quest.quest_code,
-            points_reward: quest.reward_loyalty_points,
-            owner_id: quest.owner_id,
-            created_at: quest.createdAt,
-            updated_at: quest.updatedAt,
-            is_completed: walletAddress ? isCompleted : false,
+            is_active: quest.is_active,
+            createdAt: quest.createdAt,
+            updatedAt: quest.updatedAt,
+            claimable_metadata: quest.claimable_metadata,
+            tasks,
+            total_tasks: totalTasks,
+            completed_tasks: completedTasks,
+            is_completed: isQuestCompleted,
+            total_points: totalPoints,
           } as Quest;
         });
       } catch (err) {
@@ -125,7 +170,7 @@ export const useQuests = ({
         const keysToRemove: string[] = [];
         for (let i = 0; i < sessionStorage.length; i++) {
           const k = sessionStorage.key(i);
-          if (k && k.startsWith("quest_progress_session_"))
+          if (k && (k.startsWith("quest_progress_session_") || k.startsWith("task_progress_session_")))
             keysToRemove.push(k);
         }
         keysToRemove.forEach((k) => sessionStorage.removeItem(k));
@@ -141,7 +186,7 @@ export const useQuests = ({
     const savedNftStatus = localStorage.getItem("nft_minted_ns_daily");
     
     if (quests.length > 0) {
-      const completedQuests = quests.filter((quest: any) => quest.is_completed).length;
+      const completedQuests = quests.filter((quest: Quest) => quest.is_completed).length;
       const totalQuests = quests.length;
       const currentCompletionPercentage =
         totalQuests > 0 ? Math.round((completedQuests / totalQuests) * 100) : 0;
@@ -176,7 +221,7 @@ export const useQuests = ({
   // Listen for storage events
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "quest_progress_ping" && e.newValue) {
+      if ((e.key === "quest_progress_ping" || e.key === "task_progress_ping") && e.newValue) {
         refetch();
       }
       // Also listen for NFT minted status changes
@@ -189,7 +234,7 @@ export const useQuests = ({
   }, [refetch]);
 
   const completedQuests = mounted && isWalletConnected && !isLoading
-    ? quests.filter((q: any) => q.is_completed).length
+    ? quests.filter((q: Quest) => q.is_completed).length
     : 0;
   const totalQuests = !isLoading ? quests.length : 0;
   const completionPercentage = mounted && isWalletConnected && !isLoading && totalQuests > 0

@@ -2,10 +2,9 @@
 import { useCallback } from "react";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
 
 interface NFTData {
-  collection_id: string;
+  collection_id: string | number;
   name: string;
   description: string;
   image_url: string;
@@ -19,7 +18,6 @@ interface UseNFTClaimingReturn {
   // State
   isMinting: boolean;
   canMintAgain: boolean;
-  autoClaimInProgress: boolean;
   
   // Functions
   claimNFT: (nftData: NFTData) => Promise<{
@@ -39,30 +37,56 @@ export const useNFTClaiming = (): UseNFTClaimingReturn => {
     nftClaiming,
     setIsMinting,
     setCanMintAgain,
-    canStartMinting,
   } = useGlobalAppStore();
 
-  const claimNFT = useCallback(async (nftData: NFTData) => {
+  const claimNFT = useCallback(async (nftData: NFTData): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+  }> => {
     const { recipient, metadata_id } = nftData;
     
-    // Check if we can start minting
-    if (!canStartMinting(recipient, metadata_id)) {
+    // Simple validation - only check if minting is already in progress
+    if (nftClaiming.isMinting) {
       return {
         success: false,
-        error: "Cannot start minting at this time"
+        error: "Minting is already in progress"
       };
     }
 
-    // Set minting state
-    setIsMinting(true, metadata_id, recipient);
+    // Check if we can mint based on API response
+    if (!nftClaiming.canMintAgain) {
+      return {
+        success: false,
+        error: "NFT has already been claimed"
+      };
+    }
 
     try {
       console.log("Claiming NFT:", nftData);
 
-      const response = await axiosInstance.post("/platform/mint-nft", nftData);
+      // Set minting state to disable button
+      setIsMinting(true);
+
+      // Prepare NFT data for API
+      const apiData = {
+        collection_id: nftData.collection_id.toString(),
+        name: nftData.name,
+        description: nftData.description,
+        image_url: nftData.image_url,
+        attributes: nftData.attributes,
+        recipient: nftData.recipient,
+        chain_type: nftData.chain_type,
+        metadata_id: nftData.metadata_id,
+      };
+
+      // Make the API call directly
+      const response = await axiosInstance.post("/platform/mint-nft", apiData);
 
       if (response.data.success) {
-        // Update global state
+        console.log('NFT minted successfully');
+        
+        // Mark as no longer mintable
         setCanMintAgain(false);
         
         return {
@@ -70,50 +94,58 @@ export const useNFTClaiming = (): UseNFTClaimingReturn => {
           data: response.data
         };
       } else {
-        return {
-          success: false,
-          error: response.data.message || "Failed to claim NFT"
-        };
+        throw new Error(response.data.message || 'Minting failed');
       }
+      
     } catch (error: any) {
       console.error("NFT claim error:", error);
-      const errorMessage = error.response?.data?.message || "Failed to claim NFT";
-
-      // Handle specific error cases
+      
+      const errorMessage = error.response?.data?.message || error.message || "Failed to claim NFT";
+      
+      // Check for specific error types
       if (
         errorMessage.includes("already claimed") ||
-        errorMessage.includes("already minted")
+        errorMessage.includes("already minted") ||
+        errorMessage.includes("already exists")
       ) {
+        // Mark as no longer mintable even on "already claimed" errors
         setCanMintAgain(false);
+        
         return {
-          success: false,
-          error: "NFT has already been claimed"
+          success: true, // Treat as success since NFT exists
+          data: { 
+            message: 'NFT already claimed',
+            name: nftData.name,
+            description: nftData.description,
+            image_url: nftData.image_url,
+            recipient: nftData.recipient
+          }
         };
       }
-
+      
       return {
         success: false,
         error: errorMessage
       };
+      
     } finally {
-      // Always reset minting state
+      // Always clean up minting state
       setIsMinting(false);
     }
-  }, [canStartMinting, setIsMinting, setCanMintAgain]);
+  }, [nftClaiming.isMinting, nftClaiming.canMintAgain, setIsMinting, setCanMintAgain]);
 
   const canStartClaiming = useCallback((walletAddress: string, metadataId: number) => {
-    return canStartMinting(walletAddress, metadataId);
-  }, [canStartMinting]);
+    // Simple check - only based on global state
+    return nftClaiming.canMintAgain && !nftClaiming.isMinting;
+  }, [nftClaiming.canMintAgain, nftClaiming.isMinting]);
 
-  const isClaimDisabled = nftClaiming.isMinting || 
-                         nftClaiming.autoClaimInProgress || 
-                         !nftClaiming.canMintAgain;
+  // Simple disabled state checking - button disabled when minting or already claimed
+  const isClaimDisabled = nftClaiming.isMinting || !nftClaiming.canMintAgain;
 
   return {
     // State
     isMinting: nftClaiming.isMinting,
     canMintAgain: nftClaiming.canMintAgain,
-    autoClaimInProgress: nftClaiming.autoClaimInProgress,
     
     // Functions
     claimNFT,
