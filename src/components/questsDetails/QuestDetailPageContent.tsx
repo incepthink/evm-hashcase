@@ -11,10 +11,10 @@ import {
   QuestWithCompletion,
   TaskWithCompletion,
 } from "@/hooks/useQuestById";
-import {
-  NFTMintingService,
-  MintingStateManager,
-} from "@/utils/mintingStateManager";
+// import {
+//   NFTMintingService,
+//   MintingStateManager,
+// } from "@/utils/mintingStateManager";
 
 // Components
 import { LoadingScreen } from "../quests/LoadingScreen";

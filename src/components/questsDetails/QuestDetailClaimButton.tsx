@@ -49,7 +49,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
   const {
     isMinting,
     canMintAgain,
-    autoClaimInProgress,
+    // autoClaimInProgress,
     claimNFT,
     canStartClaiming,
     isClaimDisabled,
@@ -129,14 +129,14 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       return "NFT Data Loading...";
     }
 
-    if (autoClaimInProgress) {
-      return (
-        <div className="flex items-center justify-center gap-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          <span>Auto-claiming...</span>
-        </div>
-      );
-    }
+    // if (autoClaimInProgress) {
+    //   return (
+    //     <div className="flex items-center justify-center gap-2">
+    //       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+    //       <span>Auto-claiming...</span>
+    //     </div>
+    //   );
+    // }
 
     if (claiming || isMinting) {
       return (
@@ -178,7 +178,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       </button>
 
       {/* Additional info when quest is completed but NFT not yet claimed */}
-      {completionPercentage === 100 && !nftMinted && !autoClaimInProgress && (
+      {completionPercentage === 100 && !nftMinted && (
         <p className="text-sm text-gray-400 mt-3">
           Complete all tasks to unlock your NFT reward
         </p>

@@ -20,7 +20,7 @@ import { Navigation } from "./Navigation";
 import { NFTDisplay } from "./NFTDisplay";
 import { QuestHeader } from "./QuestHeader";
 import { QuestList } from "./QuestList";
-import { ClaimNFTButton } from "./ClaimNFTButton";
+// import { ClaimNFTButton } from "./ClaimNFTButton";
 import { NFTSuccessModal } from "./NFTSuccessModal";
 // import { METADATA_ID } from "@/utils/constants";  // ← COMMENTED OUT
 

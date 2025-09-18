@@ -263,91 +263,92 @@ export class MintingStateManager {
   }
 }
 
+// ========== COMMENTED OUT NFT MINTING SERVICE ==========
 // NFT Minting Service with cross-tab sync
-export class NFTMintingService {
-  static async mintNFT(params: {
-    walletAddress: string;
-    metadataId: number;
-    nftData: any;
-    onSuccess?: (data: any) => void;
-    onError?: (error: any) => void;
-  }): Promise<boolean> {
-    const { walletAddress, metadataId, nftData, onSuccess, onError } = params;
+// export class NFTMintingService {
+//   static async mintNFT(params: {
+//     walletAddress: string;
+//     metadataId: number;
+//     nftData: any;
+//     onSuccess?: (data: any) => void;
+//     onError?: (error: any) => void;
+//   }): Promise<boolean> {
+//     const { walletAddress, metadataId, nftData, onSuccess, onError } = params;
     
-    // Dynamic import to avoid circular dependencies
-    const { useGlobalAppStore } = await import('@/store/globalAppStore');
-    const store = useGlobalAppStore.getState();
+//     // Dynamic import to avoid circular dependencies
+//     const { useGlobalAppStore } = await import('@/store/globalAppStore');
+//     const store = useGlobalAppStore.getState();
     
-    // Check if we can start minting
-    if (!store.canStartMinting(walletAddress, metadataId)) {
-      onError?.({ message: 'Minting not allowed at this time' });
-      return false;
-    }
+//     // Check if we can start minting
+//     if (!store.canStartMinting(walletAddress, metadataId)) {
+//       onError?.({ message: 'Minting not allowed at this time' });
+//       return false;
+//     }
     
-    // Try to set minting state (this will acquire the lock)
-    const mintingStarted = store.setIsMinting(true, metadataId, walletAddress);
-    if (mintingStarted === false) {
-      onError?.({ message: 'Could not start minting - another process in progress' });
-      return false;
-    }
+//     // Try to set minting state (this will acquire the lock)
+//     const mintingStarted = store.setIsMinting(true, metadataId, walletAddress);
+//     if (mintingStarted === false) {
+//       onError?.({ message: 'Could not start minting - another process in progress' });
+//       return false;
+//     }
     
-    try {
-      console.log('Starting NFT mint process...');
+//     try {
+//       console.log('Starting NFT mint process...');
       
-      // Make the API call
-      const axiosInstance = (await import('@/utils/axios')).default;
-      const response = await axiosInstance.post("/platform/mint-nft", nftData);
+//       // Make the API call
+//       const axiosInstance = (await import('@/utils/axios')).default;
+//       const response = await axiosInstance.post("/platform/mint-nft", nftData);
       
-      if (response.data.success) {
-        console.log('NFT minted successfully');
+//       if (response.data.success) {
+//         console.log('NFT minted successfully');
         
-        // Mark as successfully minted
-        MintingStateManager.markMintSuccess(walletAddress, metadataId, response.data.txHash);
+//         // Mark as successfully minted
+//         MintingStateManager.markMintSuccess(walletAddress, metadataId, response.data.txHash);
         
-        // Update global state
-        store.setCanMintAgain(false);
+//         // Update global state
+//         store.setCanMintAgain(false);
         
-        onSuccess?.(response.data);
-        return true;
-      } else {
-        throw new Error(response.data.message || 'Minting failed');
-      }
+//         onSuccess?.(response.data);
+//         return true;
+//       } else {
+//         throw new Error(response.data.message || 'Minting failed');
+//       }
       
-    } catch (error: any) {
-      console.error('NFT minting failed:', error);
+//     } catch (error: any) {
+//       console.error('NFT minting failed:', error);
       
-      const errorMessage = error.response?.data?.message || error.message || 'Minting failed';
+//       const errorMessage = error.response?.data?.message || error.message || 'Minting failed';
       
-      // Check for specific error types
-      if (
-        errorMessage.includes('already claimed') ||
-        errorMessage.includes('already minted') ||
-        errorMessage.includes('already exists')
-      ) {
-        // Mark as successfully minted even on "already claimed" errors
-        MintingStateManager.markMintSuccess(walletAddress, metadataId);
-        store.setCanMintAgain(false);
+//       // Check for specific error types
+//       if (
+//         errorMessage.includes('already claimed') ||
+//         errorMessage.includes('already minted') ||
+//         errorMessage.includes('already exists')
+//       ) {
+//         // Mark as successfully minted even on "already claimed" errors
+//         MintingStateManager.markMintSuccess(walletAddress, metadataId);
+//         store.setCanMintAgain(false);
         
-        onSuccess?.({ 
-          message: 'NFT already claimed',
-          name: nftData.name,
-          description: nftData.description,
-          image_url: nftData.image_url,
-          recipient: walletAddress
-        });
-        return true;
-      }
+//         onSuccess?.({ 
+//           message: 'NFT already claimed',
+//           name: nftData.name,
+//           description: nftData.description,
+//           image_url: nftData.image_url,
+//           recipient: walletAddress
+//         });
+//         return true;
+//       }
       
-      onError?.(error);
-      return false;
+//       onError?.(error);
+//       return false;
       
-    } finally {
-      // Always clean up minting state
-      store.setIsMinting(false, metadataId, walletAddress);
-      store.setAutoClaimInProgress(false);
-    }
-  }
-}
+//     } finally {
+//       // Always clean up minting state
+//       store.setIsMinting(false, metadataId, walletAddress);
+//       store.setAutoClaimInProgress(false);
+//     }
+//   }
+// }
 
 // Auto-cleanup on page load
 if (typeof window !== 'undefined') {
