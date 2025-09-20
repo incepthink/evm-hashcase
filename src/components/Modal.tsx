@@ -29,11 +29,11 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`bg-[#00041F]/20 backdrop-blur-md text-white rounded-xl  shadow md:p-8 p-3 transition-all ${
+        className={`bg-[#00041F]/20 backdrop-blur-md text-white rounded-xl  shadow md:p-5 p-3 transition-all ${
           openModal ? "scale-100 opacity-100" : "scale-125 opacity-0"
         } `}
       >
-        <div className="flex items-center justify-between gap-x-4">
+        <div className="flex items-center justify-center relative">
           <h1
             className={`${workSans.className} md:text-2xl text-lg mb-2 mx-4 font-bold`}
           >
@@ -41,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({
           </h1>
           <button
             onClick={CloseModal}
-            className="mb-2 rounded-lg text-gray-400"
+            className="mb-2 rounded-lg text-gray-400 absolute right-0"
           >
             <X />
           </button>

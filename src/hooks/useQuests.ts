@@ -24,7 +24,7 @@ interface Task {
   is_active: boolean;
   created_at?: Date;
   updated_at?: Date;
-  is_completed?: boolean;
+  isCompleted: boolean; // This comes from the API now
 }
 
 interface Quest {
@@ -36,7 +36,7 @@ interface Quest {
   createdAt?: Date;
   updatedAt?: Date;
   claimable_metadata?: number | null;
-  tasks: Task[];
+  tasksWithCompletion: Task[]; // Updated to match API response
   // Computed properties
   total_tasks: number;
   completed_tasks: number;
@@ -50,6 +50,7 @@ interface UseQuestsProps {
   isWalletConnected: boolean;
   mounted: boolean;
   requiredChainType?: 'sui' | 'evm';
+  userId?: number | null; // Add userId prop
 }
 
 export const useQuests = ({ 
@@ -57,7 +58,8 @@ export const useQuests = ({
   walletAddress, 
   isWalletConnected, 
   mounted, 
-  requiredChainType = 'sui' 
+  requiredChainType = 'sui',
+  userId 
 }: UseQuestsProps) => {
   const [nftMinted, setNftMinted] = useState(false);
   const prevIsConnectedRef = useRef<boolean | null>(null);
@@ -68,34 +70,22 @@ export const useQuests = ({
     refetch,
     error,
   } = useQuery({
-    queryKey: ["quests", collection?.owner_id, walletAddress, requiredChainType],
+    queryKey: ["quests", collection?.owner_id, walletAddress, userId, requiredChainType],
     queryFn: async () => {
       if (!collection || !collection.owner_id) {
         return [];
       }
 
       try {
-        // Use the new API endpoint
-        const response = await axiosInstance.get(`/platform/quest/owner/${collection.owner_id}`);
-        console.log("QUEST", response.data);
+        let response;
         
-        // Get session completed tasks if wallet is connected
-        let sessionCompletedTasks: number[] = [];
-        try {
-          const sessionKey = walletAddress
-            ? `task_progress_session_${walletAddress}`
-            : null;
-          sessionCompletedTasks = sessionKey
-            ? JSON.parse(sessionStorage.getItem(sessionKey) || "[]")
-            : [];
-        } catch {}
-
-        return (response.data.quests || []).map((quest: any) => {
-          const tasks = (quest.tasks || []).map((task: any) => {
-            // Check if task is completed from session storage
-            const isCompletedFromSession = sessionCompletedTasks.includes(task.id);
-            
-            return {
+        // If user is connected and we have userId, use the completion endpoint
+        if (isWalletConnected && userId) {
+          response = await axiosInstance.get(`/platform/quest/completion/owner/${collection.owner_id}/user/${userId}`);
+          console.log("QUEST WITH COMPLETIONS", response.data);
+          
+          return (response.data.quests || []).map((quest: any) => {
+            const tasks = (quest.tasksWithCompletion || []).map((task: any) => ({
               id: task.id,
               quest_id: task.quest_id,
               owner_id: task.owner_id,
@@ -108,32 +98,92 @@ export const useQuests = ({
               is_active: task.is_active,
               created_at: task.created_at,
               updated_at: task.updated_at,
-              is_completed: walletAddress ? isCompletedFromSession : false,
-            } as Task;
+              isCompleted: task.isCompleted || false, // Use server-side completion status
+            } as Task));
+
+            // Calculate quest completion metrics from server data
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter((task: Task) => task.isCompleted).length;
+            const isQuestCompleted = totalTasks > 0 && completedTasks === totalTasks;
+            const totalPoints = tasks.reduce((sum: number, task: Task) => sum + task.reward_loyalty_points, 0);
+
+            return {
+              id: quest.id,
+              owner_id: quest.owner_id,
+              title: quest.title,
+              description: quest.description,
+              is_active: quest.is_active,
+              createdAt: quest.createdAt,
+              updatedAt: quest.updatedAt,
+              claimable_metadata: quest.claimable_metadata,
+              tasksWithCompletion: tasks,
+              total_tasks: totalTasks,
+              completed_tasks: completedTasks,
+              is_completed: isQuestCompleted,
+              total_points: totalPoints,
+            } as Quest;
           });
+        } else {
+          // Fallback to original endpoint without user completions
+          response = await axiosInstance.get(`/platform/quest/owner/${collection.owner_id}`);
+          console.log("QUEST WITHOUT COMPLETIONS", response.data);
+          
+          // Get session completed tasks if wallet is connected (fallback behavior)
+          let sessionCompletedTasks: number[] = [];
+          try {
+            const sessionKey = walletAddress
+              ? `task_progress_session_${walletAddress}`
+              : null;
+            sessionCompletedTasks = sessionKey
+              ? JSON.parse(sessionStorage.getItem(sessionKey) || "[]")
+              : [];
+          } catch {}
 
-          // Calculate quest completion metrics
-          const totalTasks = tasks.length;
-          const completedTasks = tasks.filter((task: any) => task.is_completed).length;
-          const isQuestCompleted = totalTasks > 0 && completedTasks === totalTasks;
-          const totalPoints = tasks.reduce((sum: any, task: any) => sum + task.reward_loyalty_points, 0);
+          return (response.data.quests || []).map((quest: any) => {
+            const tasks = (quest.tasks || []).map((task: any) => {
+              // Check if task is completed from session storage (fallback)
+              const isCompletedFromSession = sessionCompletedTasks.includes(task.id);
+              
+              return {
+                id: task.id,
+                quest_id: task.quest_id,
+                owner_id: task.owner_id,
+                title: task.title,
+                description: task.description,
+                task_code: task.task_code,
+                requirement_rules: task.requirement_rules,
+                required_completions: task.required_completions,
+                reward_loyalty_points: task.reward_loyalty_points,
+                is_active: task.is_active,
+                created_at: task.created_at,
+                updated_at: task.updated_at,
+                isCompleted: walletAddress ? isCompletedFromSession : false,
+              } as Task;
+            });
 
-          return {
-            id: quest.id,
-            owner_id: quest.owner_id,
-            title: quest.title,
-            description: quest.description,
-            is_active: quest.is_active,
-            createdAt: quest.createdAt,
-            updatedAt: quest.updatedAt,
-            claimable_metadata: quest.claimable_metadata,
-            tasks,
-            total_tasks: totalTasks,
-            completed_tasks: completedTasks,
-            is_completed: isQuestCompleted,
-            total_points: totalPoints,
-          } as Quest;
-        });
+            // Calculate quest completion metrics
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter((task: Task) => task.isCompleted).length;
+            const isQuestCompleted = totalTasks > 0 && completedTasks === totalTasks;
+            const totalPoints = tasks.reduce((sum: number, task: Task) => sum + task.reward_loyalty_points, 0);
+
+            return {
+              id: quest.id,
+              owner_id: quest.owner_id,
+              title: quest.title,
+              description: quest.description,
+              is_active: quest.is_active,
+              createdAt: quest.createdAt,
+              updatedAt: quest.updatedAt,
+              claimable_metadata: quest.claimable_metadata,
+              tasksWithCompletion: tasks,
+              total_tasks: totalTasks,
+              completed_tasks: completedTasks,
+              is_completed: isQuestCompleted,
+              total_points: totalPoints,
+            } as Quest;
+          });
+        }
       } catch (err) {
         console.error("Error fetching quests:", err);
         toast.error("Failed to load quests");

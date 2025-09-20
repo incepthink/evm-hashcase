@@ -75,7 +75,7 @@ interface Task {
   is_active: boolean;
   created_at?: Date;
   updated_at?: Date;
-  is_completed?: boolean;
+  isCompleted: boolean; // Updated from is_completed
 }
 
 interface Quest {
@@ -87,7 +87,7 @@ interface Quest {
   createdAt?: Date;
   updatedAt?: Date;
   claimable_metadata?: number | null;
-  tasks: Task[];
+  tasksWithCompletion: Task[]; // Updated from tasks
   total_tasks: number;
   completed_tasks: number;
   is_completed: boolean;
@@ -248,6 +248,7 @@ const QuestsPageContent = () => {
     isWalletConnected,
     mounted,
     requiredChainType,
+    userId: user?.id || null, // Add userId from global store
   });
 
   // Trigger quest refetch when wallet connection changes

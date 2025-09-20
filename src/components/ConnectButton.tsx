@@ -132,8 +132,8 @@ const ConnectButton: React.FC = () => {
   }, [isUserVerified]);
 
   const handleModal = () => {
-    // Only allow opening modal if not initializing, no wallet is connected, and not pending
-    if (!isInitializing && !walletAddress && !isPending) {
+    // Allow opening modal if not initializing and (no wallet connected OR pending state)
+    if (!isInitializing && (!walletAddress || isPending)) {
       // Mark user interaction when opening modal
       setUserHasInteracted(true);
       setOpenModal(!openModal);
@@ -258,13 +258,17 @@ const ConnectButton: React.FC = () => {
     );
   }
 
-  // If wallet is connected but not authenticated, show pending state
+  // If wallet is connected but not authenticated, show pending state - CLICKABLE
   if (isPending) {
     return (
-      <div className="ml-4 sm:ml-6 md:ml-10 flex items-center gap-x-2 sm:gap-x-3 px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-yellow-200 border-yellow-300 w-max font-medium sm:font-semibold rounded-2xl text-xs sm:text-sm md:text-base">
+      <button
+        onClick={handleModal}
+        disabled={isInitializing}
+        className="ml-4 sm:ml-6 md:ml-10 flex items-center gap-x-2 sm:gap-x-3 px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-yellow-200 border-yellow-300 w-max font-medium sm:font-semibold rounded-2xl text-xs sm:text-sm md:text-base hover:bg-yellow-400/10 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-yellow-200 border-t-transparent rounded-full animate-spin"></div>
         <span>Pending...</span>
-      </div>
+      </button>
     );
   }
 
@@ -272,7 +276,7 @@ const ConnectButton: React.FC = () => {
   return (
     <button
       onClick={handleModal}
-      disabled={isInitializing || isPending}
+      disabled={isInitializing}
       className="flex justify-center items-center gap-x-2 sm:gap-x-3 md:gap-x-5 px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 md:py-2.5 border-b-2 text-white font-medium sm:font-semibold rounded-2xl w-max ml-4 sm:ml-6 md:ml-10 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/10 transition-colors"
     >
       <span className="hidden sm:inline">Connect</span>

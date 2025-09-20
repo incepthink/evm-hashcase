@@ -6,6 +6,8 @@ import EVMWalletConnect from "@/components/WalletConnect/EvmWalletConnect";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import PrivyGoogleLogin from "./WalletConnect/PrivyGoogleLogin";
 import { useAutoOpenModal } from "@/hooks/useAutoOpenModal";
+import { useDisconnect, useAccount } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 
 const WalletConnectionModal = () => {
   const {
@@ -15,6 +17,8 @@ const WalletConnectionModal = () => {
     getWalletForChain,
     hasWalletForChain,
     setUserHasInteracted,
+    unsetUser,
+    disconnectAllWallets,
   } = useGlobalAppStore();
 
   // Enable auto-open functionality
@@ -24,8 +28,42 @@ const WalletConnectionModal = () => {
   const [email, setEmail] = useState("");
   const [emailSubmitted, setEmailSubmitted] = useState(false);
 
+  // Wallet hooks for disconnect functionality
+  const { disconnect: disconnectWagmi } = useDisconnect();
+  const {
+    logout: logoutPrivy,
+    authenticated: privyAuthenticated,
+    user: privyUser,
+  } = usePrivy();
+  const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
+
   // Get EVM wallet state from store ONLY
   const evmWallet = getWalletForChain("evm");
+
+  // Check for pending state (wallet connected but not authenticated)
+  const [isPending, setIsPending] = useState(false);
+
+  useEffect(() => {
+    let pending = false;
+
+    // Check if Privy is connected but user not verified
+    if (privyAuthenticated && privyUser?.wallet?.address && !isUserVerified) {
+      pending = true;
+    }
+
+    // Check if Wagmi is connected but user not verified
+    if (wagmiConnected && wagmiAddress && !isUserVerified) {
+      pending = true;
+    }
+
+    setIsPending(pending);
+  }, [
+    privyAuthenticated,
+    privyUser,
+    wagmiConnected,
+    wagmiAddress,
+    isUserVerified,
+  ]);
 
   // Auto-close modal when user is verified and has EVM wallet
   useEffect(() => {
@@ -60,6 +98,48 @@ const WalletConnectionModal = () => {
       setUserHasInteracted(true);
     }
   }, [openModal, setUserHasInteracted]);
+
+  // Handle complete disconnect - clears all wallet connections
+  const handleCompleteDisconnect = async () => {
+    try {
+      console.log("Initiating complete disconnect...");
+
+      // Clear user data from global store immediately
+      unsetUser();
+      disconnectAllWallets();
+
+      // Complete disconnect from all wallet providers
+      if (privyAuthenticated) {
+        // Disconnect from Privy (Google login)
+        await logoutPrivy();
+        console.log("Disconnected from Privy");
+      }
+
+      if (wagmiConnected) {
+        // Disconnect from Wagmi (MetaMask, etc.)
+        disconnectWagmi();
+        console.log("Disconnected from Wagmi");
+      }
+
+      // Additional cleanup - clear any localStorage tokens or session data
+      if (typeof window !== "undefined") {
+        // Clear any auth tokens stored in localStorage
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("walletConnect");
+
+        // Clear any session storage
+        sessionStorage.clear();
+      }
+
+      // Reset email flow
+      resetEmailFlow();
+
+      console.log("Complete disconnect successful");
+    } catch (error) {
+      console.error("Error during complete disconnect:", error);
+    }
+  };
 
   return (
     <Modal
@@ -151,8 +231,23 @@ const WalletConnectionModal = () => {
           <EVMWalletConnect />
         </div>
 
+        {/* Disconnect Button - Show when in pending state */}
+        {isPending && (
+          <div className="w-full pt-4 border-t border-gray-200">
+            <button
+              onClick={handleCompleteDisconnect}
+              className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+            >
+              Disconnect All Wallets
+            </button>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              Having trouble? Try disconnecting and reconnecting your wallet.
+            </p>
+          </div>
+        )}
+
         {/* Instructions Footer */}
-        <div className="w-full mt-6 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="text-xs text-gray-600 text-center">
             <p className="font-medium mb-1">How it works:</p>
             <ol className="text-left space-y-1">
