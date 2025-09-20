@@ -194,20 +194,21 @@ const QuestDetailPageContent = () => {
   }, [metadata, walletAddress]);
 
   const handleBack = useCallback(() => {
-    // try {
-    //   const collectionId =
-    //     metadata?.collection?.id || searchParams.get("collection_id") || "218";
-    //   router.push(
-    //     `/loyalties/${collectionId}/quests?collection_id=${collectionId}`
-    //   );
-    // } catch {
-    //   if (typeof window !== "undefined" && window.history.length > 1) {
-    //     window.history.back();
-    //   } else {
-    //     router.push("/loyalties");
-    //   }
-    // }
-    router.back();
+    try {
+      const collectionId = metadata?.collection?.id || null;
+      currentQuest;
+      if (collectionId) {
+        router.push(`/quests?collection_id=${collectionId}`);
+      } else {
+        router.push(`/collections`); // Fallback to collections page
+      }
+    } catch {
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        window.history.back();
+      } else {
+        router.back();
+      }
+    }
   }, [metadata?.collection?.id, searchParams, router]);
 
   const handleNFTMintSuccess = useCallback(

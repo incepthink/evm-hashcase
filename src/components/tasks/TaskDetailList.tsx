@@ -1,34 +1,15 @@
-// components/quests/TaskDetailList.tsx
+// components/tasks/TaskDetailList.tsx
 "use client";
 
 import { useState } from "react";
 import axiosInstance from "@/utils/axios";
 import toast from "react-hot-toast";
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import { RequirementRule, TaskWithCompletion } from "@/hooks/useQuestById";
-
-interface Task extends TaskWithCompletion {
-  is_completed?: boolean;
-}
-
-interface Quest {
-  id: number;
-  owner_id: number;
-  title: string;
-  description?: string;
-  is_active?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-  claimable_metadata?: number | null;
-  tasks: Task[];
-  total_tasks: number;
-  completed_tasks: number;
-  is_completed: boolean;
-  total_points: number;
-}
+import { RequirementRule, TaskWithCompletion } from "@/hooks/useTasksByCode";
 
 interface TaskDetailListProps {
-  quest: Quest;
+  tasks: TaskWithCompletion[];
+  questTitle: string;
   isWalletConnected: boolean;
   requiredChainType?: "sui" | "evm";
   highlightTaskCode?: string;
@@ -36,58 +17,84 @@ interface TaskDetailListProps {
 }
 
 export const TaskDetailList: React.FC<TaskDetailListProps> = ({
-  quest,
+  tasks,
+  questTitle,
   isWalletConnected,
   requiredChainType = "sui",
   highlightTaskCode,
   onTaskComplete,
 }) => {
-  const [completingTasks, setCompletingTasks] = useState<Set<string>>(
+  const [completingTasks, setCompletingTasks] = useState<Set<number>>(
     new Set()
   );
   const { setOpenModal, user } = useGlobalAppStore();
 
-  const getTaskStatusIcon = (task: Task): string => {
+  const getTaskStatusIcon = (task: TaskWithCompletion): string => {
     if (!isWalletConnected) return "🔒";
-    const completed = task.isCompleted || task.is_completed;
-    return completed ? "✅" : "⏳";
+    return task.is_completed ? "✅" : "⏳";
   };
 
-  const getTaskStatusText = (task: Task): string => {
+  const getTaskStatusText = (task: TaskWithCompletion): string => {
     if (!isWalletConnected) return "Connect Wallet";
-    const completed = task.isCompleted || task.is_completed;
-    return completed ? "Completed" : "Pending";
+    return task.is_completed ? "Completed" : "Pending";
   };
 
-  const getTaskStatusColor = (task: Task): string => {
+  const getTaskStatusColor = (task: TaskWithCompletion): string => {
     if (!isWalletConnected)
       return "text-gray-400 bg-gray-800/20 border-gray-600";
-    const completed = task.isCompleted || task.is_completed;
-    return completed
+    return task.is_completed
       ? "text-green-400 bg-green-900/20 border-green-700"
-      : "text-yellow-400 bg-yellow-900/20 border-yellow-700";
+      : "text-blue-400 bg-blue-900/20 border-blue-700";
   };
 
-  const handleCompleteTask = async (taskCode: string | null) => {
-    if (!taskCode) {
-      toast.error("Task code not available");
-      return;
+  const getTaskButton = (task: TaskWithCompletion) => {
+    const isCompleting = completingTasks.has(task.id);
+
+    if (!isWalletConnected) {
+      return null; // No button when wallet not connected
     }
 
+    if (task.is_completed) {
+      return (
+        <span className="text-xs sm:text-sm px-3 py-2 rounded border text-green-400 bg-green-900/20 border-green-700 inline-block text-center">
+          ✅ Completed
+        </span>
+      );
+    }
+
+    if (task.can_complete) {
+      return (
+        <button
+          onClick={() => handleCompleteTask(task)}
+          disabled={isCompleting}
+          className={`text-xs sm:text-sm px-3 py-2 rounded border transition-colors ${
+            isCompleting
+              ? "bg-gray-600 text-gray-400 border-gray-600 cursor-not-allowed"
+              : "bg-white text-black border-white hover:bg-gray-100 font-medium"
+          }`}
+        >
+          {isCompleting ? "Completing..." : "Complete Task"}
+        </button>
+      );
+    }
+
+    // Task is pending but cannot be completed yet
+    return (
+      <span className="text-xs sm:text-sm px-3 py-2 rounded border text-blue-400 bg-blue-900/20 border-blue-700 inline-block text-center">
+        ⏳ Pending
+      </span>
+    );
+  };
+
+  const handleCompleteTask = async (task: TaskWithCompletion) => {
     if (!isWalletConnected && !user?.id) {
       toast.error("Please connect wallet or sign in to complete tasks");
       setOpenModal(true);
       return;
     }
 
-    const task = quest.tasks.find((t) => t.task_code === taskCode);
-    if (!task) {
-      toast.error("Task not found");
-      return;
-    }
-
     try {
-      setCompletingTasks((prev) => new Set(prev).add(taskCode));
+      setCompletingTasks((prev) => new Set(prev).add(task.id));
 
       const payload: any = {
         task_id: task.id,
@@ -98,14 +105,23 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
         payload.user_id = user.id;
       }
 
+      // Find task code - we need this for the API call
+      // Since we don't have task_code in the response, we'll use the highlighted one
+      // or we need to modify the backend to include task_code
+      const taskCodeToUse = highlightTaskCode; // This should be the current task code
+
+      if (!taskCodeToUse) {
+        throw new Error("Task code not available");
+      }
+
       await axiosInstance.post(
-        `/platform/quests/tasks/${taskCode}/complete`,
+        `/platform/quests/tasks/${taskCodeToUse}/complete`,
         payload
       );
 
       toast.success("Task completed successfully!");
 
-      // Call the callback to refetch quest data
+      // Call the callback to refetch task data
       if (onTaskComplete) {
         onTaskComplete();
       }
@@ -117,7 +133,7 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
           JSON.stringify({
             ts: Date.now(),
             wallet: user?.id,
-            taskCode,
+            taskCode: taskCodeToUse,
           })
         );
         localStorage.removeItem("task_progress_ping");
@@ -138,14 +154,14 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
     } finally {
       setCompletingTasks((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(taskCode);
+        newSet.delete(task.id);
         return newSet;
       });
     }
   };
 
   // Filter active tasks
-  const activeTasks = quest.tasks.filter((task: Task) => task.is_active);
+  const activeTasks = tasks.filter((task) => task.is_active);
 
   if (activeTasks.length === 0) {
     return (
@@ -163,12 +179,9 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
 
   return (
     <div className="space-y-2 sm:space-y-3">
-      {activeTasks.map((task: Task, index: number) => {
-        const isCompleted = task.isCompleted || task.is_completed;
-        const isHighlighted =
-          highlightTaskCode && task.task_code === highlightTaskCode;
-        const isCompleting =
-          task.task_code && completingTasks.has(task.task_code);
+      {activeTasks.map((task, index) => {
+        const isHighlighted = highlightTaskCode && task.can_complete;
+        const isCompleting = completingTasks.has(task.id);
 
         return (
           <div
@@ -179,15 +192,6 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
                 : "border-gray-700"
             }`}
           >
-            {/* Highlighted Task Badge */}
-            {isHighlighted && (
-              <div className="absolute top-2 right-2">
-                <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
-                  Current Task
-                </span>
-              </div>
-            )}
-
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
               {/* Task Info */}
               <div className="flex-1">
@@ -196,9 +200,16 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
                   <h3 className="text-sm sm:text-base font-bold text-white">
                     {task.title}
                   </h3>
-                  <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded">
-                    Task {index + 1}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded">
+                      Task {index + 1}
+                    </span>
+                    {isHighlighted && (
+                      <span className="text-xs ml-1 bg-purple-600 text-white px-2 py-1 rounded-full">
+                        Current
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {task.description && (
@@ -219,39 +230,24 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
                       {task.required_completions} completions required
                     </span>
                   )}
+                  {task.completion_count > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="text-green-400">✓</span>
+                      {task.completion_count}/{task.required_completions}{" "}
+                      completed
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Task Actions */}
-              <div className="flex-shrink-0 sm:ml-4 flex flex-col gap-2">
-                {/* Status Badge */}
-                <span
-                  className={`text-xs sm:text-sm px-3 py-2 rounded border inline-block text-center ${getTaskStatusColor(
-                    task
-                  )}`}
-                >
-                  {getTaskStatusText(task)}
-                </span>
-
-                {/* Complete Task Button */}
-                {!isCompleted && isWalletConnected && task.task_code && (
-                  <button
-                    onClick={() => handleCompleteTask(task.task_code)}
-                    disabled={Boolean(isCompleting)}
-                    className={`text-xs sm:text-sm px-3 py-2 rounded border transition-colors ${
-                      isCompleting
-                        ? "bg-gray-600 text-gray-400 border-gray-600 cursor-not-allowed"
-                        : "bg-white text-black border-white hover:bg-gray-100 font-medium"
-                    }`}
-                  >
-                    {isCompleting ? "Completing..." : "Complete Task"}
-                  </button>
-                )}
+              {/* Task Actions - Single Button */}
+              <div className="flex-shrink-0 sm:ml-4 flex justify-center items-center">
+                {getTaskButton(task)}
               </div>
             </div>
 
             {/* Task completion indicator */}
-            {isCompleted && (
+            {task.is_completed && (
               <div className="absolute top-2 left-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               </div>

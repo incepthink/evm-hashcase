@@ -53,7 +53,7 @@ export const QuestDetailList: React.FC<QuestDetailListProps> = ({
     const completed = task.isCompleted || task.is_completed;
     return completed
       ? "text-green-400 bg-green-900/20 border-green-700"
-      : "text-yellow-400 bg-yellow-900/20 border-yellow-700";
+      : "text-blue-400 bg-blue-900/20 border-blue-700";
   };
 
   // Filter active tasks

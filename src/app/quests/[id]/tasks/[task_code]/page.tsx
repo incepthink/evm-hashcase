@@ -2,15 +2,10 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import {
-  useQuestById,
-  QuestWithCompletion,
-  TaskWithCompletion,
-} from "@/hooks/useQuestById";
+import { useTasksByCode } from "@/hooks/useTasksByCode";
 
 // Components
 import { LoadingScreen } from "@/components/quests/LoadingScreen";
@@ -65,41 +60,9 @@ interface MetadataInstance {
   updatedAt: string;
 }
 
-// Transform the quest data to match the expected format
-const transformQuestData = (questData: QuestWithCompletion): any => {
-  const completedTasks = questData.tasksWithCompletion.filter(
-    (task) => task.isCompleted
-  ).length;
-  const totalTasks = questData.tasksWithCompletion.length;
-  const totalPoints = questData.tasksWithCompletion.reduce(
-    (sum, task) => sum + task.reward_loyalty_points,
-    0
-  );
-
-  return {
-    id: questData.id,
-    owner_id: questData.owner_id,
-    title: questData.title,
-    description: questData.description,
-    is_active: questData.is_active,
-    createdAt: questData.created_at,
-    updatedAt: questData.updated_at,
-    claimable_metadata: questData.claimable_metadata,
-    tasks: questData.tasksWithCompletion.map((task) => ({
-      ...task,
-      is_completed: task.isCompleted,
-    })),
-    total_tasks: totalTasks,
-    completed_tasks: completedTasks,
-    is_completed: completedTasks === totalTasks,
-    total_points: totalPoints,
-  };
-};
-
 const TaskDetailPage = () => {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const questIdParam = String(params?.id || "");
   const taskCode = String(params?.task_code || "");
   const questId = parseInt(questIdParam);
@@ -143,25 +106,50 @@ const TaskDetailPage = () => {
   const walletAddress = walletInfo?.address || null;
   const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
-  // Always call hooks
+  // Use the new hook to get tasks by task code
   const {
-    data: questData,
-    isLoading: questLoading,
-    refetch: refetchQuest,
-    error: questError,
-  } = useQuestById({
-    id: questId,
-    userId: userId || "temp",
+    data: tasksData,
+    isLoading: tasksLoading,
+    refetch: refetchTasks,
+    error: tasksError,
+  } = useTasksByCode({
+    taskCode,
+    userId: userId || "",
+    walletAddress: walletAddress || "",
+    enabled: mounted && !!taskCode && (!!userId || !!walletAddress),
   });
 
-  // Transform the quest data to match expected format
-  const currentQuest = useMemo(() => {
-    if (!questData) return null;
-    return transformQuestData(questData);
-  }, [questData]);
+  // Calculate quest statistics
+  const questStats = useMemo(() => {
+    if (!tasksData?.tasks) {
+      return {
+        totalTasks: 0,
+        completedTasks: 0,
+        totalPoints: 0,
+        isCompleted: false,
+      };
+    }
+
+    const totalTasks = tasksData.tasks.length;
+    const completedTasks = tasksData.tasks.filter(
+      (task) => task.is_completed
+    ).length;
+    const totalPoints = tasksData.tasks.reduce(
+      (sum, task) => sum + task.reward_loyalty_points,
+      0
+    );
+    const isCompleted = completedTasks === totalTasks && totalTasks > 0;
+
+    return {
+      totalTasks,
+      completedTasks,
+      totalPoints,
+      isCompleted,
+    };
+  }, [tasksData?.tasks]);
 
   // Get the metadata ID from the quest's claimable_metadata
-  const metadataId = currentQuest?.claimable_metadata;
+  const metadataId = tasksData?.quest?.claimable_metadata;
 
   // Check if it's NS Collection based on metadata
   const isNSCollection = useMemo(() => {
@@ -319,31 +307,31 @@ const TaskDetailPage = () => {
     );
   }
 
-  if (questLoading) {
+  if (tasksLoading) {
     return (
       <LoadingScreen
-        message="Loading Quest..."
+        message="Loading Tasks..."
         isNSCollection={isNSCollection}
       />
     );
   }
 
-  if (questError || !questData) {
-    return (
-      <ErrorScreen
-        title="Quest Not Found"
-        message="The requested quest could not be found"
-        onBack={handleBack}
-        isNSCollection={isNSCollection}
-      />
-    );
-  }
+  if (tasksError || !tasksData) {
+    // Handle specific "Task not found" error
+    const errorMessage =
+      tasksError?.response?.data?.error ||
+      tasksError?.message ||
+      "The requested tasks could not be found";
+    const isTaskNotFound = errorMessage.includes("Task not found");
 
-  if (!currentQuest) {
     return (
       <ErrorScreen
-        title="Quest Not Found"
-        message="Unable to process quest data"
+        title={isTaskNotFound ? "Invalid Task Code" : "Tasks Not Found"}
+        message={
+          isTaskNotFound
+            ? `Task code "${taskCode}" was not found. Please check the task code and try again.`
+            : errorMessage
+        }
         onBack={handleBack}
         isNSCollection={isNSCollection}
       />
@@ -383,11 +371,11 @@ const TaskDetailPage = () => {
           {/* Page Title */}
           <div className="text-center mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-              {currentQuest.title}
+              {tasksData.quest.title}
             </h1>
-            {currentQuest.description && (
+            {tasksData.quest.description && (
               <p className="text-gray-400 text-sm sm:text-base mt-2">
-                {currentQuest.description}
+                {tasksData.quest.description}
               </p>
             )}
             <div className="mt-2 text-sm text-purple-400">
@@ -429,24 +417,24 @@ const TaskDetailPage = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">
-                    {currentQuest.is_completed ? "🎉" : "📋"}
+                    {questStats.isCompleted ? "🎉" : "📋"}
                   </span>
                   <div className="text-left">
                     <h3 className="text-lg font-semibold text-white">
-                      {currentQuest.is_completed
+                      {questStats.isCompleted
                         ? "Quest Completed!"
                         : "Quest Tasks"}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      {currentQuest.completed_tasks} of{" "}
-                      {currentQuest.total_tasks} tasks completed
+                      {questStats.completedTasks} of {questStats.totalTasks}{" "}
+                      tasks completed
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <div className="text-lg font-bold text-white">
-                    {currentQuest.total_points} pts
+                    {questStats.totalPoints} pts
                   </div>
                   <div className="text-xs text-gray-400">Total Reward</div>
                 </div>
@@ -456,11 +444,12 @@ const TaskDetailPage = () => {
                 <div className="flex justify-between text-sm text-gray-400 mb-2">
                   <span>Progress</span>
                   <span>
-                    {Math.round(
-                      (currentQuest.completed_tasks /
-                        currentQuest.total_tasks) *
-                        100
-                    )}
+                    {questStats.totalTasks > 0
+                      ? Math.round(
+                          (questStats.completedTasks / questStats.totalTasks) *
+                            100
+                        )
+                      : 0}
                     %
                   </span>
                 </div>
@@ -468,17 +457,21 @@ const TaskDetailPage = () => {
                   <div
                     className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.round(
-                        (currentQuest.completed_tasks /
-                          currentQuest.total_tasks) *
-                          100
-                      )}%`,
+                      width: `${
+                        questStats.totalTasks > 0
+                          ? Math.round(
+                              (questStats.completedTasks /
+                                questStats.totalTasks) *
+                                100
+                            )
+                          : 0
+                      }%`,
                     }}
                   />
                 </div>
               </div>
 
-              {currentQuest.is_completed && currentQuest.claimable_metadata && (
+              {questStats.isCompleted && tasksData.quest.claimable_metadata && (
                 <div className="mt-4">
                   <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
                     <span>✨</span>
@@ -491,11 +484,12 @@ const TaskDetailPage = () => {
 
           {/* Task List with Completion Functionality */}
           <TaskDetailList
-            quest={currentQuest}
+            tasks={tasksData.tasks}
+            questTitle={tasksData.quest.title}
             isWalletConnected={isWalletConnected}
             requiredChainType={requiredChainType}
             highlightTaskCode={taskCode}
-            onTaskComplete={refetchQuest}
+            onTaskComplete={refetchTasks}
           />
 
           {/* Claim NFT Button (only if quest has claimable metadata) */}
@@ -506,16 +500,16 @@ const TaskDetailPage = () => {
               setClaiming={() => {}}
               setNftMinted={(minted: boolean) => setCanMintAgain(!minted)}
               completionPercentage={Math.round(
-                (currentQuest.completed_tasks / currentQuest.total_tasks) * 100
+                (questStats.completedTasks / questStats.totalTasks) * 100
               )}
               totalQuests={1}
-              completedQuests={currentQuest.is_completed ? 1 : 0}
+              completedQuests={questStats.isCompleted ? 1 : 0}
               isWalletConnected={isWalletConnected}
               nftData={nftData}
               onSuccess={handleNFTMintSuccess}
               requiredChainType={requiredChainType}
               disabled={isMintingDisabled}
-              metadataId={metadataId}
+              metadataId={metadataId || undefined}
             />
           )}
         </div>
