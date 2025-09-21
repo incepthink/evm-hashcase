@@ -1,3 +1,4 @@
+// evm badges table
 "use client";
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";

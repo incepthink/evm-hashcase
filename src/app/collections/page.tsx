@@ -193,11 +193,15 @@ const CollectionsPage: React.FC = () => {
               <Link
                 key={collectionId}
                 href={`/loyalties/${collectionId}`}
-                className="block group"
+                className="block group h-full" // Added h-full here
               >
-                <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 overflow-hidden shadow-lg transition-all duration-300">
+                <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 overflow-hidden shadow-lg transition-all duration-300 h-full flex flex-col">
+                  {" "}
+                  {/* Added h-full flex flex-col */}
                   {/* Image Section */}
-                  <div className="relative w-full aspect-square overflow-hidden">
+                  <div className="relative w-full aspect-square overflow-hidden flex-shrink-0">
+                    {" "}
+                    {/* Added flex-shrink-0 */}
                     <Image
                       src={collection.image_uri}
                       alt={collectionName}
@@ -205,7 +209,6 @@ const CollectionsPage: React.FC = () => {
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
                     {/* Collection Badge */}
                     <div className="absolute top-3 left-3">
                       <span className="px-2 py-1 bg-[#4DA2FF] text-black text-xs font-semibold rounded-full">
@@ -213,16 +216,18 @@ const CollectionsPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-
                   {/* Content Section */}
-                  <div className="p-4">
+                  <div className="p-4 flex flex-col flex-grow">
+                    {" "}
+                    {/* Added flex flex-col flex-grow */}
                     <h3 className="text-lg font-semibold text-white mb-2 line-clamp-1">
                       {collectionName}
                     </h3>
-                    <p className="text-sm text-white/70 line-clamp-2 mb-3">
+                    <p className="text-sm text-white/70 line-clamp-2 mb-3 flex-grow">
+                      {" "}
+                      {/* Added flex-grow */}
                       {collectionDescription}
                     </p>
-
                     {/* Contract Address */}
                     {contractAddress && (
                       <div className="mb-3">
@@ -236,24 +241,11 @@ const CollectionsPage: React.FC = () => {
                         </p>
                       </div>
                     )}
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      {/* <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          router.push(`/metadata/${collectionId}`);
-                        }}
-                        className="flex-1 text-center rounded-lg px-3 py-2 text-sm font-medium text-white bg-[#4DA2FF]/20 border border-[#4DA2FF]/50 hover:bg-[#4DA2FF] hover:text-black transition-all duration-200"
-                        aria-label={`View NFTs for ${collectionName}`}
-                      >
-                        View Mintable NFTs
-                      </button> */}
-                      {/* <button className="flex-1 text-center rounded-lg px-3 py-2 text-sm font-medium text-white bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-200">
-                        View
-                      </button> */}
+                    {/* Action Buttons - This will stick to bottom */}
+                    <div className="flex gap-2 mt-auto">
+                      {" "}
+                      {/* Added mt-auto */}
+                      {/* Your button code here if needed */}
                     </div>
                   </div>
                 </div>

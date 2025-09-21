@@ -68,11 +68,11 @@ export const QuestDetailHeader: React.FC<QuestDetailHeaderProps> = ({
           )}
 
           {/* Collection ID Display */}
-          <div className="text-xs text-gray-500">
+          {/* <div className="text-xs text-gray-500">
             <span className="bg-gray-800/50 px-2 py-1 rounded border border-gray-600">
               Collection ID: {nftData.collection_id}
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
 

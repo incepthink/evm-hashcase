@@ -392,14 +392,17 @@ const QuestsPageContent = () => {
   // Loading states
   if (!mounted) {
     return (
-      <LoadingScreen message="Loading..." isNSCollection={isNSCollection} />
+      <LoadingScreen
+        message="Loading Quests..."
+        isNSCollection={isNSCollection}
+      />
     );
   }
 
   if (isCollectionLoading) {
     return (
       <LoadingScreen
-        message="Loading Collection..."
+        message="Loading Quests..."
         isNSCollection={isNSCollection}
       />
     );
@@ -448,7 +451,7 @@ const QuestsPageContent = () => {
   if (metadataLoading) {
     return (
       <LoadingScreen
-        message="Loading Collection Details..."
+        message="Loading Quests..."
         collectionName={collection?.name}
         isNSCollection={isNSCollection}
       />
@@ -459,7 +462,7 @@ const QuestsPageContent = () => {
   if (metadataError || !metadata) {
     return (
       <ErrorScreen
-        title="NFT Details Not Found"
+        title="Reward Details Not Found"
         message="Unable to load NFT reward details"
         onBack={handleBack}
         isNSCollection={isNSCollection}
@@ -467,7 +470,7 @@ const QuestsPageContent = () => {
     );
   }
 
-  if (questsLoading || quests.length === 0) {
+  if (questsLoading) {
     return (
       <LoadingScreen
         message="Loading Quests..."

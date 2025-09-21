@@ -44,6 +44,7 @@ interface AppState {
   authenticationLock: AuthenticationLock | null;
   userHasInteracted: boolean;
   nftClaiming: NFTClaimingState;
+  isLoggingOut: boolean; // New state for logout tracking
 
   // Actions
   setUser: (user: User, jwt: string) => void;
@@ -73,6 +74,9 @@ interface AppState {
   setIsMinting: (minting: boolean) => void;
   setCanMintAgain: (canMint: boolean) => void;
   resetNFTClaimingState: () => void;
+
+  // Logout state actions
+  setIsLoggingOut: (loggingOut: boolean) => void;
 }
 
 /* ========= Helpers ========= */
@@ -103,6 +107,7 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
   isAuthenticating: false,
   authenticationLock: null,
   userHasInteracted: false,
+  isLoggingOut: false, // Initialize logout state
 
   nftClaiming: {
     isMinting: false,
@@ -318,6 +323,11 @@ export const useGlobalAppStore = create<AppState>((set, get) => ({
         canMintAgain: true,
       },
     });
+  },
+
+  // Logout state actions
+  setIsLoggingOut: (loggingOut: boolean) => {
+    set({ isLoggingOut: loggingOut });
   },
 }));
 

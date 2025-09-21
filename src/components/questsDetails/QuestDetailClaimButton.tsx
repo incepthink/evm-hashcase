@@ -164,7 +164,7 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
   }
 
   return (
-    <div className="mt-8 text-center">
+    <div className="mt-8 mb-8 text-center">
       <button
         onClick={handleClaimNFT}
         disabled={isButtonDisabled}
@@ -178,11 +178,11 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       </button>
 
       {/* Additional info when quest is completed but NFT not yet claimed */}
-      {completionPercentage === 100 && !nftMinted && (
+      {/* {completionPercentage === 100 && !nftMinted && (
         <p className="text-sm text-gray-400 mt-3">
           Complete all tasks to unlock your NFT reward
         </p>
-      )}
+      )} */}
     </div>
   );
 };

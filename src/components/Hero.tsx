@@ -128,7 +128,7 @@ export const Hero = () => {
                       <span className="xs:hidden">
                         {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
                       </span>{" "}
-                      ({evmWallet?.type})
+                      {/* ({evmWallet?.type}) */}
                     </span>
                   </div>
 

@@ -16,11 +16,17 @@ interface NFTSuccessModalProps {
   onClose: () => void;
   mintedNftData: MintedNftData | null;
   walletAddress: string | null;
-  isNSCollection: boolean;
+  isNSCollection?: boolean;
 }
 
 const NFTSuccessModal = memo<NFTSuccessModalProps>(
-  ({ isOpen, onClose, mintedNftData, walletAddress, isNSCollection }) => {
+  ({
+    isOpen,
+    onClose,
+    mintedNftData,
+    walletAddress,
+    isNSCollection = false,
+  }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
 

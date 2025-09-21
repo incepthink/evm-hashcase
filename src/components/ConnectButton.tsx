@@ -5,6 +5,7 @@ import { Wallet, User, LogOut, ChevronDown } from "lucide-react";
 import React, { useEffect, useState, useRef } from "react";
 import { useDisconnect, useAccount } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/navigation";
 
 const ConnectButton: React.FC = () => {
   const {
@@ -17,6 +18,7 @@ const ConnectButton: React.FC = () => {
     disconnectWallet,
     disconnectAllWallets,
     setUserHasInteracted,
+    setIsLoggingOut,
   } = useGlobalAppStore();
 
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -39,6 +41,8 @@ const ConnectButton: React.FC = () => {
     user: privyUser,
   } = usePrivy();
   const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
+
+  const router = useRouter();
 
   // Get wallet info from store only
   const evmWallet = getWalletForChain("evm");
@@ -147,12 +151,13 @@ const ConnectButton: React.FC = () => {
   const handleProfile = () => {
     setDropdownOpen(false);
     // Add your profile navigation logic here
-    console.log("Navigate to profile");
-    // Example: router.push('/profile');
+    // console.log("Navigate to profile");
+    router.push("/profile");
   };
 
   const handleCompleteDisconnect = async () => {
     setDropdownOpen(false);
+    setIsLoggingOut(true);
 
     // Clear wallet address state immediately for instant UI feedback
     setWalletAddress(null);
@@ -193,6 +198,8 @@ const ConnectButton: React.FC = () => {
       console.log("Complete disconnect successful");
     } catch (error) {
       console.error("Error during complete disconnect:", error);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
