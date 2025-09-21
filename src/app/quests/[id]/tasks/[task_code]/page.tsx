@@ -1,4 +1,4 @@
-// app/quests/[id]/tasks/[task_code]/page.tsx
+// evm app/quests/[id]/tasks/[task_code]/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -88,6 +88,7 @@ const TaskDetailPage = () => {
     setOpenModal,
     nftClaiming,
     setCanMintAgain,
+    connectedWallets,
   } = useGlobalAppStore();
 
   // Validate questId early
@@ -98,11 +99,7 @@ const TaskDetailPage = () => {
   const isValidUserId = userId && !isNaN(Number(userId)) && Number(userId) > 0;
 
   // Get wallet info from global store
-  const walletInfo = useMemo(() => {
-    if (!mounted) return null;
-    return getWalletForChain(requiredChainType);
-  }, [mounted, getWalletForChain, requiredChainType]);
-
+  const walletInfo = mounted ? getWalletForChain(requiredChainType) : null;
   const walletAddress = walletInfo?.address || null;
   const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
@@ -252,11 +249,11 @@ const TaskDetailPage = () => {
       fetchMetadata();
     } else if (mounted && (!isWalletConnected || !metadataId)) {
       setMetadata(null);
-      setMetadataLoading(true);
+      setMetadataLoading(false); // Change from true to false
       setMetadataError("");
       setCanMintAgain(true);
     }
-  }, [mounted, isWalletConnected, walletAddress, metadataId, setCanMintAgain]);
+  }, [mounted, isWalletConnected, walletAddress, metadataId]);
 
   // Loading states
   if (!mounted) {

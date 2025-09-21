@@ -130,6 +130,7 @@ const QuestDetailPageContent = () => {
     setOpenModal,
     nftClaiming,
     setCanMintAgain,
+    connectedWallets, // Add this line
   } = useGlobalAppStore();
 
   // ===== VALIDATION & COMPUTED VALUES =====
@@ -137,12 +138,8 @@ const QuestDetailPageContent = () => {
   const userId = user?.id;
   const isValidUserId = userId && !isNaN(Number(userId)) && Number(userId) > 0;
 
-  // Get wallet info from global store
-  const walletInfo = useMemo(() => {
-    if (!mounted) return null;
-    return getWalletForChain(requiredChainType);
-  }, [mounted, getWalletForChain, requiredChainType]);
-
+  // Get wallet info from global store - Fix the dependency
+  const walletInfo = mounted ? getWalletForChain(requiredChainType) : null;
   const walletAddress = walletInfo?.address || null;
   const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
@@ -289,11 +286,11 @@ const QuestDetailPageContent = () => {
       fetchMetadata();
     } else if (mounted) {
       setMetadata(null);
-      setMetadataLoading(false); // ← Set to false when no metadata is expected
+      setMetadataLoading(false); // Already correct
       setMetadataError("");
       setCanMintAgain(true);
     }
-  }, [mounted, isWalletConnected, walletAddress, metadataId, setCanMintAgain]);
+  }, [mounted, isWalletConnected, walletAddress, metadataId]);
 
   // ===== RENDER CONDITIONS =====
 

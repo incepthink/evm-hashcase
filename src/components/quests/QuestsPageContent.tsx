@@ -108,6 +108,7 @@ const QuestsPageContent = () => {
     // canStartMinting,        // ← COMMENTED OUT
     // setAutoClaimInProgress, // ← COMMENTED OUT
     setIsMinting,
+    connectedWallets,
   } = useGlobalAppStore();
 
   const [mounted, setMounted] = useState(false);
@@ -141,12 +142,7 @@ const QuestsPageContent = () => {
   }, [collection?.contract?.Chain?.chain_type]);
 
   // Get wallet info from global store only
-  const walletInfo = useMemo(() => {
-    if (!mounted) return null;
-    return getWalletForChain(requiredChainType);
-  }, [mounted, getWalletForChain, requiredChainType]);
-
-  // Simple wallet address and connection status from global store
+  const walletInfo = mounted ? getWalletForChain(requiredChainType) : null;
   const walletAddress = walletInfo?.address || null;
   const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
@@ -188,11 +184,11 @@ const QuestsPageContent = () => {
     } else if (mounted && !isWalletConnected) {
       // Reset metadata when wallet disconnected
       setMetadata(null);
-      setMetadataLoading(true);
+      setMetadataLoading(false); // Change from true to false
       setMetadataError("");
       setCanMintAgain(true);
     }
-  }, [mounted, isWalletConnected, walletAddress, setCanMintAgain]);
+  }, [mounted, isWalletConnected, walletAddress]);
 
   const fetchMetadata = async () => {
     if (!walletAddress) return;
