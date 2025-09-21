@@ -1,4 +1,4 @@
-// components/quests/QuestDetailPageContent.tsx
+// evm components/quests/QuestDetailPageContent.tsx
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -369,7 +369,7 @@ const QuestDetailPageContent = () => {
 
   // Show loading screen while fetching metadata (only if we have a metadata ID)
   if (metadataId && metadataLoading) {
-    return <LoadingScreen message="Loading Metadata..." />;
+    return <LoadingScreen message="Loading Tasks..." />;
   }
 
   // Show error if metadata failed to load (only if we have a metadata ID)

@@ -1,9 +1,7 @@
 "use client";
 import Link from "next/link";
 import React from "react";
-import YT from "@/assets/images/yt.svg";
-import IG from "@/assets/images/insta.svg";
-import X from "@/assets/images/twitter.svg";
+import { Telegram, X } from "@mui/icons-material";
 import { Work_Sans } from "next/font/google";
 
 const workSans = Work_Sans({ subsets: ["latin"] });
@@ -16,25 +14,20 @@ const Footer = () => {
           {/* Social Media Links */}
           <div className="flex items-center gap-4 order-2 sm:order-1">
             <Link
-              href="#"
+              href="https://t.me/taahanizam"
+              target="_blank"
               className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
-              aria-label="YouTube"
+              aria-label="Telegram"
             >
-              <YT className="w-5 h-5" />
+              <Telegram className="w-5 h-5 text-white" />
             </Link>
             <Link
-              href="#"
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
-              aria-label="Instagram"
-            >
-              <IG className="w-5 h-5" />
-            </Link>
-            <Link
-              href="#"
+              href="https://x.com/hash_case"
+              target="_blank"
               className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300"
               aria-label="Twitter"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-white" />
             </Link>
           </div>
 
