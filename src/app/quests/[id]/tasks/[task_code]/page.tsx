@@ -406,7 +406,7 @@ const TaskDetailPage = () => {
           )}
 
           {/* NFT Display Header (only if quest has claimable metadata) */}
-          {nftData && <TaskDetailHeader nftData={nftData} />}
+          {/* {nftData && <TaskDetailHeader nftData={nftData} />} */}
 
           {/* Combined Quest Progress Header */}
           <div className="text-center mb-8">
@@ -468,11 +468,18 @@ const TaskDetailPage = () => {
                 </div>
               </div>
 
-              {questStats.isCompleted && tasksData.quest.claimable_metadata && (
+              {questStats.isCompleted && tasksData.quest.claimable_metadata ? (
                 <div className="mt-4">
                   <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
                     <span>✨</span>
                     NFT reward available for claiming!
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
+                    <span>✨</span>
+                    Complete all tasks to claim your NFT reward!
                   </p>
                 </div>
               )}
