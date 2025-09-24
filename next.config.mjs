@@ -73,6 +73,11 @@ const nextConfig = {
       hostname: "metadata-hashcase-admin.s3.us-east-2.amazonaws.com",
       pathname: "/**",
     },
+    {
+    protocol: "https",
+    hostname: "images.unsplash.com",
+    pathname: "/**",
+  },
     ],
   },
 };

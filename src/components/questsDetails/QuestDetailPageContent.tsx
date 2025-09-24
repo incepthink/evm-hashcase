@@ -457,7 +457,6 @@ const QuestDetailPageContent = () => {
                   <div className="text-xs text-gray-400">Total Reward</div>
                 </div>
               </div>
-
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="flex justify-between text-sm text-gray-400 mb-2">
@@ -484,23 +483,24 @@ const QuestDetailPageContent = () => {
                   />
                 </div>
               </div>
-
               {/* NFT Reward Notice */}
-              {currentQuest.is_completed && currentQuest.claimable_metadata ? (
+              {currentQuest.is_completed && currentQuest.claimable_metadata && (
                 <div className="mt-4">
                   <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
                     <span>✨</span>
                     NFT reward available for claiming!
                   </p>
                 </div>
-              ) : (
-                <div className="mt-4">
-                  <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
-                    <span>✨</span>
-                    Complete all tasks to claim your NFT reward!
-                  </p>
-                </div>
-              )}
+              )}{" "}
+              {!currentQuest.is_completed &&
+                currentQuest.claimable_metadata && (
+                  <div className="mt-4">
+                    <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
+                      <span>✨</span>
+                      Complete all tasks to claim your NFT reward!
+                    </p>
+                  </div>
+                )}
             </div>
           </div>
 

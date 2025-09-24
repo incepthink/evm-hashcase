@@ -31,7 +31,6 @@ interface CollectionsResponse {
 const fetchCollections = async (page: number): Promise<CollectionsResponse> => {
   try {
     const res = await axiosInstance.get(`/platform/collections`);
-    console.log("Collections API response:", res.data);
     return res.data;
   } catch (error) {
     console.error("Error fetching collections:", error);
@@ -60,6 +59,8 @@ export const useCollections = (page: number = 1) => {
 
     return { collections, totalPages };
   }, [query.data]);
+
+  console.log("processedData:", processedData);
 
   return {
     ...query,
