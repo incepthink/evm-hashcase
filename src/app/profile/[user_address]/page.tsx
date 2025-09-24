@@ -100,7 +100,9 @@ const App: React.FC = () => {
 
   const fetchNfts = async () => {
     try {
-      const { data } = await axiosInstance.get("/user/nfts");
+      const { data } = await axiosInstance.get(
+        "/user/nfts?userAddress=" + userAddress
+      );
       console.log("PROFILE_DEBUG: Fetched NFTs:", data);
       setFetchedNfts(data.nfts || []);
     } catch (error) {
@@ -156,7 +158,9 @@ const App: React.FC = () => {
 
   const getDatabase = async () => {
     try {
-      const response = await axiosInstance.get("/user");
+      const response = await axiosInstance.get(
+        "/user?userAddress=" + userAddress
+      );
       console.log("PROFILE_DEBUG: User data response:", response.data);
 
       const user = response.data.user;
