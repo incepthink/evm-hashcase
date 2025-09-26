@@ -214,12 +214,12 @@ const CollectionsPage: React.FC = () => {
                 <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 overflow-hidden shadow-lg transition-all duration-300 h-full flex flex-col relative">
                   {/* Image Section */}
                   <div className="relative w-full aspect-square overflow-hidden flex-shrink-0">
-                    {/* <Image
+                    <Image
                       src={collection.image_uri}
                       alt={collectionName}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
-                    /> */}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                     {/* Collection Badge */}
