@@ -122,7 +122,7 @@ const TokensTab: React.FC<TokensTabProps> = ({ searchQuery, userAddress }) => {
         </div>
         <p className="text-gray-400 text-lg mb-2">No Tokens Found</p>
         <p className="text-gray-500 text-sm">
-          This user hasn't received any tokens yet.
+          This user hasn&apos;t received any tokens yet.
         </p>
       </div>
     );
