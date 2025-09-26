@@ -12,9 +12,11 @@ import { useGlobalAppStore } from "@/store/globalAppStore";
 import UpdateProfileModal from "./UpdateProfileModal";
 import ConnectButton from "@/components/ConnectButton";
 import Image from "next/image";
-import NftCard from "@/components/NftCard";
+import NFTsTab from "@/components/tasks/NFTsTab";
+import TokensTab from "@/components/tasks/TokensTab";
 import { toast } from "react-hot-toast";
 import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
+import { TokensApiResponse } from "@/components/tasks/tokenTypes";
 
 interface FetchedNFT {
   id: number;
@@ -33,6 +35,8 @@ interface FetchedNFT {
   updatedAt: string; // ISO date string
 }
 
+type TabType = "NFTs" | "Tokens";
+
 const App: React.FC = () => {
   const [userData, setUserData] = useState({
     profile_image:
@@ -48,6 +52,8 @@ const App: React.FC = () => {
   const [collections, setCollections] = useState([]);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [fetchedNfts, setFetchedNfts] = useState<FetchedNFT[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>("NFTs");
+  const [tokenCount, setTokenCount] = useState(0);
 
   // EVM and Privy wallet connections
   const { address: evmAddress } = useAccount();
@@ -63,11 +69,6 @@ const App: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   // Share profile modal
   const [showShareModal, setShowShareModal] = useState(false);
-
-  const handleNFTClick = (nft: FetchedNFT) => {
-    // Redirect to the dedicated NFT page
-    router.push(`/loyalties/${nft.collection_id}`);
-  };
 
   // Get the current user's wallet address (EVM or Privy)
   const getConnectedWalletAddress = (): string | null => {
@@ -111,9 +112,26 @@ const App: React.FC = () => {
     }
   };
 
+  const fetchTokenCount = async () => {
+    if (!userAddress) return;
+
+    try {
+      const response = await axiosInstance.get<TokensApiResponse>(
+        `/user/profile/erc20/${userAddress}`
+      );
+      if (response.data.success) {
+        setTokenCount(response.data.data.count || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching token count:", error);
+      setTokenCount(0);
+    }
+  };
+
   useEffect(() => {
     fetchNfts();
-  }, []);
+    fetchTokenCount();
+  }, [userAddress]);
 
   const { isUserVerified } = useGlobalAppStore();
 
@@ -358,97 +376,78 @@ const App: React.FC = () => {
       )}
 
       <div className="p-8 max-w-[1600px] mx-auto">
-        <>
-          <h1 className="text-4xl font-bold text-center mb-3">Owned NFTs</h1>
-          <div className="flex flex-col items-center gap-2 mb-6">
-            <p className="flex flex-col text-white/60 text-xs sm:text-sm break-all mb-4 mt-2">
-              Address:{" "}
-              <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">
-                {userAddress || "Not connected"}
-              </span>
-              {getConnectedWalletAddress() &&
-                userAddressFromUrl &&
-                getConnectedWalletAddress() !== userAddressFromUrl && (
-                  <span className="ml-2 flex justify-center mt-2 text-xs text-blue-400">
-                    (Viewing shared profile; connected as{" "}
-                    {getConnectedWalletAddress()?.slice(0, 6)}...
-                    {getConnectedWalletAddress()?.slice(-4)})
-                  </span>
-                )}
-            </p>
-            {/* Toolbar */}
-            <div className="relative w-full max-w-5xl mb-10 border-b border-white/10 rounded-xl px-4 py-4">
-              {/* Centered, wide search */}
-              <div className="mx-auto w-full sm:w-[520px] md:w-[680px]">
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 text-sm">
-                  {fetchedNfts.length} item{fetchedNfts.length === 1 ? "" : "s"}
-                </div>
+        {/* Tabs Navigation */}
+        <div className="flex justify-center mb-6">
+          <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
+            {(["NFTs", "Tokens"] as TabType[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === tab
+                    ? "bg-white text-black shadow-sm"
+                    : "text-white/70 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name, description or token..."
-                  className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
-                />
+        {/* Address Display and Search Bar */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <p className="flex flex-col text-white/60 text-xs sm:text-sm break-all mb-4 mt-2">
+            Address:{" "}
+            <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">
+              {userAddress || "Not connected"}
+            </span>
+            {getConnectedWalletAddress() &&
+              userAddressFromUrl &&
+              getConnectedWalletAddress() !== userAddressFromUrl && (
+                <span className="ml-2 flex justify-center mt-2 text-xs text-blue-400">
+                  (Viewing shared profile; connected as{" "}
+                  {getConnectedWalletAddress()?.slice(0, 6)}...
+                  {getConnectedWalletAddress()?.slice(-4)})
+                </span>
+              )}
+          </p>
+
+          {/* Toolbar */}
+          <div className="relative w-full max-w-5xl mb-10 border-b border-white/10 rounded-xl px-4 py-4">
+            {/* Centered, wide search */}
+            <div className="mx-auto w-full sm:w-[520px] md:w-[680px]">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 text-sm">
+                {activeTab === "NFTs" && fetchedNfts.length}
+                {activeTab === "Tokens" && tokenCount} item
+                {(activeTab === "NFTs" ? fetchedNfts.length : tokenCount) === 1
+                  ? ""
+                  : "s"}
               </div>
-              {/* Item count pinned to the right */}
+
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search ${activeTab.toLowerCase()} by name, description or token...`}
+                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+              />
             </div>
           </div>
+        </div>
 
-          {fetchedNfts && fetchedNfts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-8">
-              {fetchedNfts
-                .filter((nft) => {
-                  if (!searchQuery.trim()) return true;
-                  const q = searchQuery.toLowerCase();
-                  return (
-                    (nft.name || "").toLowerCase().includes(q) ||
-                    (nft.description || "").toLowerCase().includes(q) ||
-                    (nft.token_id || "").toString().includes(q)
-                  );
-                })
-                .map((nft: FetchedNFT) => (
-                  <NftCard
-                    key={nft.id}
-                    href={`/loyalties/${nft.collection_id}`}
-                    imageUrl={
-                      nft.name === "Hashcase Super Cool Collection"
-                        ? backgroundImageHeroSection
-                        : nft.image_uri
-                    }
-                    title={nft.name}
-                    description={nft.description}
-                    footer={
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Additional NFT info can go here */}
-                        </div>
-                        <button
-                          onClick={() => handleNFTClick(nft)}
-                          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border border-blue-400/60 ${
-                            density === "compact"
-                              ? "px-2 py-1.5 text-xs"
-                              : "px-3 py-2 text-sm"
-                          } font-medium text-white hover:bg-blue-400/10 transition-colors`}
-                        >
-                          View Collection <span className="text-white">→</span>
-                        </button>
-                      </div>
-                    }
-                  />
-                ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-400 text-lg mb-2">No NFTs found</p>
-              <p className="text-gray-500 text-sm">
-                {isOwnProfile()
-                  ? "You don't own any NFTs yet."
-                  : "This user doesn't own any NFTs yet."}
-              </p>
-            </div>
-          )}
-        </>
+        {/* Tab Content */}
+        {activeTab === "NFTs" && (
+          <NFTsTab
+            fetchedNfts={fetchedNfts}
+            searchQuery={searchQuery}
+            density={density}
+            isOwnProfile={isOwnProfile()}
+          />
+        )}
+
+        {activeTab === "Tokens" && (
+          <TokensTab searchQuery={searchQuery} userAddress={userAddress} />
+        )}
       </div>
 
       {/* Render the modal conditionally */}

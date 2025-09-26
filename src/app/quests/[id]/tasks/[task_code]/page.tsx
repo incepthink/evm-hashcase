@@ -1,4 +1,3 @@
-// evm app/quests/[id]/tasks/[task_code]/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -15,6 +14,7 @@ import { NFTSuccessModal } from "@/components/quests/NFTSuccessModal";
 import { TaskDetailHeader } from "@/components/tasks/TaskDetailHeader";
 import { TaskDetailList } from "@/components/tasks/TaskDetailList";
 import { QuestDetailClaimButton } from "@/components/questsDetails/QuestDetailClaimButton";
+import { QuestTokenClaimButton } from "@/components/questsDetails/QuestTokenClaimButton";
 
 interface MintedNftData {
   name: string;
@@ -103,7 +103,7 @@ const TaskDetailPage = () => {
   const walletAddress = walletInfo?.address || null;
   const isWalletConnected = mounted && hasWalletForChain(requiredChainType);
 
-  // Use the new hook to get tasks by task code
+  // Use the hook to get tasks by task code
   const {
     data: tasksData,
     isLoading: tasksLoading,
@@ -147,6 +147,14 @@ const TaskDetailPage = () => {
 
   // Get the metadata ID from the quest's claimable_metadata
   const metadataId = tasksData?.quest?.claimable_metadata;
+
+  // Get token reward info
+  const hasTokenReward =
+    tasksData?.quest?.reward_token && tasksData?.quest?.reward_token_amount;
+  const tokenReward = tasksData?.quest?.reward_token;
+  const tokenAmount = Number(
+    tasksData?.quest?.reward_token_amount || 0
+  ).toFixed(2);
 
   // Check if it's NS Collection based on metadata
   const isNSCollection = useMemo(() => {
@@ -249,7 +257,7 @@ const TaskDetailPage = () => {
       fetchMetadata();
     } else if (mounted && (!isWalletConnected || !metadataId)) {
       setMetadata(null);
-      setMetadataLoading(false); // Change from true to false
+      setMetadataLoading(false);
       setMetadataError("");
       setCanMintAgain(true);
     }
@@ -405,8 +413,26 @@ const TaskDetailPage = () => {
             </div>
           )}
 
-          {/* NFT Display Header (only if quest has claimable metadata) */}
-          {/* {nftData && <TaskDetailHeader nftData={nftData} />} */}
+          {/* Token Reward Info Banner */}
+          {hasTokenReward && tokenReward && (
+            <div className="mb-6 p-4 bg-green-800/20 rounded-lg border border-green-600/30">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">
+                    {tokenReward.symbol.substring(0, 2)}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white text-sm">
+                    This Quest contains reward tokens
+                  </h4>
+                  <p className="text-xs text-green-400">
+                    {tokenAmount} {tokenReward.symbol} • {tokenReward.name}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Combined Quest Progress Header */}
           <div className="text-center mb-8">
@@ -468,44 +494,72 @@ const TaskDetailPage = () => {
                 </div>
               </div>
 
-              {questStats.isCompleted && tasksData.quest.claimable_metadata ? (
-                <div className="mt-4">
-                  <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
-                    <span>✨</span>
-                    NFT reward available for claiming!
-                  </p>
+              {/* Reward Messages */}
+              {questStats.isCompleted &&
+              (tasksData.quest.claimable_metadata || hasTokenReward) ? (
+                <div className="mt-4 space-y-2">
+                  {tasksData.quest.claimable_metadata && (
+                    <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
+                      <span>✨</span>
+                      NFT reward available for claiming!
+                    </p>
+                  )}
+                  {hasTokenReward && (
+                    <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
+                      <span>💰</span>
+                      Token reward available for claiming!
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="mt-4">
                   <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
                     <span>✨</span>
-                    Complete all tasks to claim your NFT reward!
+                    Complete all tasks to claim your rewards!
                   </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Claim NFT Button (only if quest has claimable metadata) */}
-          {nftData && (
-            <QuestDetailClaimButton
-              nftMinted={!nftClaiming.canMintAgain}
-              claiming={false}
-              setClaiming={() => {}}
-              setNftMinted={(minted: boolean) => setCanMintAgain(!minted)}
-              completionPercentage={Math.round(
-                (questStats.completedTasks / questStats.totalTasks) * 100
-              )}
-              totalQuests={1}
-              completedQuests={questStats.isCompleted ? 1 : 0}
-              isWalletConnected={isWalletConnected}
-              nftData={nftData}
-              onSuccess={handleNFTMintSuccess}
-              requiredChainType={requiredChainType}
-              disabled={isMintingDisabled}
-              metadataId={metadataId || undefined}
-            />
-          )}
+          {/* Claim Buttons */}
+          <div className="space-y-4">
+            {/* NFT Claim Button */}
+            {nftData && (
+              <QuestDetailClaimButton
+                nftMinted={!nftClaiming.canMintAgain}
+                claiming={false}
+                setClaiming={() => {}}
+                setNftMinted={(minted: boolean) => setCanMintAgain(!minted)}
+                completionPercentage={Math.round(
+                  (questStats.completedTasks / questStats.totalTasks) * 100
+                )}
+                totalQuests={1}
+                completedQuests={questStats.isCompleted ? 1 : 0}
+                isWalletConnected={isWalletConnected}
+                nftData={nftData}
+                onSuccess={handleNFTMintSuccess}
+                requiredChainType={requiredChainType}
+                disabled={isMintingDisabled}
+                metadataId={metadataId || undefined}
+              />
+            )}
+
+            {/* Token Claim Button */}
+            {hasTokenReward && tokenReward && tokenAmount && (
+              <QuestTokenClaimButton
+                questId={questId}
+                tokenReward={tokenReward}
+                tokenAmount={Number(tokenAmount)}
+                completionPercentage={Math.round(
+                  (questStats.completedTasks / questStats.totalTasks) * 100
+                )}
+                isWalletConnected={isWalletConnected}
+                questCompleted={questStats.isCompleted}
+                disabled={false}
+              />
+            )}
+          </div>
 
           {/* Task List with Completion Functionality */}
           <TaskDetailList

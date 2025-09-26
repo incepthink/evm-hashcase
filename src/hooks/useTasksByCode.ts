@@ -1,4 +1,3 @@
-// hooks/useTasksByCode.ts
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axios";
 
@@ -26,6 +25,14 @@ export interface TaskWithCompletion {
   can_complete: boolean;
 }
 
+export interface RewardToken {
+  id: number;
+  name: string;
+  symbol: string;
+  total_supply?: string | null;
+  can_claim_again: boolean; // NEW FIELD
+}
+
 export interface QuestInfo {
   id: number;
   owner_id: number;
@@ -35,6 +42,9 @@ export interface QuestInfo {
   createdAt: string;
   updatedAt: string;
   claimable_metadata?: number | null;
+  reward_token_id?: number | null;
+  reward_token_amount?: number | null;
+  reward_token?: RewardToken | null;
 }
 
 export interface TasksByCodeResponse {
@@ -76,19 +86,16 @@ export const useTasksByCode = ({
 
         return response.data;
       } catch (error: any) {
-        // Re-throw the error to preserve the original error structure
         throw error;
       }
     },
     enabled: enabled && !!taskCode,
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: (failureCount, error: any) => {
-      // Don't retry if it's a 404 or task not found error
       if (error?.response?.status === 404 || error?.response?.data?.error?.includes("Task not found")) {
         return false;
       }
-      // Retry other errors up to 2 times
       return failureCount < 2;
     },
   });

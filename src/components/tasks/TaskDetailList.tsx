@@ -196,7 +196,7 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
               {/* Task Info */}
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm">{getTaskStatusIcon(task)}</span>
+                  {/* <span className="text-sm">{getTaskStatusIcon(task)}</span> */}
                   <h3 className="text-sm sm:text-base font-bold text-white">
                     {task.title}
                   </h3>
