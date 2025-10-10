@@ -1,3 +1,5 @@
+// evm
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -287,11 +289,11 @@ const App: React.FC = () => {
           <div className="text-center mt-4">
             <h2 className="text-xl font-semibold">{userData.username}</h2>
             <p className="text-blue-400 text-sm">{userData.description}</p>
-            {isWalletConnected() && (
+            {/* {isWalletConnected() && (
               <p className="text-white/60 text-xs mt-1">
                 Connected with {getWalletType()} wallet
               </p>
-            )}
+            )} */}
           </div>
 
           {/* Action Buttons - Only show if viewing own profile */}
@@ -352,7 +354,7 @@ const App: React.FC = () => {
           {/* Connect Wallet Button for non-connected users */}
           <div className="mt-4 flex items-center gap-3">
             <ConnectButton />
-            <button
+            {/* <button
               onClick={() => setShowShareModal(true)}
               className="flex items-center text-white text-sm font-medium hover:underline"
             >
@@ -370,7 +372,7 @@ const App: React.FC = () => {
                   d="M8.684 13.342A3 3 0 109 12c0-.482-.114-.938-.316-1.342m0 2.684l6.632 3.316m-6.632-6l6.632-3.316"
                 />
               </svg>
-            </button>
+            </button> */}
           </div>
         </div>
       )}
@@ -383,7 +385,7 @@ const App: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                className={`w-24 px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                   activeTab === tab
                     ? "bg-white text-black shadow-sm"
                     : "text-white/70 hover:text-white hover:bg-white/5"
@@ -402,7 +404,7 @@ const App: React.FC = () => {
             <span className="px-2 py-1 rounded-full bg-white/5 border border-white/10 text-white/70">
               {userAddress || "Not connected"}
             </span>
-            {getConnectedWalletAddress() &&
+            {/* {getConnectedWalletAddress() &&
               userAddressFromUrl &&
               getConnectedWalletAddress() !== userAddressFromUrl && (
                 <span className="ml-2 flex justify-center mt-2 text-xs text-blue-400">
@@ -410,7 +412,7 @@ const App: React.FC = () => {
                   {getConnectedWalletAddress()?.slice(0, 6)}...
                   {getConnectedWalletAddress()?.slice(-4)})
                 </span>
-              )}
+              )} */}
           </p>
 
           {/* Toolbar */}

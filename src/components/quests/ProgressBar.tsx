@@ -15,16 +15,16 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div>
-      <div className="flex justify-between text-sm text-gray-400 mb-2">
-        <span>Progress</span>
-        <span>
+    <div className="max-w-md mx-auto mb-6">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-xs sm:text-sm text-gray-400">Progress</span>
+        <span className="text-xs sm:text-sm font-semibold text-white">
           {completedQuests}/{totalQuests} ({completionPercentage}%)
         </span>
       </div>
-      <div className="w-full bg-gray-700 rounded-full h-2">
+      <div className="w-full bg-gray-800 rounded-full h-2 sm:h-3 overflow-hidden">
         <div
-          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+          className="bg-white h-full rounded-full transition-all duration-500 ease-out"
           style={{ width: `${completionPercentage}%` }}
         />
       </div>

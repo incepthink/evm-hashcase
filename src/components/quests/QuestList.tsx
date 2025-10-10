@@ -1,6 +1,7 @@
 // components/QuestList.tsx
 import React from "react";
 import { useRouter } from "next/navigation";
+import { Collection } from "@/utils/modelTypes";
 
 interface RequirementRule {
   type: string;
@@ -43,19 +44,21 @@ interface QuestListProps {
   quests: Quest[];
   isWalletConnected: boolean;
   requiredChainType?: "sui" | "evm";
-  collectionId: number | string;
+  collection: Collection;
 }
 
 export const QuestList: React.FC<QuestListProps> = ({
   quests,
   isWalletConnected,
   requiredChainType = "sui",
-  collectionId,
+  collection,
 }) => {
   const router = useRouter();
 
   const handleQuestClick = (questId: number) => {
-    router.push(`/quests/${questId}`);
+    router.push(
+      `/collections/${collection.name}/${collection.id}/quests/${questId}`
+    );
   };
 
   const getWalletConnectMessage = () => {

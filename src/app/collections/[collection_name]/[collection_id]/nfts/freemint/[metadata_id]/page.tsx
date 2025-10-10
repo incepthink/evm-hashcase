@@ -33,6 +33,7 @@ import {
   Ban,
   CheckCircle,
 } from "lucide-react";
+import ConnectButton from "@/components/ConnectButton";
 
 interface Metadata {
   id: string;
@@ -173,6 +174,14 @@ export default function NFTPage() {
       }
     });
   }, [availableNFTs, preloadImage]);
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isWalletConnected = mounted && hasWalletForChain("evm");
 
   // Navigation functions for randomly selecting NFTs - ultra fast performance with enhanced security
   const navigateToRandomNFT = React.useCallback(() => {
@@ -1094,13 +1103,13 @@ export default function NFTPage() {
   return (
     <div className={`flex flex-col bg-[#00041F] ${workSans.className}`}>
       <div className="flex flex-col px-6 md:px-10 max-w-6xl mx-auto w-full">
-        <button
+        {/* <button
           onClick={() => router.back()}
           className="hidden md:flex items-center justify-start gap-x-2 my-4 cursor-pointer"
         >
           <ArrowW />
           <p className="text-2xl text-white/70">back</p>
-        </button>
+        </button> */}
         <div className="my-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start pb-32">
           {/* NFT Image with Navigation */}
           <div className="relative flex justify-center lg:justify-start">
@@ -1168,11 +1177,8 @@ export default function NFTPage() {
                   </span>
                 )}
               </div>
-              <p className="text-white md:text-xl text-base">
-                By{" "}
-                <span className="text-[#4DA2FF] font-semibold">
-                  {nftData.collection_name}
-                </span>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+                {nftData.title}
               </p>
             </div>
 
@@ -1208,14 +1214,18 @@ export default function NFTPage() {
                 </div>
               )}
 
-              <button
-                onClick={handleGaslessMintAndTransfer}
-                disabled={buttonState.disabled}
-                className={`md:px-8 md:py-4 px-6 py-3 rounded-full md:text-xl text-sm flex items-center gap-x-3 shadow-lg transition-all duration-200 ${buttonState.className}`}
-              >
-                {buttonState.icon}
-                {buttonState.text}
-              </button>
+              {isWalletConnected ? (
+                <button
+                  onClick={handleGaslessMintAndTransfer}
+                  disabled={buttonState.disabled}
+                  className={`md:px-8 md:py-4 px-6 py-3 rounded-full md:text-xl text-sm flex items-center gap-x-3 shadow-lg transition-all duration-200 ${buttonState.className}`}
+                >
+                  {buttonState.icon}
+                  {buttonState.text}
+                </button>
+              ) : (
+                <ConnectButton mid={true} />
+              )}
             </div>
           </div>
         </div>

@@ -1023,10 +1023,10 @@ export default function NFTPage() {
                     <NftCard
                       href={
                         nft.type === "randomized"
-                          ? `/freeMint/${nft.id}?type=randomized`
+                          ? `/freemint/${nft.id}?type=randomized`
                           : nft.type === "geofenced"
-                          ? `/freeMint/${nft.originalData.id}?type=geofenced`
-                          : `/freeMint/${nft.id}?type=${nft.type}`
+                          ? `/freemint/${nft.originalData.id}?type=geofenced`
+                          : `/freemint/${nft.id}?type=${nft.type}`
                       }
                       imageUrl={nft.image_url}
                       title={nft.name}

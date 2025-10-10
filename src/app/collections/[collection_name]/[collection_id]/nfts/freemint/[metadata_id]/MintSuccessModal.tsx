@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import styles from "./MintSuccessModal.module.css";
+import { useParams } from "next/navigation";
 
 interface Metadata {
   id: string;
@@ -24,6 +25,7 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
   onClose,
   nftData,
 }) => {
+  const params = useParams();
   const [isOpening, setIsOpening] = useState<boolean>(true);
   const [showContents, setShowContents] = useState<boolean>(false);
 
@@ -37,8 +39,10 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
+  const nftUrl = `https://hashcase.co/collections/${params.collection_name}/${params.collection_id}/nfts/freemint/${params.metadata_id}`;
+
   // Tweet content
-  const tweetText = `🚀 Just minted my NFT "${nftData.title}"! Check it out at ${nftData.image_url} #NFTCommunity #Web3`;
+  const tweetText = `🚀 Just minted my NFT "${nftData.title}"! Check it out at ${nftUrl} #NFTCommunity #Web3`;
 
   const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
     tweetText

@@ -65,20 +65,17 @@ const NFTMetadataPage = () => {
     <div className="min-h-screen bg-gradient-to-b from-[#00041f] to-[#030828] px-4 sm:px-6 lg:px-8 py-8 text-white">
       {/* Header Section */}
       <div className="max-w-7xl mx-auto">
-        <button
+        {/* <button
           onClick={() => router.back()}
           className="flex items-center justify-start gap-x-2 cursor-pointer mb-4"
         >
           <ArrowW />
           <p className="text-2xl text-white/70">back</p>
-        </button>
-        <div className="text-center mb-8 sm:mb-12 max-w-7xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 drop-shadow-lg">
+        </button> */}
+        <div className="text-center mb-8 sm:mb-8 max-w-7xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
             Mintable NFTs
           </h1>
-          <p className="text-gray-300 text-sm sm:text-base max-w-2xl mx-auto">
-            Discover and mint unique digital assets from our curated collection
-          </p>
         </div>
       </div>
 
@@ -92,7 +89,10 @@ const NFTMetadataPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {metadata.map((nft) => {
               return (
-                <Link key={nft.id} href={`/freeMint/${nft.id}`}>
+                <Link
+                  key={nft.id}
+                  href={`/collections/${params.collection_name}/${params.collection_id}/nfts/freemint/${nft.id}`}
+                >
                   <div className="group bg-gradient-to-br from-[#0a0f3b] to-[#050a2e] shadow-xl rounded-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:from-[#141a52] hover:to-[#0a0f3b] cursor-pointer border border-gray-700/30">
                     {/* Image Container */}
                     <div className="relative overflow-hidden">

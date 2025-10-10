@@ -56,8 +56,8 @@ export default function NftCard({
           src={imageUrl || "https://via.placeholder.com/300"}
           alt={title}
           className={"w-full h-full object-cover " + (imageClassName || "")}
-          width={200}
-          height={200}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1280px) 33vw, 20vw"
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
           <h3 className="text-xl font-bold text-white drop-shadow-lg">
