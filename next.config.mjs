@@ -78,17 +78,22 @@ const nextConfig = {
     hostname: "images.unsplash.com",
     pathname: "/**",
   },
+  {
+    protocol: "https",
+    hostname: "lime-occasional-angelfish-940.mypinata.cloud",
+    pathname: "/**",
+  },
     ],
   },
   async rewrites() {
     return [
       {
         source: "/minter/filecoin",
-        destination: "https://filecoin.hashcase.co/",
+        destination: "https://filecoin.hashcase.co/minter/filecoin",
       },
       {
         source: "/minter/filecoin/:path*",
-        destination: "https://filecoin.hashcase.co/:path*",
+        destination: "https://filecoin.hashcase.co/minter/filecoin/:path*",
       },
     ];
   },
