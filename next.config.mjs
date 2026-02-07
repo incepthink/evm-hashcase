@@ -80,6 +80,18 @@ const nextConfig = {
   },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/minter/filecoin",
+        destination: "https://filecoin.hashcase.co/",
+      },
+      {
+        source: "/minter/filecoin/:path*",
+        destination: "https://filecoin.hashcase.co/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
