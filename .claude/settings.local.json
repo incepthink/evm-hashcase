@@ -4,7 +4,10 @@
       "Bash(python:*)",
       "Bash(npm install:*)",
       "Bash(node -e:*)",
-      "Bash(npx next build)"
+      "Bash(npx next build)",
+      "Bash(ls -la /c/Users/shaik/Desktop/dev-work/evm-hashcase/src/app/collections/[collection_name]/)",
+      "Bash(ls -la /c/Users/shaik/Desktop/dev-work/evm-hashcase/src/app/collections/[collection_name]/[collection_id]/)",
+      "Bash(ls -la /c/Users/shaik/Desktop/dev-work/evm-hashcase/src/app/collections/[collection_name]/[collection_id]/quests/[id]/)"
     ]
   }
 }

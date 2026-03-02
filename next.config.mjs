@@ -55,6 +55,16 @@ const nextConfig = {
     hostname: "lime-occasional-angelfish-940.mypinata.cloud",
     pathname: "/**",
   },
+  {
+    protocol: "https",
+    hostname: "imgs.search.brave.com",
+    pathname: "/**",
+  },
+  {
+    protocol: "https",
+    hostname: "www.google.com",
+    pathname: "/**",
+  },
     ],
   },
   async rewrites() {
@@ -62,11 +72,11 @@ const nextConfig = {
       beforeFiles: [
         {
           source: "/minter/filecoin",
-          destination: "https://filecoin.hashcase.co/minter/filecoin",
+          destination: "http://localhost:3002/minter/filecoin",
         },
         {
           source: "/minter/filecoin/:path*",
-          destination: "https://filecoin.hashcase.co/minter/filecoin/:path*",
+          destination: "http://localhost:3002/minter/filecoin/:path*",
         },
       ],
     };

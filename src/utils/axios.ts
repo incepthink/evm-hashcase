@@ -2,10 +2,13 @@ import axios from "axios";
 import Cookies from "js-cookie";
 // TODO
 const axiosInstance = axios.create({
-  baseURL:  "https://api.hashcase.co",
+  baseURL:
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:8000"
+      : "https://api.hashcase.co",
 });
 
-let del
+let del;
 
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -17,7 +20,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Add response interceptor to handle 401 errors
@@ -31,7 +34,7 @@ axiosInstance.interceptors.response.use(
       // Don't throw the error, let individual components handle it
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
