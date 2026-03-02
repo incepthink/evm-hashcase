@@ -175,7 +175,7 @@ function EcommerceContent() {
       setOffChainPointsState(user_achievements);
 
       const response = await axiosInstance.get(
-        "/owner/product/owner/" + owner_id,
+        "/platform/product/owner/" + owner_id,
       );
       setProducts(response.data.products ?? []);
     } catch (error) {
