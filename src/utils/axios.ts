@@ -4,7 +4,7 @@ import Cookies from "js-cookie";
 const axiosInstance = axios.create({
   baseURL:
     process.env.NODE_ENV === "development"
-      ? "http://localhost:8000"
+      ? "https://api.hashcase.co"
       : "https://api.hashcase.co",
 });
 

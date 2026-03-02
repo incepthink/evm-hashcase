@@ -57,7 +57,7 @@ export default function RewardsCart({
     setError(false);
     axiosInstance
       .get(`/owner/reward`, {
-        params: { owner_id: owner_id, user_id: userId },
+        params: { target_owner_id: owner_id, user_id: userId },
       })
       .then((res) => {
         setRewards(res.data.data ?? []);

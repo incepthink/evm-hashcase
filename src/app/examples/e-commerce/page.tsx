@@ -6,7 +6,7 @@ import { useApp } from "@/context/ecommerce/AppContext";
 import { useSearchParams, useRouter } from "next/navigation";
 import React, { useEffect, useState, Suspense } from "react";
 
-export const USER_ID = 41; //48
+export const USER_ID = 1761; //48
 
 type Product = {
   id: number;
