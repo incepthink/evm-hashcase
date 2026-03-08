@@ -31,8 +31,25 @@ const Footer = () => {
             </Link>
           </div>
 
+          {/* Legal Links */}
+          <div className={`${workSans.className} flex items-center gap-3 order-3 sm:order-2`}>
+            <Link
+              href="/privacy-policy"
+              className="text-white/60 hover:text-white text-sm transition-colors duration-200"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-white/30">·</span>
+            <Link
+              href="/tos"
+              className="text-white/60 hover:text-white text-sm transition-colors duration-200"
+            >
+              Terms of Service
+            </Link>
+          </div>
+
           {/* Copyright */}
-          <div className="order-1 sm:order-2">
+          <div className="order-1 sm:order-3">
             <p
               className={`${workSans.className} text-white/60 text-sm text-center sm:text-right`}
             >

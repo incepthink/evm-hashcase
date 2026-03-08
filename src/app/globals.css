@@ -25,3 +25,7 @@ input[type="email"] {
   -webkit-touch-callout: default !important;
   touch-action: manipulation !important;
 }
+
+body {
+  background-color: #00041F;
+}
