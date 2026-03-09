@@ -88,6 +88,14 @@ const nextConfig = {
           source: "/examples/ip-royalties/:path*",
           destination: "https://ip-royalties.vercel.app/examples/ip-royalties/:path*",
         },
+        {
+          source: "/examples/digital-twins",
+          destination: "https://digital-twins-red.vercel.app/examples/digital-twins",
+        },
+        {
+          source: "/examples/digital-twins/:path*",
+          destination: "https://digital-twins-red.vercel.app/examples/digital-twins/:path*",
+        },
       ],
     };
   },
