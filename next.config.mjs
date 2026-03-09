@@ -79,6 +79,16 @@ const nextConfig = {
           destination: "http://localhost:3002/minter/filecoin/:path*",
         },
       ],
+      afterFiles: [
+        {
+          source: "/examples/ip-royalties",
+          destination: "https://ip-royalties.vercel.app/examples/ip-royalties",
+        },
+        {
+          source: "/examples/ip-royalties/:path*",
+          destination: "https://ip-royalties.vercel.app/examples/ip-royalties/:path*",
+        },
+      ],
     };
   },
 };
