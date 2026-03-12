@@ -96,6 +96,14 @@ const nextConfig = {
           source: "/examples/digital-twins/:path*",
           destination: "https://digital-twins-red.vercel.app/examples/digital-twins/:path*",
         },
+        {
+          source: "/examples/governance-dao",
+          destination: "https://governance-dao-nu.vercel.app/examples/governance-dao",
+        },
+        {
+          source: "/examples/governance-dao/:path*",
+          destination: "https://governance-dao-nu.vercel.app/examples/governance-dao/:path*",
+        },
       ],
     };
   },
