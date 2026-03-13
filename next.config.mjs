@@ -104,6 +104,14 @@ const nextConfig = {
           source: "/examples/governance-dao/:path*",
           destination: "https://governance-dao-nu.vercel.app/examples/governance-dao/:path*",
         },
+        {
+          source: "/examples/tokenized-real-estate",
+          destination: "https://tokenized-real-estate-nine.vercel.app/examples/tokenized-real-estate",
+        },
+        {
+          source: "/examples/tokenized-real-estate/:path*",
+          destination: "https://tokenized-real-estate-nine.vercel.app/examples/tokenized-real-estate/:path*",
+        },
       ],
     };
   },
