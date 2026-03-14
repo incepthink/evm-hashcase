@@ -112,6 +112,54 @@ const nextConfig = {
           source: "/examples/tokenized-real-estate/:path*",
           destination: "https://tokenized-real-estate-nine.vercel.app/examples/tokenized-real-estate/:path*",
         },
+        {
+          source: "/examples/tokenized-data",
+          destination: "https://tokenized-data.vercel.app/examples/tokenized-data",
+        },
+        {
+          source: "/examples/tokenized-data/:path*",
+          destination: "https://tokenized-data.vercel.app/examples/tokenized-data/:path*",
+        },
+        {
+          source: "/examples/medical-records",
+          destination: "https://medical-records-pi.vercel.app/examples/medical-records",
+        },
+        {
+          source: "/examples/medical-records/:path*",
+          destination: "https://medical-records-pi.vercel.app/examples/medical-records/:path*",
+        },
+        {
+          source: "/examples/luxury-passport",
+          destination: "https://luxury-passport-sigma.vercel.app/examples/luxury-passport",
+        },
+        {
+          source: "/examples/luxury-passport/:path*",
+          destination: "https://luxury-passport-sigma.vercel.app/examples/luxury-passport/:path*",
+        },
+        {
+          source: "/examples/edu-cred",
+          destination: "https://edu-cred-delta.vercel.app/examples/edu-cred",
+        },
+        {
+          source: "/examples/edu-cred/:path*",
+          destination: "https://edu-cred-delta.vercel.app/examples/edu-cred/:path*",
+        },
+        {
+          source: "/examples/fan-tokens",
+          destination: "https://fan-token-nu.vercel.app/examples/fan-tokens",
+        },
+        {
+          source: "/examples/fan-tokens/:path*",
+          destination: "https://fan-token-nu.vercel.app/examples/fan-tokens/:path*",
+        },
+        {
+          source: "/examples/ecommerce",
+          destination: "https://ecommerce-demo-tau-ruby.vercel.app/examples/ecommerce",
+        },
+        {
+          source: "/examples/ecommerce/:path*",
+          destination: "https://ecommerce-demo-tau-ruby.vercel.app/examples/ecommerce/:path*",
+        },
       ],
     };
   },
