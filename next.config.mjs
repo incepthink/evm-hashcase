@@ -160,6 +160,14 @@ const nextConfig = {
           source: "/examples/ecommerce/:path*",
           destination: "https://ecommerce-demo-tau-ruby.vercel.app/examples/ecommerce/:path*",
         },
+        {
+          source: "/examples/chog",
+          destination: "https://chog.hashcase.co/examples/chog",
+        },
+        {
+          source: "/examples/chog/:path*",
+          destination: "https://chog.hashcase.co/examples/chog/:path*",
+        },
       ],
     };
   },
