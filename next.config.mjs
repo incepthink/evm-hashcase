@@ -160,6 +160,14 @@ const nextConfig = {
           source: "/examples/ecommerce/:path*",
           destination: "https://ecommerce-demo-tau-ruby.vercel.app/examples/ecommerce/:path*",
         },
+        {
+          source: "/examples/safty",
+          destination: "https://saft-frontend.vercel.app/examples/safty",
+        },
+        {
+          source: "/examples/safty/:path*",
+          destination: "https://saft-frontend.vercel.app/examples/safty/:path*",
+        },
       ],
     };
   },
