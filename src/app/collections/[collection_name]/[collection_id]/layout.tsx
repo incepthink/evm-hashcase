@@ -86,7 +86,7 @@ export default function CollectionLayout({ children }: CollectionLayoutProps) {
       {/* Collection Banner */}
       <div className="w-full h-[45vh] max-w-[1920px] bg-[#00041f] relative">
         <img
-          src="/banner.jpg"
+          src={collection.banner_image || "/banner.jpg"}
           alt="banner"
           className="w-full h-full object-cover"
           style={{

@@ -9,6 +9,7 @@ interface Collection {
   image_uri: string;
   chain_type: string;
   chain_id: number;
+  banner_image?: string;
   contract_address: string;
   standard: string;
   owner_id: number;
@@ -101,7 +102,7 @@ export const useCollectionById = (collectionId: number | string) => {
         (col: Collection) =>
           col.id === Number(collectionId) ||
           col.id === collectionId ||
-          col.contract_address === collectionId
+          col.contract_address === collectionId,
       ) || null
     );
   }, [collectionsData, collectionId]);
@@ -189,7 +190,7 @@ export const useCollectionSearch = (searchTerm: string) => {
       (collection: Collection) =>
         collection.name?.toLowerCase().includes(term) ||
         collection.description?.toLowerCase().includes(term) ||
-        collection.contract_address?.toLowerCase().includes(term)
+        collection.contract_address?.toLowerCase().includes(term),
     );
   }, [collections, searchTerm]);
 
