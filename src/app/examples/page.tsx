@@ -1,6 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Work_Sans } from "next/font/google";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Play, X } from "lucide-react";
 
 const workSans = Work_Sans({ subsets: ["latin"] });
 
@@ -9,6 +12,8 @@ type Example = {
   name: string;
   category: string;
   description: string;
+  youtubeId?: string;
+  poster?: string;
 };
 
 const EXAMPLES: Example[] = [
@@ -17,42 +22,54 @@ const EXAMPLES: Example[] = [
     name: "IP Royalties",
     category: "Finance",
     description: "Manage and track intellectual property royalty flows.",
+    youtubeId: "hF9YDRBYJu0",
+    poster: "/posters/IP-Royalties.png",
   },
   {
     slug: "digital-twins",
     name: "Digital Twins",
     category: "Asset Mgmt",
     description: "Tokenized digital representations of real-world assets.",
+    youtubeId: "Bxvx-T4Iuko",
+    poster: "/posters/Digital-Twins.png",
   },
   {
     slug: "governance-dao",
     name: "Governance DAO",
     category: "Governance",
     description: "On-chain governance and proposal management demo.",
+    youtubeId: "1Bf4P8kEVZ4",
+    poster: "/posters/Governance-DAO.png",
   },
   {
     slug: "tokenized-real-estate",
     name: "Tokenized Real Estate",
     category: "Real Estate",
     description: "Real estate ownership and investment workflows.",
+    youtubeId: "_qJaIyasvlw",
+    poster: "/posters/Tokenized-RealEstate.png",
   },
   {
     slug: "tokenized-data",
     name: "Tokenized Data",
     category: "Data",
     description: "Data asset ownership, licensing, and monetization.",
+    youtubeId: "tcECTqOhXOo",
   },
   {
     slug: "medical-records",
     name: "Medical Records",
     category: "Healthcare",
     description: "Secure medical record access and ownership flows.",
+    youtubeId: "TRLwHBxO5yA",
   },
   {
     slug: "luxury-passport",
     name: "Luxury Passport",
     category: "Authenticity",
     description: "Authenticity and ownership passport for luxury goods.",
+    youtubeId: "17iBB5hTvEM",
+    poster: "/posters/luxury-passport.png",
   },
   {
     slug: "edu-cred",
@@ -65,6 +82,8 @@ const EXAMPLES: Example[] = [
     name: "Fan Tokens",
     category: "Community",
     description: "Community and fan engagement token experience.",
+    youtubeId: "b-97kVHb4t4",
+    poster: "/posters/Fan-Tokens.png",
   },
   {
     slug: "ecommerce",
@@ -83,6 +102,7 @@ const EXAMPLES: Example[] = [
     name: "SAFTY",
     category: "Legal",
     description: "SAFT / token agreement workflow demo.",
+    youtubeId: "PYgfZP3yTLo",
   },
 ];
 
@@ -173,35 +193,161 @@ export default function ExamplesPage() {
 }
 
 function ExampleCard({ example }: { example: Example }) {
-  const { slug, name, category, description } = example;
+  const { slug, name, category, description, youtubeId, poster } = example;
+  const [modalOpen, setModalOpen] = useState(false);
+  const [posterOpen, setPosterOpen] = useState(false);
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg hover:bg-white/15 hover:-translate-y-1 transition-all duration-200 p-6 flex flex-col gap-4">
-      {/* Category badge */}
-      <span className="w-fit bg-[#4DA2FF]/20 text-[#4DA2FF] text-xs font-semibold px-3 py-1 rounded-full">
-        {category}
-      </span>
-
-      {/* Name */}
-      <h2
-        className={`${workSans.className} text-white font-bold text-lg leading-snug`}
+    <>
+      <div
+        className={`bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-lg hover:bg-white/15 hover:-translate-y-1 transition-all duration-200 p-6 flex flex-col gap-4${poster ? " cursor-pointer" : ""}`}
+        onClick={() => poster && setPosterOpen(true)}
       >
-        {name}
-      </h2>
+        {/* Category badge */}
+        <span className="w-fit bg-[#4DA2FF]/20 text-[#4DA2FF] text-xs font-semibold px-3 py-1 rounded-full">
+          {category}
+        </span>
 
-      {/* Description */}
-      <p className="text-white/70 text-sm leading-relaxed flex-1">
-        {description}
-      </p>
+        {/* Name */}
+        <h2
+          className={`${workSans.className} text-white font-bold text-lg leading-snug`}
+        >
+          {name}
+        </h2>
 
-      {/* CTA */}
-      <Link
-        href={`/examples/${slug}`}
-        className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] text-black font-semibold text-sm shadow-[0_10px_30px_-10px_rgba(77,162,255,0.4)] transition-all duration-200 w-fit"
+        {/* Description */}
+        <p className="text-white/70 text-sm leading-relaxed flex-1">
+          {description}
+        </p>
+
+        {/* CTAs */}
+        <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+          <Link
+            href={`/examples/${slug}`}
+            className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] text-black font-semibold text-sm shadow-[0_10px_30px_-10px_rgba(77,162,255,0.4)] transition-all duration-200"
+          >
+            Try it out
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+          {youtubeId && (
+            <button
+              onClick={() => setModalOpen(true)}
+              className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/30 text-white/80 hover:bg-white/10 hover:text-white font-semibold text-sm transition-all duration-200"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              View Demo
+            </button>
+          )}
+        </div>
+      </div>
+
+      {modalOpen && youtubeId && (
+        <YouTubeModal videoId={youtubeId} onClose={() => setModalOpen(false)} />
+      )}
+
+      {posterOpen && poster && (
+        <PosterModal src={poster} alt={name} onClose={() => setPosterOpen(false)} />
+      )}
+    </>
+  );
+}
+
+function PosterModal({
+  src,
+  alt,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-3xl"
+        onClick={(e) => e.stopPropagation()}
       >
-        View Demo
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-      </Link>
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          className="max-h-[80vh] w-full object-contain rounded-xl shadow-2xl"
+        />
+      </div>
+    </div>
+  );
+}
+
+function YouTubeModal({
+  videoId,
+  onClose,
+}: {
+  videoId: string;
+  onClose: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-3xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-white/70 hover:text-white transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        <div className="relative aspect-video w-full rounded-xl overflow-hidden shadow-2xl">
+          {/* Loading placeholder */}
+          <div
+            className={`absolute inset-0 bg-[#00041F] flex items-center justify-center pointer-events-none transition-opacity duration-500 ${loaded ? "opacity-0" : "opacity-100"}`}
+          >
+            <div className="w-16 h-16 rounded-full bg-[#4DA2FF]/20 border border-[#4DA2FF]/40 flex items-center justify-center animate-pulse">
+              <Play className="w-6 h-6 fill-[#4DA2FF] text-[#4DA2FF] ml-1" />
+            </div>
+          </div>
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            onLoad={() => setLoaded(true)}
+          />
+        </div>
+      </div>
     </div>
   );
 }
