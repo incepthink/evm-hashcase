@@ -221,8 +221,12 @@ function ExampleCard({ example }: { example: Example }) {
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex flex-wrap gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Link
+            target="_blank"
             href={`/examples/${slug}`}
             className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#4DA2FF] to-[#7ab8ff] hover:from-[#3a8fef] hover:to-[#6aa7f0] text-black font-semibold text-sm shadow-[0_10px_30px_-10px_rgba(77,162,255,0.4)] transition-all duration-200"
           >
@@ -247,7 +251,11 @@ function ExampleCard({ example }: { example: Example }) {
       )}
 
       {posterOpen && poster && (
-        <PosterModal src={poster} alt={name} onClose={() => setPosterOpen(false)} />
+        <PosterModal
+          src={poster}
+          alt={name}
+          onClose={() => setPosterOpen(false)}
+        />
       )}
     </>
   );
