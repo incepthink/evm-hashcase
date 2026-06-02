@@ -4,7 +4,7 @@
 import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 export interface MintNFTData {
   collection_id: string;
@@ -37,9 +37,9 @@ export const useNFTMinting = () => {
       const data = mintNFTMutation.data;
       if (data.success) {
         localStorage.setItem("nft_minted_ns_daily", "true");
-        toast.success("🎉 NFT minted successfully!");
+        notify("🎉 NFT minted successfully!", "success");
       } else {
-        toast.error(data.message || "Failed to mint NFT");
+        notify(data.message || "Failed to mint NFT", "error");
       }
     }
   }, [mintNFTMutation.isSuccess, mintNFTMutation.data]);
@@ -53,9 +53,9 @@ export const useNFTMinting = () => {
       
       if (errorMessage.includes("already minted") || errorMessage.includes("already claimed")) {
         localStorage.setItem("nft_minted_ns_daily", "true");
-        toast.error("NFT already minted for today's quests!");
+        notify("NFT already minted for today's quests!", "error");
       } else {
-        toast.error(errorMessage);
+        notify(errorMessage, "error");
       }
     }
   }, [mintNFTMutation.isError, mintNFTMutation.error]);

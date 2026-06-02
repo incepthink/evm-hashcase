@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import { RequirementRule, TaskWithCompletion } from "@/hooks/useTasksByCode";
 
@@ -88,7 +88,7 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
 
   const handleCompleteTask = async (task: TaskWithCompletion) => {
     if (!isWalletConnected && !user?.id) {
-      toast.error("Please connect wallet or sign in to complete tasks");
+      notify("Please connect wallet or sign in to complete tasks", "error");
       setOpenModal(true);
       return;
     }
@@ -119,7 +119,7 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
         payload
       );
 
-      toast.success("Task completed successfully!");
+      notify("Task completed successfully!", "success");
 
       // Call the callback to refetch task data
       if (onTaskComplete) {
@@ -144,12 +144,12 @@ export const TaskDetailList: React.FC<TaskDetailListProps> = ({
         err.response?.data?.message || "Failed to complete task";
 
       if (errorMessage.includes("already completed")) {
-        toast.error("Task has already been completed");
+        notify("Task has already been completed", "error");
         if (onTaskComplete) {
           onTaskComplete();
         }
       } else {
-        toast.error(errorMessage);
+        notify(errorMessage, "error");
       }
     } finally {
       setCompletingTasks((prev) => {

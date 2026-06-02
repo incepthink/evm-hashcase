@@ -19,7 +19,7 @@ import { useAccount } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import { HashcaseText } from "../assets";
 import ConnectButton from "./ConnectButton";
 import { useGlobalAppStore } from "@/store/globalAppStore";
@@ -117,9 +117,7 @@ export const Navbar = () => {
       router.push(`/profile/${profileAddress}`);
       handleClose();
     } else {
-      toast.error(
-        "Please connect wallet or sign in with Google to view your profile",
-      );
+      notify("Please connect wallet or sign in with Google to view your profile", "error");
     }
   };
 

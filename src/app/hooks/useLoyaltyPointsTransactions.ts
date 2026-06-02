@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Transaction } from "@mysten/sui/transactions";
 import { useSuiClient, useSignAndExecuteTransaction, useCurrentAccount } from "@mysten/dapp-kit";
-import { toast } from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import axiosInstance from "@/utils/axios";
 
 export const useLoyaltyPointsTransactions = () => {
@@ -22,7 +22,7 @@ export const useLoyaltyPointsTransactions = () => {
     console.log("🔧 Completing quest:", { questType, currentAccount: currentAccount?.address });
     
     if (!currentAccount?.address) {
-      toast.error("Please connect your wallet first.");
+      notify("Please connect your wallet first.", "error");
       return;
     }
 
@@ -36,17 +36,17 @@ export const useLoyaltyPointsTransactions = () => {
       });
 
       console.log("Quest completion response:", response.data);
-      toast.success(`Quest completed! You earned ${response.data.points_earned} points!`);
+      notify(`Quest completed! You earned ${response.data.points_earned} points!`, "success");
       return response.data;
     } catch (error: any) {
       console.error("Error completing quest:", error);
       
       if (error.response?.status === 400) {
-        toast.error("Quest already completed or not available.");
+        notify("Quest already completed or not available.", "error");
       } else if (error.response?.status === 500) {
-        toast.error("Backend error. Please try again.");
+        notify("Backend error. Please try again.", "error");
       } else {
-        toast.error("Failed to complete quest. Please try again.");
+        notify("Failed to complete quest. Please try again.", "error");
       }
       return null;
     } finally {
@@ -59,7 +59,7 @@ export const useLoyaltyPointsTransactions = () => {
     console.log("🔧 Spending loyalty points:", { userTokenId, amount });
     
     if (!userTokenId || !amount) {
-      toast.error("Please fill in all fields.");
+      notify("Please fill in all fields.", "error");
       return;
     }
 
@@ -96,11 +96,11 @@ export const useLoyaltyPointsTransactions = () => {
       });
 
       console.log("Transaction Details:", txDetails);
-      toast.success("Points spent successfully!");
+      notify("Points spent successfully!", "success");
       return txDetails;
     } catch (error: any) {
       console.error("Error executing transaction:", error);
-      toast.error("Failed to spend points. Check if you have enough tokens.");
+      notify("Failed to spend points. Check if you have enough tokens.", "error");
       return null;
     } finally {
       setIsLoading(false);

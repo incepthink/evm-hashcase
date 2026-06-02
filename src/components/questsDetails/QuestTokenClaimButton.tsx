@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 interface QuestTokenClaimButtonProps {
   tokenReward: {
@@ -39,13 +39,13 @@ export const QuestTokenClaimButton: React.FC<QuestTokenClaimButtonProps> = ({
 
   const handleClaimTokens = async () => {
     if (!isWalletConnected) {
-      toast.error("Please connect your wallet first");
+      notify("Please connect your wallet first", "error");
       return;
     }
 
     const walletInfo = getWalletForChain("evm");
     if (!walletInfo?.address) {
-      toast.error("Wallet address not found");
+      notify("Wallet address not found", "error");
       return;
     }
 
@@ -60,11 +60,7 @@ export const QuestTokenClaimButton: React.FC<QuestTokenClaimButtonProps> = ({
       const response = await axiosInstance.post("/user/claim/erc20", claimData);
 
       if (response.data.success) {
-        toast.success(
-          `Successfully claimed ${Number(tokenAmount).toFixed(2)} ${
-            tokenReward.symbol
-          }!`
-        );
+        notify(`Successfully claimed ${Number(tokenAmount).toFixed(2)} ${tokenReward.symbol}!`, "success");
         setHasClaimed(true);
 
         const blockchainTx =
@@ -73,7 +69,7 @@ export const QuestTokenClaimButton: React.FC<QuestTokenClaimButtonProps> = ({
           console.log(`Blockchain transaction: ${blockchainTx.hash}`);
         }
       } else {
-        toast.error(response.data.message || "Failed to claim tokens");
+        notify(response.data.message || "Failed to claim tokens", "error");
       }
     } catch (error: any) {
       console.error("Error claiming tokens:", error);
@@ -85,7 +81,7 @@ export const QuestTokenClaimButton: React.FC<QuestTokenClaimButtonProps> = ({
         errorMessage = error.message;
       }
 
-      toast.error(errorMessage);
+      notify(errorMessage, "error");
     } finally {
       setIsClaiming(false);
     }

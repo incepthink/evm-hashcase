@@ -4,7 +4,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import { useQuestById, QuestWithCompletion } from "@/hooks/useQuestById";
 

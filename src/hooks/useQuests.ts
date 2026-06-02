@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 interface RequirementRule {
   type: string;
@@ -186,7 +186,7 @@ export const useQuests = ({
         }
       } catch (err) {
         console.error("Error fetching quests:", err);
-        toast.error("Failed to load quests");
+        notify("Failed to load quests", "error");
         throw err;
       }
     },

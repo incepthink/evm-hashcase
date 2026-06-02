@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import axiosInstance from "@/utils/axios";
-import { toast } from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 import { X, HandCoins, Image as ImageIcon, FileText, Tag, Sparkles } from "lucide-react";
 
@@ -87,14 +87,14 @@ const CustomNftModal: React.FC<CustomNftModalProps> = ({
 
   const handleFreeMint = async () => {
     if (!currentAccount?.address) {
-      toast.error("Please connect your wallet");
+      notify("Please connect your wallet", "error");
       return;
     }
 
     // Validate form
     const validation = validateForm();
     if (!validation.isValid) {
-      validation.errors.forEach(error => toast.error(error));
+      validation.errors.forEach(error => notify(error, "error"));
       return;
     }
 
@@ -114,7 +114,7 @@ const CustomNftModal: React.FC<CustomNftModalProps> = ({
       );
 
       if (response.data.success) {
-        toast.success(`Custom NFT "${formValues.title}" minted successfully!`);
+        notify(`Custom NFT "${formValues.title}" minted successfully!`, "success");
         console.log("Minted NFT:", response.data);
         
         // Call the refresh callback to update the collection page
@@ -133,12 +133,12 @@ const CustomNftModal: React.FC<CustomNftModalProps> = ({
         
         onClose();
       } else {
-        toast.error(response.data.message || "Failed to mint NFT");
+        notify(response.data.message || "Failed to mint NFT", "error");
       }
     } catch (error: any) {
       console.error("Minting failed:", error);
       const errorMessage = error.response?.data?.message || error.response?.data?.missing || "Failed to mint NFT";
-      toast.error(errorMessage);
+      notify(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }

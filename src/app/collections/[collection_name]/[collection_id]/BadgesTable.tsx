@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { Flame, Award, Trophy, ChevronRight } from "lucide-react";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 type Badge = {
   id: number;
@@ -66,7 +66,7 @@ const BadgesTable = ({ owner_id }: { owner_id: number }) => {
       );
 
       console.log(response);
-      toast.success("Badge Successfully Added");
+      notify("Badge Successfully Added", "success");
     } catch (error) {}
   };
 

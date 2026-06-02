@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAccounts } from "@mysten/dapp-kit";
-import { toast } from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import { suiApi, MintNftRequest, AddLoyaltyPointsRequest } from "@/utils/suiApi";
 
 interface MintingForm {
@@ -21,12 +21,12 @@ export const useBackendSui = () => {
    */
   const mintNftWithBackend = async (nftForm: MintingForm) => {
     if (!address) {
-      toast.error("Please connect your wallet first.");
+      notify("Please connect your wallet first.", "error");
       return;
     }
 
     if (!nftForm.collection_id || !nftForm.title || !nftForm.image_url || !nftForm.attributes) {
-      toast.error("Please fill in all required fields.");
+      notify("Please fill in all required fields.", "error");
       return;
     }
 
@@ -46,7 +46,7 @@ export const useBackendSui = () => {
 
       const result = await suiApi.mintNft(request);
       
-      toast.success("NFT minted and transferred successfully!");
+      notify("NFT minted and transferred successfully!", "success");
       console.log("Mint result:", result);
       
       return result;
@@ -65,7 +65,7 @@ export const useBackendSui = () => {
    */
   const addLoyaltyPoints = async (points: number) => {
     if (!address) {
-      toast.error("Please connect your wallet first.");
+      notify("Please connect your wallet first.", "error");
       return;
     }
 
@@ -79,7 +79,7 @@ export const useBackendSui = () => {
 
       const result = await suiApi.addLoyaltyPoints(request);
       
-      toast.success(`Successfully added ${points} loyalty points!`);
+      notify(`Successfully added ${points} loyalty points!`, "success");
       console.log("Loyalty points result:", result);
       
       return result;
@@ -98,7 +98,7 @@ export const useBackendSui = () => {
    */
   const getLoyaltyBalance = async () => {
     if (!address) {
-      toast.error("Please connect your wallet first.");
+      notify("Please connect your wallet first.", "error");
       return null;
     }
 
@@ -140,7 +140,7 @@ export const useBackendSui = () => {
       return result;
     } catch (error: any) {
       console.error("Error testing backend connection:", error);
-      toast.error("Backend connection failed");
+      notify("Backend connection failed", "error");
       return null;
     }
   };

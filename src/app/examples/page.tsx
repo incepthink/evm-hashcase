@@ -22,7 +22,7 @@ const EXAMPLES: Example[] = [
     name: "IP Royalties",
     category: "Finance",
     description: "Manage and track intellectual property royalty flows.",
-    youtubeId: "hF9YDRBYJu0",
+    youtubeId: "lOtwarufpPw",
     poster: "/posters/IP-Royalties.png",
   },
   {
@@ -30,7 +30,7 @@ const EXAMPLES: Example[] = [
     name: "Digital Twins",
     category: "Asset Mgmt",
     description: "Tokenized digital representations of real-world assets.",
-    youtubeId: "Bxvx-T4Iuko",
+    youtubeId: "NwgcHfEfDVA",
     poster: "/posters/Digital-Twins.png",
   },
   {
@@ -38,7 +38,7 @@ const EXAMPLES: Example[] = [
     name: "Governance DAO",
     category: "Governance",
     description: "On-chain governance and proposal management demo.",
-    youtubeId: "1Bf4P8kEVZ4",
+    youtubeId: "kwoxfB1kT_U",
     poster: "/posters/Governance-DAO.png",
   },
   {
@@ -46,7 +46,7 @@ const EXAMPLES: Example[] = [
     name: "Tokenized Real Estate",
     category: "Real Estate",
     description: "Real estate ownership and investment workflows.",
-    youtubeId: "_qJaIyasvlw",
+    youtubeId: "-t5r-X8VOZo",
     poster: "/posters/Tokenized-RealEstate.png",
   },
   {
@@ -54,21 +54,21 @@ const EXAMPLES: Example[] = [
     name: "Tokenized Data",
     category: "Data",
     description: "Data asset ownership, licensing, and monetization.",
-    youtubeId: "tcECTqOhXOo",
+    youtubeId: "utI_zBHxeag",
   },
   {
     slug: "medical-records",
     name: "Medical Records",
     category: "Healthcare",
     description: "Secure medical record access and ownership flows.",
-    youtubeId: "TRLwHBxO5yA",
+    youtubeId: "7EiEA_tzlp0",
   },
   {
     slug: "luxury-passport",
     name: "Luxury Passport",
     category: "Authenticity",
     description: "Authenticity and ownership passport for luxury goods.",
-    youtubeId: "17iBB5hTvEM",
+    youtubeId: "WgnAoOLonwY",
     poster: "/posters/luxury-passport.png",
   },
   {
@@ -82,7 +82,7 @@ const EXAMPLES: Example[] = [
     name: "Fan Tokens",
     category: "Community",
     description: "Community and fan engagement token experience.",
-    youtubeId: "b-97kVHb4t4",
+    youtubeId: "jIhRirRMmT4",
     poster: "/posters/Fan-Tokens.png",
   },
   {
@@ -102,7 +102,7 @@ const EXAMPLES: Example[] = [
     name: "SAFTY",
     category: "Legal",
     description: "SAFT / token agreement workflow demo.",
-    youtubeId: "PYgfZP3yTLo",
+    youtubeId: "Nq5-HvDm1yM",
   },
 ];
 

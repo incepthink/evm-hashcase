@@ -1,7 +1,7 @@
 import React from "react";
 
 import { X, Lock } from "lucide-react";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 interface UnlockableNft {
   isOpen: boolean;
@@ -17,7 +17,7 @@ const UnlockableNft: React.FC<UnlockableNft> = ({
   if (!isOpen) return null;
 
   const handleReveal = () => {
-    toast.error("Mint the NFT to view unlockable content");
+    notify("Mint the NFT to view unlockable content", "error");
     closeModal();
   };
 

@@ -4,7 +4,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 import { useLoyaltyPointsTransactions } from "@/app/hooks/useLoyaltyPointsTransactions";
 import { useCurrentAccount, useSuiClientQuery } from "@mysten/dapp-kit";
@@ -116,7 +116,7 @@ export default function CollectionPointsPage() {
       }
       setPoints("");
     } else {
-      toast.error("Please enter an amount and ensure you have loyalty tokens");
+      notify("Please enter an amount and ensure you have loyalty tokens", "error");
     }
   };
 

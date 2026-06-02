@@ -3,7 +3,7 @@ import { Transaction } from "@mysten/sui/transactions";
 
 import { useSuiClient, useSignAndExecuteTransaction } from "@mysten/dapp-kit";
 
-import { toast } from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import { 
   freeMintNftHelper, 
   dynamicMintNftHelper, 
@@ -33,7 +33,7 @@ export const useNftTransactions = () => {
 
   const freeMintNft = async (nftForm: MintingForm) => {
     if (!nftForm.collection_id) {
-      toast.error("Please fill in all fields.");
+      notify("Please fill in all fields.", "error");
       return;
     }
 
@@ -62,11 +62,11 @@ export const useNftTransactions = () => {
       });
 
       console.log("Transaction Details:", txDetails);
-      toast.success("NFT Minted Successfully!");
+      notify("NFT Minted Successfully!", "success");
       return txDetails;
     } catch (error) {
       console.error("Error executing transaction:", error);
-      toast.error("Failed to mint NFT.");
+      notify("Failed to mint NFT.", "error");
       return null;
     } finally {
       setIsLoading(false);
@@ -75,7 +75,7 @@ export const useNftTransactions = () => {
 
   const fixedPriceMintNFT = async (nftForm: MintingForm, address: string) => {
     if (!nftForm.collection_id || !address) {
-      toast.error("Please fill in all fields.");
+      notify("Please fill in all fields.", "error");
       return;
     }
 
@@ -126,10 +126,10 @@ export const useNftTransactions = () => {
       });
 
       console.log("Transaction Details:", txDetails);
-      toast.success("NFT Minted Successfully!");
+      notify("NFT Minted Successfully!", "success");
     } catch (error) {
       console.error("Error executing transaction:", error);
-      toast.error("Failed to mint NFT.");
+      notify("Failed to mint NFT.", "error");
       return null;
     } finally {
       setIsLoading(false);
@@ -138,7 +138,7 @@ export const useNftTransactions = () => {
 
   const claimNFT = async (collection_id: string, nft_id: string) => {
     if (!collection_id || !nft_id) {
-      toast.error("Please fill in all fields.");
+      notify("Please fill in all fields.", "error");
       return;
     }
 
@@ -167,11 +167,11 @@ export const useNftTransactions = () => {
       });
 
       console.log("Transaction Details:", txDetails);
-      toast.success("NFT Claimed Successfully!");
+      notify("NFT Claimed Successfully!", "success");
       return txDetails;
     } catch (error) {
       console.error("Error executing transaction:", error);
-      toast.error("Failed to Claim NFT.");
+      notify("Failed to Claim NFT.", "error");
       return null;
     } finally {
       setIsLoading(false);
@@ -180,7 +180,7 @@ export const useNftTransactions = () => {
 
   const updateNftMetadata = async (updateForm: any) => {
     if (!updateForm.collectionId || !updateForm.nftId) {
-      toast.error("Please fill in all fields.");
+      notify("Please fill in all fields.", "error");
       return;
     }
 
@@ -226,11 +226,11 @@ export const useNftTransactions = () => {
       });
 
       console.log("Transaction Details:", txDetails);
-      toast.success("NFT Metadata Updated Successfully!");
+      notify("NFT Metadata Updated Successfully!", "success");
       return txDetails;
     } catch (error) {
       console.error("Error executing transaction:", error);
-      toast.error("Failed to update NFT Metadata.");
+      notify("Failed to update NFT Metadata.", "error");
       return null;
     } finally {
       setIsLoading(false);
@@ -240,7 +240,7 @@ export const useNftTransactions = () => {
   // ✅ NEW - Function for admins to create update tickets
   const createUpdateTicket = async (ticketData: any) => {
     if (!ticketData.adminCapId || !ticketData.nftId || !ticketData.recipient) {
-      toast.error("Please fill in all required fields.");
+      notify("Please fill in all required fields.", "error");
       return;
     }
 
@@ -286,11 +286,11 @@ export const useNftTransactions = () => {
       });
 
       console.log("Update Ticket Created:", txDetails);
-      toast.success("Update Ticket Created Successfully!");
+      notify("Update Ticket Created Successfully!", "success");
       return txDetails;
     } catch (error) {
       console.error("Error creating update ticket:", error);
-      toast.error("Failed to create update ticket.");
+      notify("Failed to create update ticket.", "error");
       return null;
     } finally {
       setIsLoading(false);

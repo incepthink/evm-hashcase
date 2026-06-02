@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { useNFTClaiming } from "@/hooks/useNFTClaiming";
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 interface QuestDetailClaimButtonProps {
   nftMinted: boolean;
@@ -57,23 +57,23 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
 
   const handleClaimNFT = async () => {
     if (!isWalletConnected) {
-      toast.error("Please connect your wallet first");
+      notify("Please connect your wallet first", "error");
       setOpenModal(true);
       return;
     }
 
     if (!nftData.recipient) {
-      toast.error("Wallet address not found");
+      notify("Wallet address not found", "error");
       return;
     }
 
     if (!metadataId) {
-      toast.error("NFT metadata not found");
+      notify("NFT metadata not found", "error");
       return;
     }
 
     if (!canStartClaiming(nftData.recipient, metadataId)) {
-      toast.error("Cannot start claiming at this time");
+      notify("Cannot start claiming at this time", "error");
       return;
     }
 
@@ -94,15 +94,15 @@ export const QuestDetailClaimButton: React.FC<QuestDetailClaimButtonProps> = ({
       const result = await claimNFT(claimData);
 
       if (result.success) {
-        toast.success("NFT claimed successfully!");
+        notify("NFT claimed successfully!", "success");
         onSuccess(result.data);
         setNftMinted(true);
       } else {
-        toast.error(result.error || "Failed to claim NFT");
+        notify(result.error || "Failed to claim NFT", "error");
       }
     } catch (error: any) {
       console.error("Error in handleClaimNFT:", error);
-      toast.error("An unexpected error occurred");
+      notify("An unexpected error occurred", "error");
     } finally {
       setClaiming(false);
     }

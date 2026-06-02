@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LeaderboardPeriod } from "@/utils/enums";
 import axiosInstance from "@/utils/axios";
 import { useGlobalAppStore } from "@/store/globalAppStore";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 type LeaderboardEntry = {
   user_id: number;
@@ -72,7 +72,7 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
 
   const refreshLeaderboard = async () => {
     if (!isWalletConnected) {
-      toast.error("Please connect your wallet to refresh leaderboard");
+      notify("Please connect your wallet to refresh leaderboard", "error");
       return;
     }
 
@@ -97,10 +97,10 @@ const LeaderboardTable = ({ owner_id }: { owner_id: number }) => {
       // Reset to page 1 after refresh
       setCurrentPage(1);
 
-      toast.success("Leaderboard updated with latest rankings!");
+      notify("Leaderboard updated with latest rankings!", "success");
     } catch (error: any) {
       console.error("Error refreshing leaderboard:", error);
-      toast.error("Failed to refresh leaderboard");
+      notify("Failed to refresh leaderboard", "error");
     } finally {
       setIsLoading(false);
     }

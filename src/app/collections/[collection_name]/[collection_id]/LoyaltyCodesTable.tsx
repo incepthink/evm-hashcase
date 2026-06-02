@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { Flame, Clock, Calendar, Info } from "lucide-react";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import { useGlobalAppStore } from "@/store/globalAppStore";
 import { usePrivy } from "@privy-io/react-auth";
 import { useLoyalty } from "@/hooks/useLoyalty";
@@ -128,16 +128,14 @@ const LoyaltyCodesTable = ({
     walletAddress?: string;
   } => {
     if (!isUserVerified) {
-      toast.error("Please connect your wallet to continue");
+      notify("Please connect your wallet to continue", "error");
       setOpenModal(true);
       return { isValid: false };
     }
 
     const walletInfo = getWalletInfo();
     if (!walletInfo) {
-      toast.error("Please connect wallet or sign in with Google", {
-        duration: 5000,
-      });
+      notify("Please connect wallet or sign in with Google", "error", 5000);
       setOpenModal(true);
       return { isValid: false };
     }
@@ -188,9 +186,7 @@ const LoyaltyCodesTable = ({
       console.log("LOYALTY_TABLE_DEBUG: Daily check-in failed:", error);
 
       if (error.response?.data?.message?.includes("wrong wallet")) {
-        toast.error(
-          "Daily check-in failed: Incorrect wallet type connected for this collection."
-        );
+        notify("Daily check-in failed: Incorrect wallet type connected for this collection.", "error");
       }
     }
   };

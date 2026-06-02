@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import { usePrivy } from "@privy-io/react-auth";
 
 type Loyalty = {
@@ -84,16 +84,14 @@ export const useAddLoyalty = ({
     walletType?: "evm" | "privy";
   } => {
     if (!isUserVerified) {
-      toast.error("Please connect your wallet to continue");
+      notify("Please connect your wallet to continue", "error");
       setOpenModal(true);
       return { isValid: false };
     }
 
     const walletInfo = getWalletInfo();
     if (!walletInfo) {
-      toast.error("Please connect wallet or sign in with Google", {
-        duration: 5000,
-      });
+      notify("Please connect wallet or sign in with Google", "error", 5000);
       setOpenModal(true);
       return { isValid: false };
     }
@@ -173,9 +171,7 @@ export const useAddLoyalty = ({
 
       const walletTypeDisplay = validation.walletType === "privy" ? "Google" : "EVM";
 
-      toast.success(
-        `Successfully redeemed ${code} with ${walletTypeDisplay} wallet! +${value} points added. Total: ${newPoints} points`
-      );
+      notify(`Successfully redeemed ${code} with ${walletTypeDisplay} wallet! +${value} points added. Total: ${newPoints} points`, "success");
 
       // Call callbacks if provided
       if (onPointsUpdate && newPoints > 0) {
@@ -189,27 +185,19 @@ export const useAddLoyalty = ({
       console.error("LOYALTY_DEBUG: Error:", error);
 
       if (error.response?.status === 401 || error.response?.status === 403) {
-        toast.error(
-          "Authentication failed. Please reconnect your wallet and try again."
-        );
+        notify("Authentication failed. Please reconnect your wallet and try again.", "error");
       } else if (error.response?.data?.message?.includes("wrong wallet")) {
-        toast.error(
-          "Incorrect wallet type connected. Please connect wallet or sign in with Google."
-        );
+        notify("Incorrect wallet type connected. Please connect wallet or sign in with Google.", "error");
       } else if (error.response?.data?.message === "Loyalty code already claimed") {
-        toast.error("This loyalty code has already been claimed.");
+        notify("This loyalty code has already been claimed.", "error");
       } else if (error.response?.data?.message === "Loyalty code not found") {
-        toast.error("Invalid loyalty code.");
+        notify("Invalid loyalty code.", "error");
       } else if (error.response?.data?.message?.includes("Outside availability window")) {
-        toast.error(`Code not available: ${error.response.data.message}`);
+        notify(`Code not available: ${error.response.data.message}`, "error");
       } else if (error.response?.data?.message?.includes("You can claim this code again")) {
-        toast.error(`On cooldown: ${error.response.data.message}`);
+        notify(`On cooldown: ${error.response.data.message}`, "error");
       } else {
-        toast.error(
-          `Failed to redeem loyalty code: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        notify(`Failed to redeem loyalty code: ${error.response?.data?.message || error.message}`, "error");
       }
     } finally {
       setIsLoading(false);

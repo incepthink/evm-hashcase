@@ -16,7 +16,7 @@ import ConnectButton from "@/components/ConnectButton";
 import Image from "next/image";
 import NFTsTab from "@/components/tasks/NFTsTab";
 import TokensTab from "@/components/tasks/TokensTab";
-import { toast } from "react-hot-toast";
+import { notify } from "@/utils/notify";
 import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
 import { TokensApiResponse } from "@/components/tasks/tokenTypes";
 
@@ -213,10 +213,10 @@ const App: React.FC = () => {
     const profileUrl = window.location.href;
     try {
       await navigator.clipboard.writeText(profileUrl);
-      toast.success("Profile link copied to clipboard!");
+      notify("Profile link copied to clipboard!", "success");
     } catch (error) {
       console.error("Failed to copy link:", error);
-      toast.error("Failed to copy link");
+      notify("Failed to copy link", "error");
     }
   };
 

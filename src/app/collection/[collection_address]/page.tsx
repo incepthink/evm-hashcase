@@ -14,7 +14,7 @@ import {
   Metadata,
   MetadataSetWithAllMetadataInstances,
 } from "@/utils/modelTypes";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 let notused = true;
 
@@ -261,28 +261,13 @@ export default function NFTPage() {
         console.log(
           "Backend service temporarily unavailable (502 Bad Gateway)"
         );
-        toast.error(
-          "Backend service temporarily unavailable. Please try again later.",
-          {
-            duration: 5000,
-            position: "top-center",
-          }
-        );
+        notify("Backend service temporarily unavailable. Please try again later.", "error", 5000);
       } else if (error.response?.status === 500) {
         console.log("Internal server error (500)");
-        toast.error("Server error occurred. Please try again later.", {
-          duration: 5000,
-          position: "top-center",
-        });
+        notify("Server error occurred. Please try again later.", "error", 5000);
       } else {
         console.log("Network or other error:", error.message);
-        toast.error(
-          "Failed to fetch NFTs. Please check your connection and try again.",
-          {
-            duration: 5000,
-            position: "top-center",
-          }
-        );
+        notify("Failed to fetch NFTs. Please check your connection and try again.", "error", 5000);
       }
 
       setMintedNFTs([]);

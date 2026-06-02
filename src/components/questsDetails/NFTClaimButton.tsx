@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import axiosInstance from "@/utils/axios";
-import toast from "react-hot-toast";
+import { notify } from "@/utils/notify";
 
 interface MetadataInstance {
   id: number;
@@ -49,12 +49,12 @@ export const NFTClaimButton: React.FC<NFTClaimButtonProps> = ({
 
   const handleClaim = async () => {
     if (!questCompleted) {
-      toast.error("Complete the quest first to claim the NFT");
+      notify("Complete the quest first to claim the NFT", "error");
       return;
     }
 
     if (!canMintAgain) {
-      toast.error("This NFT has already been claimed");
+      notify("This NFT has already been claimed", "error");
       return;
     }
 
@@ -66,10 +66,10 @@ export const NFTClaimButton: React.FC<NFTClaimButtonProps> = ({
       });
 
       if (response.data.success) {
-        toast.success("NFT claimed successfully!");
+        notify("NFT claimed successfully!", "success");
         onClaimSuccess(metadata);
       } else {
-        toast.error(response.data.message || "Failed to claim NFT");
+        notify(response.data.message || "Failed to claim NFT", "error");
       }
     } catch (error: any) {
       console.error("Error claiming NFT:", error);
@@ -77,9 +77,9 @@ export const NFTClaimButton: React.FC<NFTClaimButtonProps> = ({
         error.response?.data?.message || "Failed to claim NFT";
 
       if (errorMessage.includes("already claimed")) {
-        toast.error("This NFT has already been claimed");
+        notify("This NFT has already been claimed", "error");
       } else {
-        toast.error(errorMessage);
+        notify(errorMessage, "error");
       }
     } finally {
       setClaiming(false);
