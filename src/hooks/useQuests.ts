@@ -199,7 +199,7 @@ export const useQuests = ({
   useEffect(() => {
     if (error) {
       console.error("Quest query error:", error);
-      toast.error("Failed to load quests");
+      notify("Failed to load quests", "error");
     }
   }, [error]);
 

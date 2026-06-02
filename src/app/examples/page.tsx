@@ -55,6 +55,7 @@ const EXAMPLES: Example[] = [
     category: "Data",
     description: "Data asset ownership, licensing, and monetization.",
     youtubeId: "utI_zBHxeag",
+    poster: "/posters/Tokenized-asset-management.png",
   },
   {
     slug: "medical-records",
@@ -62,6 +63,7 @@ const EXAMPLES: Example[] = [
     category: "Healthcare",
     description: "Secure medical record access and ownership flows.",
     youtubeId: "7EiEA_tzlp0",
+    poster: "/posters/Tokenized-asset-management.png",
   },
   {
     slug: "luxury-passport",
@@ -76,6 +78,7 @@ const EXAMPLES: Example[] = [
     name: "Edu Cred",
     category: "Education",
     description: "Verifiable education credentials and certificates.",
+    poster: "/posters/Tokenized-asset-management.png",
   },
   {
     slug: "fan-tokens",

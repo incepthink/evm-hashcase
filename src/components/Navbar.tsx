@@ -117,7 +117,10 @@ export const Navbar = () => {
       router.push(`/profile/${profileAddress}`);
       handleClose();
     } else {
-      notify("Please connect wallet or sign in with Google to view your profile", "error");
+      notify(
+        "Please connect wallet or sign in with Google to view your profile",
+        "error",
+      );
     }
   };
 
@@ -131,7 +134,7 @@ export const Navbar = () => {
     { label: "Home", path: "/" },
     { label: "Collections", path: "/collections" },
     { label: "Profile", onClick: handleProfileClick },
-    { label: "Blog", path: "/blog" },
+    { label: "Examples", path: "/examples" },
   ];
 
   return (

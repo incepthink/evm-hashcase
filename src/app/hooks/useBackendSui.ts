@@ -53,7 +53,7 @@ export const useBackendSui = () => {
     } catch (error: any) {
       console.error("Error minting NFT:", error);
       const errorMessage = error.response?.data?.message || "Failed to mint NFT";
-      toast.error(errorMessage);
+      notify(errorMessage, "error");
       return null;
     } finally {
       setIsLoading(false);
@@ -86,7 +86,7 @@ export const useBackendSui = () => {
     } catch (error: any) {
       console.error("Error adding loyalty points:", error);
       const errorMessage = error.response?.data?.message || "Failed to add loyalty points";
-      toast.error(errorMessage);
+      notify(errorMessage, "error");
       return null;
     } finally {
       setIsLoading(false);
@@ -109,7 +109,7 @@ export const useBackendSui = () => {
     } catch (error: any) {
       console.error("Error getting loyalty balance:", error);
       const errorMessage = error.response?.data?.message || "Failed to get loyalty balance";
-      toast.error(errorMessage);
+      notify(errorMessage, "error");
       return null;
     }
   };
@@ -125,7 +125,7 @@ export const useBackendSui = () => {
     } catch (error: any) {
       console.error("Error getting contract info:", error);
       const errorMessage = error.response?.data?.message || "Failed to get contract info";
-      toast.error(errorMessage);
+      notify(errorMessage, "error");
       return null;
     }
   };
