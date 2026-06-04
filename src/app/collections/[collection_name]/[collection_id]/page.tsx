@@ -17,6 +17,8 @@ import { useCollectionById } from "@/hooks/useCollections";
 
 import LeaderboardTable from "./LeaderboardTable";
 import LoyaltyCodesTable from "./LoyaltyCodesTable";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 export default function CollectionPointsPage() {
   const [mounted, setMounted] = useState(false);
@@ -120,24 +122,9 @@ export default function CollectionPointsPage() {
     }
   };
 
-  // Show loading spinner for token data
+  // Show loading skeleton for token data
   if (isTokenLoading && hasSuiWallet && !hasEvmWallet && !hasPrivyWallet) {
-    return (
-      <div className="w-full min-h-[70vh] flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-blue-900/20 to-transparent -skew-x-12 -translate-x-1/3"></div>
-        <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-to-l from-purple-900/20 to-transparent skew-x-12 translate-x-1/3"></div>
-
-        <div className="relative z-10 text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-          <h1 className="text-4xl sm:text-4xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-blue-400 to-purple-500 drop-shadow-lg leading-tight">
-            Loading...
-          </h1>
-          <p className="text-xl sm:text-2xl text-white/80 mb-8 leading-relaxed max-w-2xl">
-            Fetching your loyalty data
-          </p>
-        </div>
-      </div>
-    );
+    return <ContentSkeleton theme={collectionTheme} variant="points" />;
   }
 
   if (!mounted) return null;

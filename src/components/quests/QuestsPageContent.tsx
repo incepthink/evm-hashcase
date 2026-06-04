@@ -14,7 +14,9 @@ import backgroundImageHeroSection from "@/assets/images/high_rise.jpg";
 // } from "@/utils/mintingStateManager";  // ← COMMENTED OUT
 
 // Components
-import { LoadingScreen } from "./LoadingScreen";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import EmptyState from "@/components/collectionShell/EmptyState";
+import { collectionTheme } from "@/components/collectionShell/theme";
 import { ErrorScreen } from "./ErrorScreen";
 import { Navigation } from "./Navigation";
 import { NFTDisplay } from "./NFTDisplay";
@@ -388,19 +390,13 @@ const QuestsPageContent = ({ collectionId }: any) => {
   // Loading states
   if (!mounted) {
     return (
-      <LoadingScreen
-        message="Loading Quests..."
-        isNSCollection={isNSCollection}
-      />
+      <ContentSkeleton theme={collectionTheme} variant="quests" />
     );
   }
 
   if (isCollectionLoading) {
     return (
-      <LoadingScreen
-        message="Loading Quests..."
-        isNSCollection={isNSCollection}
-      />
+      <ContentSkeleton theme={collectionTheme} variant="quests" />
     );
   }
 
@@ -418,39 +414,20 @@ const QuestsPageContent = ({ collectionId }: any) => {
   // Show wallet connection required screen if not connected
   if (!isWalletConnected) {
     return (
-      <div className={`pb-10 bg-[#000421]`}>
-        {/* <Navigation onBack={handleBack} /> */}
-        <div className="pt-2 pb-6 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center py-12">
-              <div className="text-4xl sm:text-6xl mb-4">🔒</div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                Login or Connect Wallet
-              </h3>
-              <p className="text-gray-400 text-sm sm:text-base mb-6">
-                Please Connect wallet to view quests and claim rewards
-              </p>
-              <button
-                onClick={() => setOpenModal(true)}
-                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Connect Wallet or Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        title="Login or Connect Wallet"
+        description="Please Connect wallet to view quests and claim rewards"
+        actionLabel="Connect Wallet or Login"
+        onAction={() => setOpenModal(true)}
+        accentClassName="bg-blue-500/15 text-blue-400"
+      />
     );
   }
 
   // Show loading screen while fetching metadata
   if (metadataLoading) {
     return (
-      <LoadingScreen
-        message="Loading Quests..."
-        collectionName={collection?.name}
-        isNSCollection={isNSCollection}
-      />
+      <ContentSkeleton theme={collectionTheme} variant="quests" />
     );
   }
 
@@ -468,11 +445,7 @@ const QuestsPageContent = ({ collectionId }: any) => {
 
   if (questsLoading) {
     return (
-      <LoadingScreen
-        message="Loading Quests..."
-        collectionName={collection?.name}
-        isNSCollection={isNSCollection}
-      />
+      <ContentSkeleton theme={collectionTheme} variant="quests" />
     );
   }
 
@@ -515,6 +488,7 @@ const QuestsPageContent = ({ collectionId }: any) => {
             completionPercentage={completionPercentage}
             showProgress={mounted && isWalletConnected && !questsLoading}
             requiredChainType={requiredChainType}
+            theme={collectionTheme}
           />
 
           {/* Quest List */}
@@ -523,6 +497,7 @@ const QuestsPageContent = ({ collectionId }: any) => {
             isWalletConnected={isWalletConnected}
             requiredChainType={requiredChainType}
             collection={collection}
+            theme={collectionTheme}
           />
 
           {/* ========== COMMENTED OUT CLAIM NFT BUTTON ========== */}

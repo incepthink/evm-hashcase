@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useCollectionById } from "@/hooks/useCollections";
 import BadgesTable from "../BadgesTable";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 export default function CollectionBadgesPage() {
   const [mounted, setMounted] = useState(false);
@@ -20,11 +22,7 @@ export default function CollectionBadgesPage() {
 
   // Show loading state while fetching collection
   if (isLoading) {
-    return (
-      <div className="bg-gradient-to-b from-[#00041f] to-[#030828] min-h-[70vh] flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
+    return <ContentSkeleton theme={collectionTheme} variant="badges" />;
   }
 
   // Show error if no owner_id

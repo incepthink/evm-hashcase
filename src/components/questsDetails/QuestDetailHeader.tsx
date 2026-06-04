@@ -2,6 +2,7 @@
 "use client";
 
 import Image from "next/image";
+import { ShellTheme } from "@/components/collectionShell/theme";
 
 interface NFTData {
   collection_id: number; // Changed from string to number
@@ -14,17 +15,21 @@ interface NFTData {
 
 interface QuestDetailHeaderProps {
   nftData: NFTData;
+  theme: ShellTheme;
 }
 
 export const QuestDetailHeader: React.FC<QuestDetailHeaderProps> = ({
   nftData,
+  theme,
 }) => {
   return (
     <div className="mb-12 sm:mb-16 md:mb-16">
       <div className="flex flex-col sm:flex-row items-center sm:space-x-6 md:space-x-8 space-y-6 sm:space-y-0">
         {/* NFT Image */}
         <div className="w-full sm:flex-shrink-0 sm:w-auto">
-          <div className="w-full sm:w-40 sm:h-40 md:w-48 md:h-48 aspect-square rounded-2xl shadow-2xl border-2 border-purple-300/30 overflow-hidden">
+          <div
+            className={`w-full sm:w-40 sm:h-40 md:w-48 md:h-48 aspect-square rounded-2xl shadow-2xl border-2 ${theme.cardBorder} overflow-hidden`}
+          >
             <Image
               src={nftData.image_url}
               alt="NFT Reward"
@@ -58,7 +63,7 @@ export const QuestDetailHeader: React.FC<QuestDetailHeaderProps> = ({
                 {nftData.attributes.map((attribute, index) => (
                   <span
                     key={index}
-                    className="text-xs bg-purple-900/30 text-purple-200 px-2 py-1 rounded border border-purple-700/50"
+                    className={`text-xs px-2 py-1 rounded border ${theme.pill}`}
                   >
                     {attribute}
                   </span>
@@ -77,16 +82,16 @@ export const QuestDetailHeader: React.FC<QuestDetailHeaderProps> = ({
       </div>
 
       {/* Reward Banner */}
-      <div className="mt-8 p-4 bg-gradient-to-r from-purple-900/20 to-pink-900/20 rounded-xl border border-purple-700/30">
+      <div
+        className={`mt-8 p-4 ${theme.cardBg} rounded-xl border ${theme.cardBorder}`}
+      >
         <div className="flex items-center justify-center gap-3">
-          <span className="text-2xl">🎁</span>
           <div className="text-center">
             <h3 className="text-lg font-semibold text-white">Quest Reward</h3>
-            <p className="text-sm text-gray-300">
+            <p className="text-sm text-gray-300 mt-2">
               Complete all tasks to claim this exclusive NFT
             </p>
           </div>
-          <span className="text-2xl">✨</span>
         </div>
       </div>
     </div>

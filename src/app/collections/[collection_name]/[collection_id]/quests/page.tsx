@@ -3,14 +3,15 @@
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
 import QuestsPageContent from "@/components/quests/QuestsPageContent";
-import { LoadingScreen } from "@/components/quests/LoadingScreen";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 export default function CollectionQuestsPage() {
   const params = useParams();
   const collectionId = params.collection_id as string;
 
   return (
-    <Suspense fallback={<LoadingScreen message="Loading quests..." />}>
+    <Suspense fallback={<ContentSkeleton theme={collectionTheme} variant="quests" />}>
       <QuestsPageContent collectionId={collectionId} />
     </Suspense>
   );

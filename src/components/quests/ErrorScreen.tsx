@@ -1,4 +1,6 @@
 // components/ErrorScreen.tsx
+import { AlertTriangle } from "lucide-react";
+
 interface ErrorScreenProps {
   title: string;
   message: string;
@@ -14,12 +16,16 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({
 }) => {
   return (
     <div
-      className={`min-h-screen ${
-        isNSCollection ? "bg-black" : "bg-[#000421]"
+      className={`min-h-[60vh] ${
+        isNSCollection ? "bg-black" : ""
       } flex items-center justify-center px-4`}
     >
       <div className="text-center">
-        <div className="text-red-400 text-3xl sm:text-4xl mb-4">⚠️</div>
+        <div className="mb-5 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/15 text-red-400">
+            <AlertTriangle className="h-7 w-7" strokeWidth={1.75} />
+          </div>
+        </div>
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">
           {title}
         </h2>

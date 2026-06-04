@@ -1,9 +1,12 @@
 // components/ProgressBar.tsx
+import { ShellTheme } from "@/components/collectionShell/theme";
+
 interface ProgressBarProps {
   completedQuests: number;
   totalQuests: number;
   completionPercentage: number;
   isVisible: boolean;
+  theme?: ShellTheme;
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({
@@ -11,6 +14,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   totalQuests,
   completionPercentage,
   isVisible,
+  theme,
 }) => {
   if (!isVisible) return null;
 
@@ -24,7 +28,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       </div>
       <div className="w-full bg-gray-800 rounded-full h-2 sm:h-3 overflow-hidden">
         <div
-          className="bg-white h-full rounded-full transition-all duration-500 ease-out"
+          className={`${
+            theme?.tabUnderline ?? "bg-white"
+          } h-full rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${completionPercentage}%` }}
         />
       </div>

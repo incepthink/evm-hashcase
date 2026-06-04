@@ -1,7 +1,15 @@
 // components/QuestList.tsx
 import React from "react";
 import { useRouter } from "next/navigation";
+import {
+  ClipboardList,
+  CheckCircle2,
+  Trophy,
+  ChevronRight,
+  ClipboardX,
+} from "lucide-react";
 import { Collection } from "@/utils/modelTypes";
+import { ShellTheme } from "@/components/collectionShell/theme";
 
 interface RequirementRule {
   type: string;
@@ -45,6 +53,7 @@ interface QuestListProps {
   isWalletConnected: boolean;
   requiredChainType?: "sui" | "evm";
   collection: Collection;
+  theme: ShellTheme;
 }
 
 export const QuestList: React.FC<QuestListProps> = ({
@@ -52,6 +61,7 @@ export const QuestList: React.FC<QuestListProps> = ({
   isWalletConnected,
   requiredChainType = "sui",
   collection,
+  theme,
 }) => {
   const router = useRouter();
 
@@ -89,18 +99,18 @@ export const QuestList: React.FC<QuestListProps> = ({
                 )}
 
                 {/* Quest Stats */}
-                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <span className="text-blue-400">📋</span>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 mt-4">
+                  <span className="flex items-center gap-1.5">
+                    <ClipboardList className="w-3.5 h-3.5 text-gray-400" />
                     {quest.total_tasks}{" "}
                     {quest.total_tasks === 1 ? "task" : "tasks"}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="text-green-400">✅</span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
                     {quest.completed_tasks} completed
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="text-yellow-400">🎯</span>
+                  <span className="flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-gray-400" />
                     {quest.total_points} points
                   </span>
                 </div>
@@ -109,8 +119,9 @@ export const QuestList: React.FC<QuestListProps> = ({
               {/* Quest Status */}
               <div className="flex-shrink-0 pr-4">
                 {quest.is_completed ? (
-                  <span className="text-xs sm:text-sm text-green-400 bg-green-900/20 px-2 sm:px-3 py-1 rounded border border-green-700 inline-block">
-                    ✓ Quest Completed
+                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-green-400 bg-green-900/20 px-2 sm:px-3 py-1 rounded border border-green-700">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Quest Completed
                   </span>
                 ) : !isWalletConnected ? (
                   <span
@@ -122,7 +133,9 @@ export const QuestList: React.FC<QuestListProps> = ({
                     {getWalletConnectMessage()}
                   </span>
                 ) : (
-                  <span className="text-xs sm:text-sm text-blue-400 bg-blue-900/20 px-2 sm:px-3 py-1 rounded border border-blue-600 inline-block">
+                  <span
+                    className={`text-xs sm:text-sm ${theme.pill} px-2 sm:px-3 py-1 rounded border inline-block`}
+                  >
                     {quest.completed_tasks}/{quest.total_tasks} Tasks
                   </span>
                 )}
@@ -131,32 +144,24 @@ export const QuestList: React.FC<QuestListProps> = ({
 
             {/* Click indicator arrow */}
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 group-hover:text-white transition-colors">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <ChevronRight className="w-5 h-5" />
             </div>
           </div>
         );
       })}
 
       {quests.length === 0 && (
-        <div className="text-center py-8">
-          <div className="text-4xl mb-4">📝</div>
+        <div className="flex flex-col items-center text-center py-12">
+          <div
+            className={`mb-4 flex h-14 w-14 items-center justify-center rounded-full ${theme.pill}`}
+          >
+            <ClipboardX className="h-6 w-6" strokeWidth={1.75} />
+          </div>
           <h3 className="text-lg font-semibold text-white mb-2">
             No Quests Available
           </h3>
           <p className="text-gray-400 text-sm">
-            Check back later for new quests and challenges!
+            Check back later for new quests and challenges.
           </p>
         </div>
       )}

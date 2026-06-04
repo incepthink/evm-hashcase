@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { Flame, Award, Trophy, ChevronRight } from "lucide-react";
 import { notify } from "@/utils/notify";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 type Badge = {
   id: number;
@@ -75,11 +77,7 @@ const BadgesTable = ({ owner_id }: { owner_id: number }) => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="bg-gradient-to-b from-[#00041f] to-[#030828] text-center h-[50vh] py-10 pb-16  px-4">
-        <div className="text-white">Loading badges...</div>
-      </div>
-    );
+    return <ContentSkeleton theme={collectionTheme} variant="badges" />;
   }
 
   if (!badges || badges.length === 0) {

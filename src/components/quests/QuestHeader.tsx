@@ -1,5 +1,6 @@
 // components/QuestHeader.tsx
 import { ProgressBar } from "./ProgressBar";
+import { ShellTheme } from "@/components/collectionShell/theme";
 
 interface QuestHeaderProps {
   completedQuests: number;
@@ -7,6 +8,7 @@ interface QuestHeaderProps {
   completionPercentage: number;
   showProgress: boolean;
   requiredChainType?: "sui" | "evm";
+  theme: ShellTheme;
 }
 
 export const QuestHeader: React.FC<QuestHeaderProps> = ({
@@ -15,6 +17,7 @@ export const QuestHeader: React.FC<QuestHeaderProps> = ({
   completionPercentage,
   showProgress,
   requiredChainType = "sui",
+  theme,
 }) => {
   return (
     <div className="text-center mb-6">
@@ -33,7 +36,11 @@ export const QuestHeader: React.FC<QuestHeaderProps> = ({
         totalQuests={totalQuests}
         completionPercentage={completionPercentage}
         isVisible={showProgress}
+        theme={theme}
       />
+      <p className={`${theme.accentText} text-md my-1`}>
+        Complete Quests designed by the owner to earn amazing Rewards!
+      </p>
     </div>
   );
 };

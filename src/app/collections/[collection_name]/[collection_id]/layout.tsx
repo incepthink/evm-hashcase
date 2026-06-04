@@ -108,9 +108,13 @@ export default function CollectionLayout({ children }: CollectionLayoutProps) {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="bg-[#00041f] mx-auto max-w-7xl mt-16 border-b border-gray-800">
-        <div className="flex gap-12 pl-1">
+      {/* Spacer between banner and sticky tabs */}
+      <div className="h-16" />
+
+      {/* Tabs Navigation — sticky just below the navbar */}
+      <div className="sticky top-14 sm:top-16 z-30 bg-[#00041f] border-b border-gray-800">
+        <div className="mx-auto max-w-7xl pl-1">
+          <div className="flex gap-12 pl-1">
           {tabs.map((tab) => {
             // Check if pathname contains the tab segment for nested routes
             let isActive = false;
@@ -142,6 +146,7 @@ export default function CollectionLayout({ children }: CollectionLayoutProps) {
               </Link>
             );
           })}
+          </div>
         </div>
       </div>
 

@@ -3,11 +3,14 @@
 
 import { Suspense } from "react";
 import QuestDetailPageContent from "@/components/questsDetails/QuestDetailPageContent";
-import { LoadingScreen } from "@/components/quests/LoadingScreen";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 const QuestDetailPage = () => {
   return (
-    <Suspense fallback={<LoadingScreen message="Loading Quest..." />}>
+    <Suspense
+      fallback={<ContentSkeleton theme={collectionTheme} variant="detail" />}
+    >
       <QuestDetailPageContent />
     </Suspense>
   );

@@ -8,6 +8,8 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useLoyalty } from "@/hooks/useLoyalty";
 import { useAddLoyalty } from "@/hooks/useAddLoyalty";
 import ConnectButton from "@/components/ConnectButton";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 interface User {
   id: number;
@@ -50,6 +52,9 @@ const LoyaltyCodesTable = ({
   const [offChainPointsState, setOffChainPointsState] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [isPageLoading, setIsPageLoading] = useState(false);
+  // First loyalty-codes fetch → shared, themed skeleton (matches NFTs/Quests/Badges).
+  // Later add/spend actions keep the overlay spinner below instead.
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Use the loyalty hook
   const {
@@ -218,7 +223,14 @@ const LoyaltyCodesTable = ({
   };
 
   useEffect(() => {
-    getLoyaltyCodesAndPoints(owner_id);
+    const loadInitial = async () => {
+      try {
+        await getLoyaltyCodesAndPoints(owner_id);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+    loadInitial();
     fetchOffChainPoints();
 
     if (hasAnyEvmWallet()) {
@@ -247,6 +259,11 @@ const LoyaltyCodesTable = ({
   }, []);
 
   const isWalletConnected = mounted && hasWalletForChain("evm");
+
+  // Initial codes fetch → shared, themed skeleton (matches NFTs/Quests/Badges)
+  if (initialLoading) {
+    return <ContentSkeleton theme={collectionTheme} variant="points" />;
+  }
 
   return (
     <div className="bg-gradient-to-b from-[#00041f] to-[#030828] flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 text-white pb-16 md:pb-16">

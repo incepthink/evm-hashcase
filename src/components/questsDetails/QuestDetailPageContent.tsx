@@ -8,7 +8,10 @@ import { useGlobalAppStore } from "@/store/globalAppStore";
 import { useQuestById, QuestWithCompletion } from "@/hooks/useQuestById";
 
 // Components
-import { LoadingScreen } from "../quests/LoadingScreen";
+import { CheckCircle2, ClipboardList, Sparkles } from "lucide-react";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import EmptyState from "@/components/collectionShell/EmptyState";
+import { collectionTheme } from "@/components/collectionShell/theme";
 import { ErrorScreen } from "../quests/ErrorScreen";
 import { Navigation } from "../quests/Navigation";
 import { NFTSuccessModal } from "../quests/NFTSuccessModal";
@@ -295,7 +298,7 @@ const QuestDetailPageContent = () => {
 
   // Loading states
   if (!mounted) {
-    return <LoadingScreen message="Loading Tasks..." />;
+    return <ContentSkeleton theme={collectionTheme} variant="detail" />;
   }
 
   // Early return for invalid quest ID
@@ -311,36 +314,24 @@ const QuestDetailPageContent = () => {
 
   // Early return for authentication
   if (!userId || !isWalletConnected || !isValidUserId) {
+    const needsLogin = !userId || !isValidUserId;
     return (
-      <div className={`py-10 bg-[#000421]`}>
-        {/* <Navigation onBack={() => router.back()} /> */}
-        <div className="pt-20 sm:pt-20 md:pt-32 pb-6 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center py-12">
-              <div className="text-4xl sm:text-6xl mb-4">🔒</div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4">
-                Login or Connect Wallet
-              </h3>
-              <p className="text-gray-400 text-sm sm:text-base mb-6">
-                {!userId || !isValidUserId
-                  ? "Please log in to view and complete quest tasks"
-                  : "Please connect wallet to view and complete tasks"}
-              </p>
-              <button
-                onClick={() => setOpenModal(true)}
-                className="bg-white text-black px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                {!userId || !isValidUserId ? "Login" : "Connect Wallet"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        title="Login or Connect Wallet"
+        description={
+          needsLogin
+            ? "Please log in to view and complete quest tasks"
+            : "Please connect wallet to view and complete tasks"
+        }
+        actionLabel={needsLogin ? "Login" : "Connect Wallet"}
+        onAction={() => setOpenModal(true)}
+        accentClassName="bg-blue-500/15 text-blue-400"
+      />
     );
   }
 
   if (questLoading) {
-    return <LoadingScreen message="Loading Tasks..." />;
+    return <ContentSkeleton theme={collectionTheme} variant="detail" />;
   }
 
   if (questError || !questData) {
@@ -365,7 +356,7 @@ const QuestDetailPageContent = () => {
 
   // Show loading screen while fetching metadata (only if we have a metadata ID)
   if (metadataId && metadataLoading) {
-    return <LoadingScreen message="Loading Tasks..." />;
+    return <ContentSkeleton theme={collectionTheme} variant="detail" />;
   }
 
   // Show error if metadata failed to load (only if we have a metadata ID)
@@ -425,7 +416,7 @@ const QuestDetailPageContent = () => {
           )} */}
 
           {/* NFT Display Header */}
-          {nftData && <QuestDetailHeader nftData={nftData} />}
+          {nftData && <QuestDetailHeader nftData={nftData} theme={collectionTheme} />}
 
           {/* Combined Quest Progress Header */}
           <div className="text-center mb-8">
@@ -433,9 +424,11 @@ const QuestDetailPageContent = () => {
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">
-                    {currentQuest.is_completed ? "🎉" : "📋"}
-                  </span>
+                  {currentQuest.is_completed ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-400" />
+                  ) : (
+                    <ClipboardList className="w-6 h-6 text-blue-400" />
+                  )}
                   <div className="text-left">
                     <h3 className="text-lg font-semibold text-white">
                       {currentQuest.is_completed
@@ -471,7 +464,7 @@ const QuestDetailPageContent = () => {
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-2">
                   <div
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                     style={{
                       width: `${Math.round(
                         (currentQuest.completed_tasks /
@@ -486,7 +479,7 @@ const QuestDetailPageContent = () => {
               {currentQuest.is_completed && currentQuest.claimable_metadata && (
                 <div className="mt-4">
                   <p className="text-sm text-green-400 text-center flex items-center justify-center gap-2">
-                    <span>✨</span>
+                    <Sparkles className="w-4 h-4" />
                     NFT reward available for claiming!
                   </p>
                 </div>
@@ -520,6 +513,7 @@ const QuestDetailPageContent = () => {
             quest={currentQuest}
             isWalletConnected={isWalletConnected}
             requiredChainType={requiredChainType}
+            theme={collectionTheme}
           />
         </div>
       </div>

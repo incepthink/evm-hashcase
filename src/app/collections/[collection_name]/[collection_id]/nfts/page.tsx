@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import ArrowW from "@/assets/images/arrowW.svg";
+import ContentSkeleton from "@/components/collectionShell/ContentSkeleton";
+import { collectionTheme } from "@/components/collectionShell/theme";
 
 interface NFTMetadata {
   id: number;
@@ -51,14 +53,7 @@ const NFTMetadataPage = () => {
   }, [params.collection_id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#00041f] to-[#030828] flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <p className="text-lg">Loading metadata...</p>
-        </div>
-      </div>
-    );
+    return <ContentSkeleton theme={collectionTheme} variant="nfts" />;
   }
 
   return (
