@@ -7,8 +7,6 @@ import LayoutChrome from "@/components/LayoutChrome";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { NotificationProvider } from "@/components/NotificationProvider";
-import WalletConnectionModal from "@/components/WalletConnectionModal";
-import Footer from "@/components/Footer";
 import RainbowkitProvider from "@/providers/RainbowkitProvider";
 import PrivyLoginProvider from "@/providers/PrivyLoginProvider";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -53,7 +51,6 @@ export default function RootLayout({
             <TanstackProvider>
               <NotificationProvider />
               <LayoutChrome>{children}</LayoutChrome>
-              <WalletConnectionModal />
               <ToastContainer />
             </TanstackProvider>
           </RainbowkitProvider>

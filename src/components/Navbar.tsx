@@ -41,13 +41,6 @@ export const Navbar = () => {
 
   const open = Boolean(anchorEl);
 
-  console.log("NAVBAR_DEBUG: Wallet states:", {
-    evmAddress,
-    privyAuthenticated,
-    privyWalletAddress: privyUser?.wallet?.address,
-    privyEmail: privyUser?.email?.address,
-  });
-
   // Determine which address to use for profile navigation
   const getProfileAddress = (): string | null => {
     // Priority: Regular EVM wallet -> Privy wallet
@@ -90,14 +83,8 @@ export const Navbar = () => {
 
     if (profileAddress && walletInfo) {
       setDisplayAddress(walletInfo.address);
-      console.log("NAVBAR_DEBUG: Updated display address:", {
-        address: walletInfo.address,
-        type: walletInfo.type,
-        fullAddress: profileAddress,
-      });
     } else {
       setDisplayAddress(null);
-      console.log("NAVBAR_DEBUG: No wallet connected, cleared display address");
     }
   }, [evmAddress, privyAuthenticated, privyUser]);
 
@@ -113,7 +100,6 @@ export const Navbar = () => {
     const profileAddress = getProfileAddress();
 
     if (profileAddress) {
-      console.log("NAVBAR_DEBUG: Navigating to profile:", profileAddress);
       router.push(`/profile/${profileAddress}`);
       handleClose();
     } else {
@@ -125,13 +111,12 @@ export const Navbar = () => {
   };
 
   const handleNavigation = (path: string) => {
-    console.log("NAVBAR_DEBUG: Navigating to:", path);
     router.push(path);
     handleClose();
   };
 
   const navigationItems = [
-    { label: "Home", path: "/" },
+    { label: "Home", path: "/app" },
     { label: "Collections", path: "/collections" },
     { label: "Profile", onClick: handleProfileClick },
     { label: "Examples", path: "/examples" },
@@ -147,7 +132,7 @@ export const Navbar = () => {
           {/* <div className="flex items-center gap-10"> */}
           {/* Logo */}
           <Box className="flex items-center">
-            <Link href="/" className="flex items-center no-underline">
+            <Link href="/app" className="flex items-center no-underline">
               <HashcaseText />
             </Link>
           </Box>
