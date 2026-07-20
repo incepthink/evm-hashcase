@@ -7,7 +7,7 @@ export const BRAND = "HashCase";
 export const TAGLINE = "B2B AI solutions";
 
 /** Swap this one line to change every contact target on the page. */
-export const CONTACT_EMAIL = "incepthinkhashcase@gmail.com";
+export const CONTACT_EMAIL = "contact@hashcase.co";
 
 const mailto = (subject: string, body: string) =>
   `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
@@ -223,8 +223,7 @@ export const WHY_US = {
     {
       icon: "Plug",
       title: "Plugs into your business",
-      description:
-        "Connects to your data and tools; live in days, not months.",
+      description: "Connects to your data and tools; live in days, not months.",
     },
     {
       icon: "ShieldCheck",
