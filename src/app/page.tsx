@@ -1,40 +1,46 @@
 import type { Metadata } from "next";
-import BuildOnIt from "@/components/landing/BuildOnIt";
-import CapabilityMarquee from "@/components/landing/CapabilityMarquee";
-import FinalCTA from "@/components/landing/FinalCTA";
-import Hero from "@/components/landing/Hero";
-import HowItWorks from "@/components/landing/HowItWorks";
-import LandingFooter from "@/components/landing/LandingFooter";
-import StackGrid from "@/components/landing/StackGrid";
-import { Navbar } from "@/components/Navbar";
-import WhyUs from "@/components/landing/WhyUs";
+import Capabilities from "@/components/home/Capabilities";
+import CaseStudies from "@/components/home/CaseStudies";
+import FinalCta from "@/components/home/FinalCta";
+import HomeFooter from "@/components/home/HomeFooter";
+import HomeHero from "@/components/home/HomeHero";
+import HomeNav from "@/components/home/HomeNav";
+import HomeShell from "@/components/home/HomeShell";
+import HowItWorks from "@/components/home/HowItWorks";
+import LogoMarquee from "@/components/home/LogoMarquee";
+import Manifesto from "@/components/home/Manifesto";
 
 export const metadata: Metadata = {
-  title: "HashCase — We built the AI stack. You build anything on it.",
+  title: "HashCase — Private, production-ready AI systems",
   description:
-    "HashCase is a B2B AI company with a ready-to-use AI stack: agents, assistants, content engines, document intelligence, and automations that plug into your business. Live in days, not months.",
+    "HashCase evaluates the best models for your use case, engineers the complete AI workflow, and deploys it inside your infrastructure — frontier AI for enterprises and governments without giving up control of their data.",
   openGraph: {
-    title: "HashCase — We built the AI stack. You build anything on it.",
+    title: "HashCase — Private, production-ready AI systems",
     description:
-      "Agents, assistants, content engines, and automations out of the box — ready to plug into your business.",
+      "Frontier AI, deployed inside your infrastructure. Model evaluation, workflow engineering and on-prem deployment for enterprises and governments.",
     type: "website",
   },
 };
 
 export default function Home() {
   return (
-    <div className="min-h-screen overflow-x-clip bg-ink text-white">
-      <Navbar />
+    <HomeShell className="hc-bg-landing">
+      {/* Ambient: fine grid + two soft brand washes, top only */}
+      <div aria-hidden="true" className="hc-grid-bg pointer-events-none absolute inset-x-0 top-0 h-[1000px]" />
+      <div aria-hidden="true" className="pointer-events-none absolute -top-[220px] right-20 h-[560px] w-[560px] rounded-full bg-[#E4DCFF] opacity-75 blur-[110px]" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-[180px] top-40 h-[480px] w-[480px] rounded-full bg-[#D6E7FF] opacity-80 blur-[110px]" />
+
+      <HomeNav />
       <main>
-        <Hero />
-        <CapabilityMarquee />
-        <StackGrid />
-        <BuildOnIt />
+        <HomeHero />
+        <LogoMarquee />
+        <Manifesto />
         <HowItWorks />
-        <WhyUs />
-        <FinalCTA />
+        <Capabilities />
+        <CaseStudies />
+        <FinalCta />
       </main>
-      <LandingFooter />
-    </div>
+      <HomeFooter />
+    </HomeShell>
   );
 }

@@ -39,7 +39,7 @@ const MintSuccessModal: React.FC<MintSuccessModalProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  const nftUrl = `https://hashcase.co/collections/${params.collection_name}/${params.collection_id}/nfts/freemint/${params.metadata_id}`;
+  const nftUrl = `https://hashcase.tech/collections/${params.collection_name}/${params.collection_id}/nfts/freemint/${params.metadata_id}`;
 
   // Tweet content
   const tweetText = `🚀 Just minted my NFT "${nftData.title}"! Check it out at ${nftUrl} #NFTCommunity #Web3`;
