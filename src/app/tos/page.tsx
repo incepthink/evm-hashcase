@@ -10,7 +10,7 @@ export default function ToS() {
       <h2 className="text-2xl font-semibold mt-8 mb-4">1. Terms</h2>
 
       <p>
-        By accessing this Website, accessible from https://www.hashcase.co/, you
+        By accessing this Website, accessible from https://www.hashcase.tech/, you
         are agreeing to be bound by these Website Terms and Conditions of Use
         and agree that you are responsible for the agreement with any applicable
         local laws. If you disagree with any of these terms, you are prohibited

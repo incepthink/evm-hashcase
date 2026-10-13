@@ -193,7 +193,7 @@ const CollectionsPage: React.FC = () => {
             // Determine if this is a SUI chain collection
             const isSuiChain = chainType.toLowerCase() === "sui";
             const linkUrl = isSuiChain
-              ? `https://sui.hashcase.co/collections/${collectionName}/${collectionId}`
+              ? `https://sui.hashcase.tech/collections/${collectionName}/${collectionId}`
               : `/collections/${collectionName}/${collectionId}`;
 
             const LinkComponent = isSuiChain ? "a" : Link;

@@ -13,6 +13,8 @@ export default function LayoutChrome({
   const isLanding = pathname === "/";
   const hideChrome =
     isLanding ||
+    pathname?.startsWith("/careers") ||
+    pathname?.startsWith("/case-studies") ||
     pathname?.startsWith("/quests") ||
     pathname?.startsWith("/examples/e-commerce");
 
@@ -21,8 +23,6 @@ export default function LayoutChrome({
       {!hideChrome && <Navbar />}
       {children}
       {!hideChrome && <Footer />}
-      {/* The landing now uses the app Navbar with a Connect button, so it
-          needs the wallet modal too. */}
       <WalletConnectionModal />
     </>
   );

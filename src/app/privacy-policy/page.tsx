@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
       <h1 className="text-3xl font-bold">Privacy Policy for HashCase</h1>
 
       <p>
-        At HashCase, accessible from https://www.hashcase.co/, one of our main
+        At HashCase, accessible from https://www.hashcase.tech/, one of our main
         priorities is the privacy of our visitors. This Privacy Policy document
         contains types of information that is collected and recorded by HashCase
         and how we use it.

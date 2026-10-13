@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Hashcase",
   description:
     "HashCase infra uses real assets and gamification to achieve user retention.",
-  metadataBase: new URL("https://hashcase.co/"),
+  metadataBase: new URL("https://hashcase.tech/"),
   openGraph: {
     images: [
       {
