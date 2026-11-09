@@ -162,11 +162,11 @@ const nextConfig = {
         },
         {
           source: "/examples/chog",
-          destination: "https://chog.hashcase.co/examples/chog",
+          destination: "https://chog.hashcase.tech/examples/chog",
         },
         {
           source: "/examples/chog/:path*",
-          destination: "https://chog.hashcase.co/examples/chog/:path*",
+          destination: "https://chog.hashcase.tech/examples/chog/:path*",
         },
         {
           source: "/examples/safty",
