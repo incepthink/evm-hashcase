@@ -21,7 +21,6 @@ export const X_URL = "https://x.com/hash_case";
 export const NAV_LINKS = [
   { label: "Use Cases", href: "/#how" },
   { label: "Case Studies", href: "/#cases", match: "/case-studies" },
-  { label: "POCs", href: "/poc", match: "/poc" },
   { label: "Careers", href: CAREERS_HREF, badge: OPEN_ROLES, match: "/careers" },
   { label: "Contact Us", href: EVALUATE_HREF },
 ] as const;
