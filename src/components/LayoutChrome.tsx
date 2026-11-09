@@ -15,14 +15,25 @@ export default function LayoutChrome({
     isLanding ||
     pathname?.startsWith("/careers") ||
     pathname?.startsWith("/case-studies") ||
+    pathname === "/poc" ||
     pathname?.startsWith("/quests") ||
     pathname?.startsWith("/examples/e-commerce");
 
   return (
     <>
-      {!hideChrome && <Navbar />}
+      {/* .hc-legacy-chrome is hidden by globals.css on pages that render the new
+          site chrome themselves but can't be matched by path (the 404 page). */}
+      {!hideChrome && (
+        <div className="hc-legacy-chrome contents">
+          <Navbar />
+        </div>
+      )}
       {children}
-      {!hideChrome && <Footer />}
+      {!hideChrome && (
+        <div className="hc-legacy-chrome contents">
+          <Footer />
+        </div>
+      )}
       <WalletConnectionModal />
     </>
   );

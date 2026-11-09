@@ -67,6 +67,11 @@ const nextConfig = {
   },
     ],
   },
+  async redirects() {
+    // The POC listing moved from /examples to /poc. Only the bare path
+    // redirects; /examples/<slug> keeps rewriting to each demo below.
+    return [{ source: "/examples", destination: "/poc", permanent: false }];
+  },
   async rewrites() {
     return {
       beforeFiles: [

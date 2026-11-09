@@ -35,3 +35,8 @@ body {
     scroll-behavior: smooth;
   }
 }
+
+/* Pages built with the new site chrome (PageChrome) hide the legacy app navbar/footer. */
+body:has([data-hc-chrome="none"]) .hc-legacy-chrome {
+  display: none;
+}
