@@ -43,7 +43,7 @@
 }
 
 .hc-d {
-  font-family: var(--hc-font-display), "Arial Narrow", system-ui, sans-serif;
+  font-family: var(--hc-font-display), system-ui, -apple-system, sans-serif;
 }
 
 .hc-m {

@@ -1,12 +1,7 @@
-import {
-  Bricolage_Grotesque,
-  Instrument_Sans,
-  JetBrains_Mono,
-} from "next/font/google";
+import { Geist, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 
-export const displayFont = Bricolage_Grotesque({
+export const displayFont = Geist({
   subsets: ["latin"],
-  axes: ["opsz"],
   variable: "--hc-font-display",
   display: "swap",
 });
