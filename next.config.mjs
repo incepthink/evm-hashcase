@@ -75,6 +75,15 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // DGIPR publicity tracking (Vercel project dgipr-tracking, built with base /dgipr/tracking/)
+        {
+          source: "/dgipr/tracking",
+          destination: "https://dgipr-tracking.vercel.app/dgipr/tracking",
+        },
+        {
+          source: "/dgipr/tracking/:path*",
+          destination: "https://dgipr-tracking.vercel.app/dgipr/tracking/:path*",
+        },
         {
           source: "/minter/filecoin",
           destination: "http://localhost:3002/minter/filecoin",
