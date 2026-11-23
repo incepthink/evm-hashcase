@@ -507,6 +507,15 @@ function setPlayIcon(end) { atEnd = end; playBtn.textContent = end ? "â†º" : "â–
 // ------------------------------------------------------------------ input
 let lastInput = performance.now(), hoverT = null, hoverD = null, drag = null;
 const attract = { on: false, t: 0, step: 0 };
+// auto tour toggle: off by default; when on, the camera hops between highlight destinations,
+// pauses on any interaction and resumes after TOUR_IDLE ms without input
+let autoTour = false; const TOUR_IDLE = 8000;
+const tourBtn = $("#tour");
+tourBtn.onclick = () => {
+  autoTour = !autoTour;
+  tourBtn.classList.toggle("on", autoTour); tourBtn.querySelector("b").textContent = autoTour ? "ON" : "OFF";
+  if (autoTour) { attract.on = true; attract.t = 99; } else attract.on = false;
+};
 const poke = () => { lastInput = performance.now(); attract.on = false; };
 const toStage = e => { const r = stage.getBoundingClientRect(), s = stage._s; return [(e.clientX - r.left) / s, (e.clientY - r.top) / s]; };
 function pickTower(x, y) {
@@ -628,7 +637,7 @@ function frame(now) {
   else tip.style.opacity = 0;
 
   // attract mode
-  if (!TEST && now - lastInput > 30000 && clock > 9 && !attract.on) { attract.on = true; attract.t = 99; }
+  if (!TEST && autoTour && now - lastInput > TOUR_IDLE && clock > 9 && !attract.on) { attract.on = true; attract.t = 99; }
   if (attract.on) { attract.t += dt; if (attract.t > 7) { attract.t = 0; attract.step++; const heroes = DEST.filter(d => d.w === 3 && d.phase <= year + .01); if (attract.step % 4 === 0) { select(null, false); flyTo(HOME, 2.4); } else select(heroes[(attract.step * 5) % heroes.length]); } }
 
   // ---- terrain state
