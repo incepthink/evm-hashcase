@@ -94,6 +94,12 @@ const nextConfig = {
         },
       ],
       afterFiles: [
+        // Viksit Maharashtra 2047 tourism map: static files live in
+        // public/viksit-maharashtra/map/ (index.html sets <base> to that folder).
+        {
+          source: "/viksit-maharashtra/map",
+          destination: "/viksit-maharashtra/map/index.html",
+        },
         {
           source: "/examples/ip-royalties",
           destination: "https://ip-royalties.vercel.app/examples/ip-royalties",

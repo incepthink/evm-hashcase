@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<base href="/viksit-maharashtra/map/">
+<title>Viksit Maharashtra 2047 · Tourism Explorer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <canvas id="ui"></canvas>
+  <div id="vignette"></div>
+  <div id="tip"></div>
+
+  <header id="top">
+    <div class="brand">
+      <div class="emblem"></div>
+      <div>
+        <div class="t1">VIKSIT <span>MAHARASHTRA</span> 2047</div>
+        <div class="t2"><span class="mr">पर्यटन व संस्कृती</span> · Tourism &amp; Culture</div>
+      </div>
+    </div>
+    <div id="kpis">
+      <div class="kpi"><b id="k1">0</b><span>Destinations</span></div>
+      <div class="kpi"><b id="k2">0</b><span>Districts covered</span></div>
+      <div class="kpi"><b id="k3">0</b><span>New since 2026</span></div>
+    </div>
+  </header>
+
+  <aside id="cats"><div class="head">EXPLORE BY THEME</div><div id="catlist"></div></aside>
+
+  <aside id="card" class="hidden">
+    <div class="close" id="closeCard">×</div>
+    <div class="tag" id="cTag"></div>
+    <div class="name" id="cName"></div>
+    <div class="dist" id="cDist"></div>
+    <div class="desc" id="cDesc"></div>
+    <div class="meta">
+      <div><span id="mL1">Theme</span><b id="cCat"></b></div>
+      <div><span id="mL2">On the map from</span><b id="cPhase"></b></div>
+    </div>
+    <div class="nearby"><span id="nL">Also in this district</span><div id="cNear"></div></div>
+  </aside>
+
+  <footer id="timeline">
+    <button id="play" title="Play journey">▶</button>
+    <div id="track">
+      <div id="fill"></div>
+      <div class="stop" data-y="2026" style="left:0%"><i></i><b>2026</b><span>Today</span></div>
+      <div class="stop" data-y="2035" style="left:42.857%"><i></i><b>2035</b><span>Building</span></div>
+      <div class="stop" data-y="2047" style="left:100%"><i></i><b>2047</b><span>Viksit</span></div>
+      <div id="knob"></div>
+    </div>
+    <div id="yearBig">2026</div>
+  </footer>
+  <div id="hint">Drag to move · Right-drag to rotate · Scroll to zoom · Tap a point to explore</div>
+  <div id="note">Destinations from "Viksit Maharashtra for Viksit Bharat" (Tourism chapter). Imagery: Sentinel-2 cloudless 2016 by EOX (contains modified Copernicus Sentinel data). Elevation: real terrain. Phasing indicative.</div>
+</div>
+<script src="assets.js"></script>
+<script src="data.js"></script>
+<script src="terrain.js"></script>
+</body>
+</html>

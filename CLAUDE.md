@@ -57,7 +57,7 @@ NFT claiming logic lives in `src/hooks/useNFTClaiming.ts`. Contract helpers are 
 
 ### URL Rewrites
 
-`next.config.mjs` proxies `/minter/filecoin` to `localhost:3002` (local filecoin minter) and rewrites `/examples/*` paths to separate Vercel-deployed demo projects (ip-royalties, digital-twins, governance-dao, tokenized-real-estate, medical-records, luxury-passport, edu-cred, fan-tokens, ecommerce, safty).
+`next.config.mjs` proxies `/minter/filecoin` to `localhost:3002` (local filecoin minter) rewrites `/viksit-maharashtra/map` to the static map in `public/viksit-maharashtra/map/`, and rewrites `/examples/*` paths to separate Vercel-deployed demo projects (ip-royalties, digital-twins, governance-dao, tokenized-real-estate, medical-records, luxury-passport, edu-cred, fan-tokens, ecommerce, safty).
 
 ### Key Utilities
 
